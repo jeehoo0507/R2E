@@ -25,3 +25,5 @@ The new order in `scripts/pipeline_day1.py`:
 Only the order changed; the experiment settings are the same. I restarted the script at 15:49. It reconnected to the running training and board-building jobs without interrupting them. The decision and reason are recorded in PROGRESS.md.
 
 **Next round:** record the rest of rung 0 (distillation, then reinforcement learning). Once the evaluation boards are done, put the first baseline numbers into RESULTS.md, then confirm rung 1 starts at about 19:45. DAILY.md is due around 05:30 UTC on 10/29.
+To https://github.com/jeehoo0507/R2E.git
+   fd338c9..a0be9ee  main -> main
