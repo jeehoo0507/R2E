@@ -1,9 +1,10 @@
-# PROGRESS (갱신 2026-10-28 06:35 UTC, 라운드 1, 첫날)
+# PROGRESS (갱신 2026-10-28 12:25 UTC, 라운드 2)
 
-- 돌고 있는 것: `scripts/build_pools.py` → `runs/pool_v1/` (48 파일: 학습 8/10/12칸 ×3종류 ×3, 검증 10칸 ×3, 평가 10/16/20칸 ×3종류 ×50문제; 14 프로세스, 06:04 시작, 20×20 평가 파일이 가장 느림 ≈ 40~60분 예상).
-- 끝난 것: 환경 확인(sanity·smoke 통과) / `decap_loop/techs.py` 세 종류 / `safe_verify.py`(MKL 멈춤 우회) / 1단 `--feat modal`(`modal_env.py`, 단위 검사 통과) / 3단 `loop_model.py`(단위 검사 통과) / 3단계 방법론(증류→RL+expert iteration) `train.py` / `scripts/make_teacher.py`, `eval_policy.py`, `collect_results.py`, `run_rung.py` / 전체 파이프라인 스모크 `scripts/smoke_pipeline.py` 통과(로그 `agent/logs/smoke_pipeline.log`).
-- 다음 4시간: 풀 완료 → `make_teacher.py`(g+p→LS, 정확 검사) → E0 기준선(g+p, LS) 평가 → 0단(coord)·1단(modal) `run_rung.py` 동시 시작(증류 0.75h + RL 1.25h) → 2단(mott).
-- 결정: 1단 = 0단 좌표 입력 + 공진 참여 포트 특징 + 정확한 1수 효과 (좌표 유지) — 사다리가 "한 단씩 쌓기"라 한 번에 하나만 바꾸기 위해. 좌표를 뺀 `modal_only`는 ablation으로 코드만 둠.
-- 결정: 모든 CPU 정확 검사는 프로세스당 torch 1스레드 — 이 서버의 MKL이 n≥200·스레드≥2 배치 복소 solve에서 멈춤(`scripts/mkl_repro.py`). 환경 파일은 수정하지 않음(PROPOSALS.md).
-- 결정: 2단은 기존 `model.py`의 `MoTT` 그대로 사용(재구현 안 함). 검사 대역은 세 종류 모두 기본값. 학습 설정은 `run_mott.sh` COMMON(d128·4층·8heads·B16·M8·lr3e-4)을 전 단 공통.
-- 결정: IP 종류 난이도 EASY(0.2~0.5), PCB/PKG HARD(0.02~0.2) — probe에서 IP HARD는 greedy가 10칸 25%, 16칸 0% 성공(`agent/logs/probe_techs.log`).
+- 사고: 06:41경 서버 재시작으로 라운드 1의 풀 생성이 죽음 (48개 중 eval_pcb10_0/1, eval_pkg10_0 3개만 완성; 3개 g+p 인증 0.92/0.76/0.88). 라운드 1 종료 기록 없음.
+- 돌고 있는 것 (모두 `scripts/bg.py`로 세션 분리 → 라운드가 끝나도 계속): ① 풀 재생성 `agent/logs/build_pools_v1_r2.log` (train·val 30개 먼저, 그다음 eval 15개; 기존 파일은 건너뜀) ② 드라이버 `scripts/pipeline_day1.py` → `agent/logs/pipeline_day1.log`: train/val 완료 대기 → 선생님(LS) → 0단 coord·1단 modal 동시 학습(증류 0.75h + RL 1.25h) → eval 풀 대기 → E0(g+p, LS, modal 규칙) → 0·1단 인증 평가 → 2단 mott → `collect_results.py`.
+- 끝난 것: 라운드 1 코드 전부(스모크 통과, `agent/logs/smoke_pipeline.log`). 아직 보고 가능한 숫자 없음.
+- 다음 라운드: `pipeline_day1.log`·`make_teacher.log` 확인, 선생님 통계(LS/g+p) 기록, 학습 로그(`runs/2026-10-28/r*_*/log.txt`) 중간 val 기록, eval 풀이 끝나면 E0 결과 RESULTS.md.
+- 결정: 백그라운드 작업은 `scripts/bg.py`(python `start_new_session`)로 띄움 — 허용 도구에 nohup/setsid가 없고, 라운드 1처럼 세션과 함께 죽으면 안 되기 때문.
+- 결정: 풀은 train·val 먼저, eval 나중 — 학습이 eval 20×20(가장 느림)을 기다리지 않게. 풀 내용·시드는 그대로라 재현성 불변.
+- 결정: 0·1단은 같은 시간 예산으로 GPU 동시 학습(같은 모델 크기·인자, `CERTIFY_WORKERS=6` 동일), 반복 수는 로그에서 확인해 기록. 2단은 GPU 경쟁을 피하려 0·1단 뒤에.
+- 결정 (라운드 1에서 유지): 1단 = 좌표 + modal 특징, 정확 검사는 프로세스당 1스레드, 2단은 기존 `MoTT`, IP 난이도 EASY / PCB·PKG HARD.
