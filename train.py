@@ -67,6 +67,8 @@ def parse():
     p.add_argument("--iters", type=int, default=5000)
     p.add_argument("--B", type=int, default=16, help="instances per batch")
     p.add_argument("--M", type=int, default=8, help="samples per instance (shared baseline, G in the method text)")
+    p.add_argument("--chunk", type=int, default=4, help="rl: instances per rollout/backward pass; gradients of the "
+                   "B/chunk passes accumulate into one step (memory only: B=16 x M=8 in one pass hit CUDA OOM)")
     p.add_argument("--sizes", default="8-12", help="(no pool) train board side range")
     p.add_argument("--shapes", default="rect,L,holes")
     p.add_argument("--targets", default="flat,step")
@@ -306,55 +308,64 @@ def main():
                 loss = backward_logp(policy, rep["traj"], 1.0 / tsteps, H, W, amp, scale=1.0 / tb.numel())
                 ratio = (teach["count"][tb].float() / n_ref[tb]).mean().item()
         else:
-            inst = ib.repeat_interleave(args.M)
-            env = make_env(batch, inst, cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
-            out = rollout(policy, env, store=True, amp=amp)
-            cnt, fail = out["count"].float().view(args.B, args.M), (~out["feasible"]).view(args.B, args.M).clone()
-            n_bad = 0
-            j = (cnt + fail * 1e6).argmin(1)                      # best sample per instance
-            cert_ok = torch.zeros(args.B, dtype=torch.bool, device=dev)
-            if pool and args.certify:
-                # the reward is computed on the working grid; without this the policy learns to prune into
-                # resonance peaks that fall between grid points
-                sel = torch.nonzero(~fail[torch.arange(args.B, device=dev), j]).squeeze(-1)
-                if sel.numel():
-                    e_idx = sel * args.M + j[sel]
-                    wv, _, add = certify_parallel(batch, ib[sel], out["occ"][e_idx], cfg)
-                    bad = torch.from_numpy(wv > 1e-3).to(dev)
-                    fail[sel[bad], j[sel[bad]]] = True
-                    cert_ok[sel[~bad]] = True
-                    n_bad = int(bad.sum())
-                    if n_bad:
-                        batch.add_freqs(add)
-            R = -cnt / n_ref[:, None] - lam * (fail.float() + out["V"].float().view(args.B, args.M))
-            adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
-            E = inst.shape[0]
-            loss = backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
-            if args.imit > 0:  # imitate the best-known solution of each instance
-                key = cnt + fail * 1e6
-                best = key.min(1)
-                use_sample = best.values <= t_key
-                ep = torch.arange(args.B, device=dev) * args.M + best.indices
-                steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
-                wt = torch.zeros(E, device=dev)
-                wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
-                loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
-                tb = torch.nonzero(~use_sample & teach["feasible"]).squeeze(-1)
-                if tb.numel():
-                    tenv = make_env(batch, ib[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
-                    rep = rollout(policy, tenv, forced=teach["actions"][tb], store=True, amp=amp)
-                    tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
-                    loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
-                if pool and args.stage == "rl":
-                    # expert iteration: a certified sample with fewer decaps than the stored teacher replaces it
-                    better = cert_ok & (best.values < tch["count"][ib].float())
-                    if better.any():
-                        bi = torch.nonzero(better).squeeze(-1)
-                        tch["occ"][ib[bi]] = out["occ"][ep[bi]]
-                        tch["count"][ib[bi]] = cnt[bi, best.indices[bi]].long()
-                        tch["ok"][ib[bi]] = True
-                        tch["replaced"] += int(bi.numel())
-                        n_replaced += int(bi.numel())
+            # The B instances go through rollout + backward `chunk` at a time and the gradients accumulate into
+            # one step. Advantages are normalised within each instance's M samples and the loss scales are the
+            # full-batch ones (1/(B*M), 1/B), so this is the same update as one B*M pass with less GPU memory.
+            E, loss, n_bad, cnts, fails = args.B * args.M, 0.0, 0, [], []
+            for c0 in range(0, args.B, args.chunk or args.B):
+                cb = torch.arange(c0, min(c0 + (args.chunk or args.B), args.B), device=dev)   # positions in ib
+                nb, ibc = cb.numel(), ib[cb]
+                env = make_env(batch, ibc.repeat_interleave(args.M), cfg, args.feat, max_steps=args.max_steps,
+                               allow_prune=not args.no_prune)
+                out = rollout(policy, env, store=True, amp=amp)
+                cnt, fail = out["count"].float().view(nb, args.M), (~out["feasible"]).view(nb, args.M).clone()
+                j = (cnt + fail * 1e6).argmin(1)                      # best sample per instance
+                cert_ok = torch.zeros(nb, dtype=torch.bool, device=dev)
+                if pool and args.certify:
+                    # the reward is computed on the working grid; without this the policy learns to prune into
+                    # resonance peaks that fall between grid points
+                    sel = torch.nonzero(~fail[torch.arange(nb, device=dev), j]).squeeze(-1)
+                    if sel.numel():
+                        e_idx = sel * args.M + j[sel]
+                        wv, _, add = certify_parallel(batch, ibc[sel], out["occ"][e_idx], cfg)
+                        bad = torch.from_numpy(wv > 1e-3).to(dev)
+                        fail[sel[bad], j[sel[bad]]] = True
+                        cert_ok[sel[~bad]] = True
+                        n_bad += int(bad.sum())
+                        if bad.any():
+                            batch.add_freqs(add)
+                R = -cnt / n_ref[cb][:, None] - lam * (fail.float() + out["V"].float().view(nb, args.M))
+                adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+                loss += backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
+                if args.imit > 0:  # imitate the best-known solution of each instance
+                    key = cnt + fail * 1e6
+                    best = key.min(1)
+                    use_sample = best.values <= t_key[cb]
+                    ep = torch.arange(nb, device=dev) * args.M + best.indices
+                    steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
+                    wt = torch.zeros(nb * args.M, device=dev)
+                    wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
+                    loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
+                    tb = torch.nonzero(~use_sample & teach["feasible"][cb]).squeeze(-1)
+                    if tb.numel():
+                        tenv = make_env(batch, ibc[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
+                        rep = rollout(policy, tenv, forced=teach["actions"][cb][tb], store=True, amp=amp)
+                        tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
+                        loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
+                    if pool and args.stage == "rl":
+                        # expert iteration: a certified sample with fewer decaps than the stored teacher replaces it
+                        better = cert_ok & (best.values < tch["count"][ibc].float())
+                        if better.any():
+                            bi = torch.nonzero(better).squeeze(-1)
+                            tch["occ"][ibc[bi]] = out["occ"][ep[bi]]
+                            tch["count"][ibc[bi]] = cnt[bi, best.indices[bi]].long()
+                            tch["ok"][ibc[bi]] = True
+                            tch["replaced"] += int(bi.numel())
+                            n_replaced += int(bi.numel())
+                cnts.append(cnt)
+                fails.append(fail)
+                env = out = tenv = rep = None     # free this chunk's trajectories before the next one
+            cnt, fail = torch.cat(cnts), torch.cat(fails)
             fail_rate = fail.float().mean().item()
             lam = max(0.0, lam + args.lam_lr * (fail_rate - args.fail_target))
             ok = ~fail

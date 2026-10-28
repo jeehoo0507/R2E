@@ -82,7 +82,10 @@ def run(cmd, logfile, stage, attach=None, env=None):
 
 
 def gpu_lane():
-    for name, arm in RUNGS:
+    # A rung whose run_rung.py is still alive (driver restarted) goes first, so two pool-loaded train.py never
+    # share the GPU; the rest keep ladder order. A finished distill is kept and an unfinished rl stage is redone
+    # (r0 rl hit CUDA OOM at 16:23 10/28 before train.py --chunk; it reruns after r1).
+    for name, arm in sorted(RUNGS, key=lambda r: alive(f"run_rung.py --name {r[0]} ") is None):
         if os.path.exists(os.path.join(ROOT, f"runs/{DAY}/{name}_rl/metrics.json")):
             log(f"{name}: rl stage finished, skip training")
         elif name == "r3_loop" and not os.path.exists(os.path.join(ROOT, f"runs/{DAY}/{name}_distill")) and \

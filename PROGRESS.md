@@ -1,6 +1,10 @@
 # PROGRESS (갱신 2026-10-28 16:27 UTC, 라운드 6)
 
 - 라운드 6 (15:51~): 상태 정상 (mem 15.8 GiB, oom_kill 0). **0단 distill 끝** (16:22, 2192 iter / 0.77 h, best iter 1600; resume.pt 1003·1961에 저장됨 = 20분 체크포인트 동작 확인). best iter 중간 val (보고서용 아님): count/g+p pcb 1.75 fail 0.56 / pkg 1.50 fail 0.56 / ip 0.77 fail 0.19 (`runs/2026-10-28/r0_coord_distill/log.txt`). 0단 RL 시작 (`runs/2026-10-28/r0_coord_rl/`).
+- **사고 3: 0단 RL이 GPU OOM** (16:23, 첫 iter; B=16×G=8=128 env를 한 번에 rollout → `sim.loaded_state`가 2 GB를 더 할당하다 실패, 풀 9.5 GB + 18.4 GB 사용). 드라이버는 그대로 1단 distill로 넘어감 (16:24). 수정: `train.py --chunk` (기본 4) — RL 한 step의 16개 문제를 4개씩 rollout+backward 하고 gradient를 누적해 optimizer step 1번. 기준선은 문제별 G=8 샘플 안에서 정규화, loss scale은 전체 배치 기준(1/(B·G), 1/B) 그대로 → 같은 갱신, 메모리만 줄어듦. `scripts/smoke_chunk.py` 통과 (CPU, chunk 2 / 0). 1단 RL(~17:10 시작)부터 적용 (이미 떠 있는 run_rung이 새 train.py를 부름).
+- 드라이버 GPU 줄 순서: 살아 있는 단 먼저 ATTACH → 나머지 사다리 순서. 그래서 r1 → **r0 RL 재실행** (distill은 유지, OOM 난 rl 폴더는 `_killed_`로 옮김) → r2 → r3. 드라이버 16:39 재시작 (r1·풀 생성 ATTACH).
+- 결정: chunk=4 (가장 메모리 안전한 쪽). 대가는 step당 시간이 늘어 1.25 h 안의 RL iter 수가 줄 수 있음 — 모든 단이 같은 chunk라 사다리 비교는 유지, iter 수는 metrics.json에 기록.
+- 결정: 0단 RL을 1단 뒤로 미룸 — 지금 1단 distill이 GPU를 쓰고 있고, 둘을 같이 올리면 GPU OOM (15:15 사고 1).
 - 관찰: distill loss는 iter 2000 무렵 0.0~0.4까지 내려가지만 val fail은 iter 200~2100 내내 0.19~0.94 사이에서 들쭉날쭉 (val 16문제라 잡음 큼) → 27개 풀의 선생님 행동을 외우는 쪽. RL 단계에서 val fail이 내려가는지가 첫 확인 포인트.
 - 위험: 10·16칸 eval 풀 생성 (2 workers, 큰 판부터)이 15:15 시작 후 72분째 16칸 2개가 아직 하나도 안 끝남. 남은 7개(16칸 6 + ip10_1)가 끝나야 E0와 단 평가가 돌기 때문에, 0단 학습이 ~17:40에 끝나도 평가는 그 뒤로 밀린다. GPU 줄(1·2·3단 학습)은 영향 없음.
 - 결정: 풀 생성은 그대로 둔다 — 지금 멈추면 72분 진행분을 버리고, workers를 늘리면 QUEUE 한도 4를 넘음. 다음 라운드에 첫 16칸 풀 시간이 찍히면 남은 시간을 그 숫자로 다시 계산하고, 너무 길면 (단 평가가 2시간 넘게 기다리면) 10칸 평가를 16칸 풀보다 먼저 하도록 드라이버 순서만 바꾸는 것을 검토.
