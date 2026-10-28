@@ -1,4 +1,10 @@
-# PROGRESS (갱신 2026-10-28 19:25 UTC, 라운드 8)
+# PROGRESS (갱신 2026-10-28 20:18 UTC, 라운드 9)
+
+## 라운드 9 (19:56 UTC~)
+- 상태 정상: 드라이버 살아 있음, pod mem 18.9 GiB / 60, oom_kill 0. 동시 CPU 프로세스 = 풀 worker 2 + certify 2 = 4 (QUEUE 한도 꽉 참 → 새 실험 안 띄움).
+- r1 (1단 modal) RL: iter 150까지 OOM 0, gpu peak 13.1 → 16.2 GB (r0와 같은 추세), ~11.8 s/iter, `grid capped` 1 (iter 75) → 29 (iter 150). iter 100 val (보고서용 아님): count/g+p pcb 0.92 fail 0.69 / pkg 0.90 fail 0.69 / ip 0.66 fail 0.38 (`runs/2026-10-28/r1_modal_rl/log.txt`). r0 RL iter 100 (fail 0.62 / 0.88 / 0.25)와 같은 양상: 학습 배치 fail 0.01~0.12 vs val 정확 검사 fail 0.38~0.69.
+- eval 풀: pkg16 ×2 생성 중 (~18:08 시작, pcb16 실측 2.8 h 기준 ~21:00 전후 예상). 
+- 다음: r1 RL `done:` (~21:00) 기록 → r2 RL 시작·OOM 확인.
 
 ## 라운드 8 (18:52 UTC~)
 - 상태 정상: 드라이버 살아 있음, pod mem 15.5 GiB / 60, oom_kill 0. GPU 줄 r0 RL 진행 중 (18:25~).

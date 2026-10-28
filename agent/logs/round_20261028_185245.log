@@ -16,3 +16,5 @@ error: Please commit or stash them.
 - **지금 도는 것:** 1단(modal 특징) 강화학습이 19:41에 시작했고, iter 50까지 OOM 없이 GPU 최대 13.8 GB다. 이어서 2단 강화학습이 약 21:00, 3단이 약 22:20에 시작한다.
 - **평가 풀:** 16칸 풀 2개가 실측 약 2.8시간씩 걸려 완성됐다. 이전에 개당 6~9시간으로 잡은 추정이 너무 비관적이어서 PROPOSALS.md를 고쳤다. 남은 16칸 4개와 10칸 1개(ip10_1)는 10/29 새벽에 끝날 것으로 보고, 그때 E0(기준선 greedy+prune·LS) 평가와 각 단 평가가 시작된다.
 - RESULTS.md는 스크립트로 다시 만들어 0단 강화학습 기록을 넣었다. 아직 정확 검사 평가 결과는 없다.
+To https://github.com/jeehoo0507/R2E.git
+   4ffaf0a..144c3da  main -> main
