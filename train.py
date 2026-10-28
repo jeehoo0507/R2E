@@ -73,7 +73,10 @@ def parse():
     p.add_argument("--M", type=int, default=8, help="samples per instance (shared baseline, G in the method text)")
     p.add_argument("--chunk", type=int, default=2, help="rl: instances per rollout/backward pass; gradients of the "
                    "B/chunk passes accumulate into one step (memory only: B=16 x M=8 in one pass and chunk 4 "
-                   "both hit CUDA OOM on 24 GB)")
+                   "both hit CUDA OOM on 24 GB); halved for the rest of the run after a CUDA OOM")
+    p.add_argument("--grid_growth", type=float, default=0.5, help="rl: a pool's working grid grows by at most this "
+                   "fraction of its initial F (exact-check failures beyond it still count as failures); the dense "
+                   "pool and every rollout block scale with F, so unbounded growth ends in CUDA OOM")
     p.add_argument("--sizes", default="8-12", help="(no pool) train board side range")
     p.add_argument("--shapes", default="rect,L,holes")
     p.add_argument("--targets", default="flat,step")
@@ -232,19 +235,21 @@ def main():
         log(f"pool: {len(pool)} train batches, {sum(p.B for p in pool)} instances; "
             f"GPU mem {torch.cuda.memory_allocated() / 2**30:.2f} GB" if dev.type == "cuda" else
             f"pool: {len(pool)} train batches, {sum(p.B for p in pool)} instances")
+        F0 = [pb.freqs.shape[1] for pb in pool]   # before a resume restores grown grids
     else:
         for s in map(int, args.val_sizes.split(",")):
             vb = sample_batch(args.val_n, s, s, cfg, vrng, device=dev, **kw)
             val_sets[s] = (vb, greedy(vb, cfg))
 
     best_val, best_iter, lam, t0 = 1e9, 0, args.lam, time.time()
-    last_val, it_done, n_replaced = {}, 0, 0
+    last_val, it_done, n_replaced, n_oom, n_capped = {}, 0, 0, 0, 0
     resume_path = os.path.join(args.out, "resume.pt")
 
     def save_resume(it):
         """Everything needed to continue after a pod restart (QUEUE 2026-10-28: every 20 min)."""
         st = dict(model=policy.state_dict(), opt=opt.state_dict(), iter=it, lam=lam, best_val=best_val,
                   best_iter=best_iter, last_val=last_val, n_replaced=n_replaced, elapsed=time.time() - t0,
+                  n_oom=n_oom, n_capped=n_capped, chunk=args.chunk,
                   rng=rng.bit_generator.state, torch_rng=torch.get_rng_state(),
                   cuda_rng=torch.cuda.get_rng_state_all() if dev.type == "cuda" else None,
                   teachers=[{k: (v.cpu() if torch.is_tensor(v) else v) for k, v in t.items()} for t in teachers],
@@ -259,6 +264,7 @@ def main():
         opt.load_state_dict(st["opt"])
         start_it, lam, best_val, best_iter = st["iter"], st["lam"], st["best_val"], st["best_iter"]
         last_val, n_replaced, it_done = st["last_val"], st["n_replaced"], st["iter"]
+        n_oom, n_capped, args.chunk = st.get("n_oom", 0), st.get("n_capped", 0), st.get("chunk", args.chunk)
         rng.bit_generator.state = st["rng"]
         torch.set_rng_state(st["torch_rng"].cpu())
         if st["cuda_rng"] is not None and dev.type == "cuda":
@@ -321,59 +327,81 @@ def main():
             # one step. Advantages are normalised within each instance's M samples and the loss scales are the
             # full-batch ones (1/(B*M), 1/B), so this is the same update as one B*M pass with less GPU memory.
             E, loss, n_bad, cnts, fails = args.B * args.M, 0.0, 0, [], []
-            for c0 in range(0, args.B, args.chunk or args.B):
-                cb = torch.arange(c0, min(c0 + (args.chunk or args.B), args.B), device=dev)   # positions in ib
-                nb, ibc = cb.numel(), ib[cb]
-                env = make_env(batch, ibc.repeat_interleave(args.M), cfg, args.feat, max_steps=args.max_steps,
-                               allow_prune=not args.no_prune)
-                out = rollout(policy, env, store=True, amp=amp)
-                cnt, fail = out["count"].float().view(nb, args.M), (~out["feasible"]).view(nb, args.M).clone()
-                j = (cnt + fail * 1e6).argmin(1)                      # best sample per instance
-                cert_ok = torch.zeros(nb, dtype=torch.bool, device=dev)
-                if pool and args.certify:
-                    # the reward is computed on the working grid; without this the policy learns to prune into
-                    # resonance peaks that fall between grid points
-                    sel = torch.nonzero(~fail[torch.arange(nb, device=dev), j]).squeeze(-1)
-                    if sel.numel():
-                        e_idx = sel * args.M + j[sel]
-                        wv, _, add = certify_parallel(batch, ibc[sel], out["occ"][e_idx], cfg)
-                        bad = torch.from_numpy(wv > 1e-3).to(dev)
-                        fail[sel[bad], j[sel[bad]]] = True
-                        cert_ok[sel[~bad]] = True
-                        n_bad += int(bad.sum())
-                        if bad.any():
-                            batch.add_freqs(add)
-                R = -cnt / n_ref[cb][:, None] - lam * (fail.float() + out["V"].float().view(nb, args.M))
-                adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
-                loss += backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
-                if args.imit > 0:  # imitate the best-known solution of each instance
-                    key = cnt + fail * 1e6
-                    best = key.min(1)
-                    use_sample = best.values <= t_key[cb]
-                    ep = torch.arange(nb, device=dev) * args.M + best.indices
-                    steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
-                    wt = torch.zeros(nb * args.M, device=dev)
-                    wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
-                    loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
-                    tb = torch.nonzero(~use_sample & teach["feasible"][cb]).squeeze(-1)
-                    if tb.numel():
-                        tenv = make_env(batch, ibc[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
-                        rep = rollout(policy, tenv, forced=teach["actions"][cb][tb], store=True, amp=amp)
-                        tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
-                        loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
-                    if pool and args.stage == "rl":
-                        # expert iteration: a certified sample with fewer decaps than the stored teacher replaces it
-                        better = cert_ok & (best.values < tch["count"][ibc].float())
-                        if better.any():
-                            bi = torch.nonzero(better).squeeze(-1)
-                            tch["occ"][ibc[bi]] = out["occ"][ep[bi]]
-                            tch["count"][ibc[bi]] = cnt[bi, best.indices[bi]].long()
-                            tch["ok"][ibc[bi]] = True
-                            tch["replaced"] += int(bi.numel())
-                            n_replaced += int(bi.numel())
-                cnts.append(cnt)
-                fails.append(fail)
-                env = out = tenv = rep = None     # free this chunk's trajectories before the next one
+            adds = [[] for _ in range(batch.B)]   # new grid points of this step, added once after all chunks
+            try:
+                for c0 in range(0, args.B, args.chunk or args.B):
+                    cb = torch.arange(c0, min(c0 + (args.chunk or args.B), args.B), device=dev)   # positions in ib
+                    nb, ibc = cb.numel(), ib[cb]
+                    env = make_env(batch, ibc.repeat_interleave(args.M), cfg, args.feat, max_steps=args.max_steps,
+                                   allow_prune=not args.no_prune)
+                    out = rollout(policy, env, store=True, amp=amp)
+                    cnt, fail = out["count"].float().view(nb, args.M), (~out["feasible"]).view(nb, args.M).clone()
+                    j = (cnt + fail * 1e6).argmin(1)                      # best sample per instance
+                    cert_ok = torch.zeros(nb, dtype=torch.bool, device=dev)
+                    if pool and args.certify:
+                        # the reward is computed on the working grid; without this the policy learns to prune into
+                        # resonance peaks that fall between grid points
+                        sel = torch.nonzero(~fail[torch.arange(nb, device=dev), j]).squeeze(-1)
+                        if sel.numel():
+                            e_idx = sel * args.M + j[sel]
+                            wv, _, add = certify_parallel(batch, ibc[sel], out["occ"][e_idx], cfg)
+                            bad = torch.from_numpy(wv > 1e-3).to(dev)
+                            fail[sel[bad], j[sel[bad]]] = True
+                            cert_ok[sel[~bad]] = True
+                            n_bad += int(bad.sum())
+                            if bad.any():
+                                for b, fs in enumerate(add):
+                                    adds[b] += fs
+                    R = -cnt / n_ref[cb][:, None] - lam * (fail.float() + out["V"].float().view(nb, args.M))
+                    adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+                    loss += backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
+                    if args.imit > 0:  # imitate the best-known solution of each instance
+                        key = cnt + fail * 1e6
+                        best = key.min(1)
+                        use_sample = best.values <= t_key[cb]
+                        ep = torch.arange(nb, device=dev) * args.M + best.indices
+                        steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
+                        wt = torch.zeros(nb * args.M, device=dev)
+                        wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
+                        loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
+                        tb = torch.nonzero(~use_sample & teach["feasible"][cb]).squeeze(-1)
+                        if tb.numel():
+                            tenv = make_env(batch, ibc[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
+                            rep = rollout(policy, tenv, forced=teach["actions"][cb][tb], store=True, amp=amp)
+                            tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
+                            loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
+                        if pool and args.stage == "rl":
+                            # expert iteration: a certified sample with fewer decaps than the stored teacher replaces it
+                            better = cert_ok & (best.values < tch["count"][ibc].float())
+                            if better.any():
+                                bi = torch.nonzero(better).squeeze(-1)
+                                tch["occ"][ibc[bi]] = out["occ"][ep[bi]]
+                                tch["count"][ibc[bi]] = cnt[bi, best.indices[bi]].long()
+                                tch["ok"][ibc[bi]] = True
+                                tch["replaced"] += int(bi.numel())
+                                n_replaced += int(bi.numel())
+                    cnts.append(cnt)
+                    fails.append(fail)
+                    env = out = tenv = rep = None     # free this chunk's trajectories before the next one
+            except torch.OutOfMemoryError:
+                # memory only: drop this step (no optimizer update) and use smaller chunks from here on
+                opt.zero_grad(set_to_none=True)
+                env = out = tenv = rep = cnts = fails = None
+                torch.cuda.empty_cache()
+                n_oom += 1
+                args.chunk = max(1, (args.chunk or args.B) // 2)
+                log(f"it {it}: CUDA OOM ({batch.P=} F={batch.freqs.shape[1]}), step skipped, chunk -> {args.chunk} "
+                    f"(OOM {n_oom}){gpu_peak()}")
+                if n_oom > 20:
+                    raise
+                continue
+            if any(adds):
+                # one call per step, as with a single B*M pass (each call pads every instance to its longest list)
+                room = int(F0[pi] * (1 + args.grid_growth)) - batch.freqs.shape[1]
+                if room < max(len(a) for a in adds):
+                    n_capped += 1
+                if room > 0:
+                    batch.add_freqs([a[:room] for a in adds])
             cnt, fail = torch.cat(cnts), torch.cat(fails)
             fail_rate = fail.float().mean().item()
             lam = max(0.0, lam + args.lam_lr * (fail_rate - args.fail_target))
@@ -388,7 +416,7 @@ def main():
             pname = pool_names[pi] if pool else f"{H}x{W}"
             log(f"it {it:6d} | {pname} P={batch.P} F={batch.freqs.shape[1]} cert-bad {n_bad} | count/ref {ratio:.3f} "
                 f"best-of-M {best_ratio:.3f} fail {fail_rate:.2f} lam {lam:.2f} | teach ok {teach['feasible'].float().mean():.2f} "
-                f"| loss {loss:.3f} | replaced {n_replaced} | {time.time()-t0:.0f}s{gpu_peak()}")
+                f"| loss {loss:.3f} | replaced {n_replaced} | grid capped {n_capped} oom {n_oom} | {time.time()-t0:.0f}s{gpu_peak()}")
         if it % args.val_every == 0 or it == args.iters:
             v = validate(policy, val_sets, args, cfg, dev)
             last_val = v
@@ -423,7 +451,9 @@ def main():
                      replaced=tch["replaced"])
     metrics = dict(args=vars(args), git=meta["git"], iters=it_done, hours=(time.time() - t_start) / 3600,
                    final_val={k: list(v) for k, v in last_val.items()}, best_val_score=best_val, best_iter=best_iter,
-                   teacher_replaced=n_replaced, lam=lam)
+                   teacher_replaced=n_replaced, lam=lam, cuda_oom_skipped=n_oom, grid_capped_steps=n_capped,
+                   chunk_final=args.chunk, pool_F={n: [f0, pb.freqs.shape[1]] for n, f0, pb in zip(pool_names, F0, pool)}
+                   if pool else {})
     json.dump(metrics, open(os.path.join(args.out, "metrics.json"), "w"), indent=2)
     log(f"done: {it_done} iters, {metrics['hours']:.2f} h, best iter {best_iter} score {best_val:.3f}, replaced {n_replaced}"
         f"{gpu_peak()}")

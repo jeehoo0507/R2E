@@ -54,3 +54,10 @@
 [17:38:12] END teacher rc=0 | mem 29.1 GiB / 60.0 GiB, oom_kill 0
 [17:38:12] ATTACH build eval pools side 10,16 (pid 13040 still running)
 [17:38:12] ATTACH train r2_mott (CERTIFY_WORKERS=2) (pid 33737 still running)
+[18:25:16] driver start | mem 10.1 GiB / 60.0 GiB, oom_kill 0
+[18:25:16] START teacher | mem 10.1 GiB / 60.0 GiB, oom_kill 0
+[18:25:16] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 4  (log agent/logs/make_teacher.log)
+[18:25:18] END teacher rc=0 | mem 9.3 GiB / 60.0 GiB, oom_kill 0
+[18:25:18] ATTACH build eval pools side 10,16 (pid 13040 still running)
+[18:25:18] START train r0_coord (CERTIFY_WORKERS=2) | mem 9.2 GiB / 60.0 GiB, oom_kill 0
+[18:25:18] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r0_coord --arm '--feat coord' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r0_coord/rung_stdout.log)

@@ -1,5 +1,15 @@
-STUCK: RL 단계(stage 3) GPU OOM 두 번 — 한 번에 128 env (16:23) → `--chunk 4` (32 env)도 OOM (r1 17:15, r0 재실행 17:22). 지금 chunk 2 + expandable_segments로 2단 RL(~18:10)에서 자동 확인 중; 또 실패하면 RL 단계 전체가 막힌 것 — 다음 라운드는 `runs/2026-10-28/r2_mott/driver.log` 끝부터 볼 것.
-# PROGRESS (갱신 2026-10-28 17:40 UTC, 라운드 6)
+# PROGRESS (갱신 2026-10-28 18:40 UTC, 라운드 7)
+
+- **RL OOM 원인 찾음 (이전 STUCK 해제, 확인 중):** RL은 정확 검사가 실패할 때마다 풀에 격자점을 추가하는데 (`batch.add_freqs`), `--chunk` 도입 후 chunk마다 따로 호출되어 매번 그 chunk의 가장 긴 목록으로 모든 인스턴스를 패딩 → step당 F가 chunk 수만큼 더 늘어남. 2단 RL(18:10, chunk 2)에서 pkg10_1 F 267→511 (iter 25), gpu peak 18.3 GB, 18:17 메모리 매핑 실패 경고. dense 풀과 rollout 블록 [E,F,n,k]가 모두 F에 비례하므로 chunk를 줄여도 결국 OOM. 즉 "같은 갱신"이라는 라운드 6 설명이 틀렸었음 (격자 증가가 달랐다).
+- 수정 3 (`train.py`): (1) 격자점은 step 끝에 한 번만 추가 (chunk 전 1-pass와 같은 동작), (2) `--grid_growth 0.5`: 풀마다 처음 F의 1.5배까지만 (넘는 실패도 정확 검사로 실패 처리 → 보상은 정직), (3) step 안 CUDA OOM이면 그 step을 버리고 (갱신 없음) chunk 반으로, 20번 넘으면 중단. iter 로그에 `grid capped`·`oom`, metrics.json에 `pool_F`(풀별 처음/끝 F)·`cuda_oom_skipped`·`chunk_final`. CPU smoke `scripts/smoke_rl_grid.py` 통과 (OOM 주입 → step 건너뜀·chunk 2→1·F 불변 / 상한 0.5 지킴). 상한 없이도 작은 smoke에서 pcb8_0 F 187→259 (6 iter) → 상한은 필요.
+- 2단 RL은 18:20에 멈춤 (12분 진행, 옛 코드라 다른 단과 조건이 달라짐 → `r2_mott_rl_killed_182000_addfreqs`). distill 3개는 그대로. 드라이버 18:25 재시작 → GPU 줄: **r0 RL (18:25~) → r1 RL → r2 RL → r3** (각 RL 1.25 h).
+- 확인: r0 RL iter 25 pkg10_1 F=310, gpu peak 13.0 GB, 15 s/iter (`runs/2026-10-28/r0_coord_rl/log.txt`).
+- 2단 distill 끝 (17:22~18:09, rc 0). 중간 val (보고서용 아님: val 풀 종류당 16문제, 정확 검사, checkpoint 고르는 데 쓴 세트): best iter 1300 count/g+p pcb 0.89 fail 0.56 / pkg 1.07 fail 0.56 / ip 0.69 fail 0.19 (`runs/2026-10-28/r2_mott/driver.log`).
+- 결정: 상한 0.5 — 풀 9.5 GB × 1.5 ≈ 14.3 GB + chunk 2 rollout이 24 GB 안에 들어가는 쪽. 모든 단의 RL이 같은 값 (r0·r1·r2 RL 모두 새 코드로 처음부터).
+- 결정: 2단 RL을 12분 만에 버리고 재시작 — 다른 단과 격자 증가 규칙이 달라지면 사다리 비교가 깨짐.
+- **위험: eval 풀 시간.** 16칸 풀 하나 ~6~9 h (1스레드, 판 변 ~6제곱), 6개 2 workers로 ~18~27 h → 10칸 E0·단 평가도 10/29 낮까지 밀림; 20칸은 ~90 h로 사실상 불가. 결정: 풀 생성은 그대로 (멈추면 진행분 손실, 늘리면 QUEUE 한도 4 위반). 사람 선택지 (a)(b)(c)를 PROPOSALS.md "사람 결정이 필요한 것"에 적음.
+
+## 라운드 6 (17:40 UTC)
 
 - **사고 4 (=STUCK): chunk 4도 RL에서 OOM.** 1단 RL 17:11 시작 → 17:15 OOM (할당 17.2 GB + 단편화로 놀던 5.7 GB), 드라이버 순서대로 0단 RL 재실행 17:16 → 17:22 같은 OOM (15.9 + 6.5 GB). 원인: `sim.loaded_state`가 [E,F,n,k] complex128 블록을 step마다 다른 k로 여러 개 잡음 (16 env·F 251·n 144·k 64면 블록 하나 0.6 GB) + 크기가 계속 바뀌어 단편화. 1·0단 distill 체크포인트는 그대로 있음 (`runs/2026-10-28/r{0,1}_*_distill/best.pt`; 1단 distill 2109 iter, best iter 600).
 - 수정 2: `--chunk` 기본 2 (16 env = distill의 선생님 replay와 같은 크기, 그건 풀 전체를 올린 채 0·1단 각 0.75 h 문제없이 돌았음) + `train.py`에서 `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` (단편화 제거). iter 로그·`done:`에 `gpu peak` 표시 추가. CPU smoke (`scripts/smoke_chunk.py`) 통과. 2단 distill이 GPU를 15.4 GB 쓰는 중이라 GPU에서 실제 크기 smoke는 못 함 (남은 8 GB로는 선생님 replay도 안 들어가 대표성 없음 → 지움).
