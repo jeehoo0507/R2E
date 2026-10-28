@@ -67,3 +67,9 @@
 [20:57:51] END train r1_modal (CERTIFY_WORKERS=2) rc=0 | mem 19.5 GiB / 60.0 GiB, oom_kill 0
 [20:57:51] START train r2_mott (CERTIFY_WORKERS=2) | mem 19.5 GiB / 60.0 GiB, oom_kill 0
 [20:57:51] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r2_mott --arm '--model mott' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r2_mott/rung_stdout.log)
+[22:14:13] END train r2_mott (CERTIFY_WORKERS=2) rc=0 | mem 14.6 GiB / 60.0 GiB, oom_kill 0
+[22:14:13] START smoke r3 loop (tiny boards) | mem 14.6 GiB / 60.0 GiB, oom_kill 0
+[22:14:13] $ /home/coder/R2E/.venv/bin/python scripts/smoke_pipeline.py --arms loop --workers 2  (log agent/logs/smoke_loop.log)
+[22:15:58] END smoke r3 loop (tiny boards) rc=0 | mem 14.7 GiB / 60.0 GiB, oom_kill 0
+[22:15:58] START train r3_loop (CERTIFY_WORKERS=2) | mem 14.7 GiB / 60.0 GiB, oom_kill 0
+[22:15:58] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r3_loop --arm '--model loop' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r3_loop/rung_stdout.log)

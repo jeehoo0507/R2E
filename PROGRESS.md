@@ -1,4 +1,13 @@
-# PROGRESS (갱신 2026-10-28 21:40 UTC, 라운드 10)
+# PROGRESS (갱신 2026-10-28 22:25 UTC, 라운드 11)
+
+## 라운드 11 (21:51 UTC~)
+- 상태 정상: 드라이버 살아 있음, pod mem 14.6~20.2 GiB / 60, oom_kill 0. 동시 CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
+- **r2 (2단 mott) 학습 끝** (22:14, rc 0): RL 354 iter / 1.27 h, best iter 300 (val score 1.691), cuda_oom_skipped 0, chunk 2, gpu peak 16.8 GB, 선생님 교체 297, λ 1.52, grid capped 149 step (`runs/2026-10-28/r2_mott_rl/metrics.json`). RL 최종 val (보고서용 아님): pcb 0.88/fail 0.44, pkg 1.00/fail 0.62, ip 0.69/fail 0.19. 2단 distill best (iter 1300, score 1.759)보다 RL이 val score로는 나음 — 0·1단(RL이 distill보다 못하거나 비슷)과 다른 첫 단. 단 val 16문제라 잡음 큼, 결론은 eval 풀 평가 뒤.
+- RL best val score (낮을수록 좋음, 보고서용 아님): 0단 1.999 → 1단 1.737 → 2단 1.691. 세 단 모두 같은 인자 (teacher gp, chunk 2, rl 1.25 h, git hash만 다름).
+- **r3 loop smoke 통과** (22:14~22:16, `agent/logs/smoke_loop.log`, 5단계 모두 OK) → **r3 (3단 loop) 학습 시작** 22:16. distill iter 100: gpu peak 12.1 GB, ~1.5 s/iter, OOM 0 (`runs/2026-10-28/r3_loop_distill/log.txt`). 끝 예상 ~00:20 (distill 0.75 h + RL 1.25 h + 로딩).
+- eval 풀: `eval_pkg16_0`은 22:25에도 진행 중 (~4.1 h째, 지금까지 16칸 중 가장 김), 다른 worker는 21:16부터 다음 풀(ip16) 진행. 남은 것 pkg16_0, ip16 ×2, ip10_1.
+- RESULTS.md 재생성 (r2 RL 행 추가, eval 기록 0개 — 풀 대기).
+- 다음 라운드: r3 distill `done:`·RL 시작·OOM 확인 → pkg16_0 완성 시간 기록 → 10/29 05:30 무렵 첫 DAILY.md.
 
 ## 라운드 10 (21:15 UTC~)
 - 상태 정상: 드라이버 살아 있음, pod mem 20.8 GiB / 60, oom_kill 0, GPU 17.9 GB 사용 (r2 RL). 동시 CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.

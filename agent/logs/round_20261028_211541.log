@@ -12,3 +12,5 @@ This round is wrapped up. All the long jobs are still running and none of them f
 - **Bookkeeping:** I updated `PROGRESS.md` with a round 10 section and regenerated `RESULTS.md`, which still has 0 eval records because the pools aren't finished. Committed as `4155220` and pushed to `r2e main`.
 
 **Next round:** record rung 2 RL's completion (around 22:15), confirm the rung 3 loop smoke test passes and training starts (`agent/logs/smoke_loop.log`), and log the build times for the pkg16_0 and ip16 pools.
+To https://github.com/jeehoo0507/R2E.git
+   4155220..0e615eb  main -> main
