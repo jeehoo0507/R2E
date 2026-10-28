@@ -10,3 +10,5 @@ r2 (the 2-stage MoTT rung) finished training. The r3 loop smoke passed and r3 tr
 - **Limits:** pod memory stayed between 14.6 and 20.2 GiB out of 60, with no `oom_kill`. 4 CPU processes are running, which is the QUEUE limit, so I didn't start any new experiments.
 
 Next round: confirm r3 moves from distillation to RL without an OOM, and record when `eval_pkg16_0` finishes. The first DAILY.md is due around 05:30 UTC on 10/29.
+To https://github.com/jeehoo0507/R2E.git
+   65d90d1..9d51c7b  main -> main

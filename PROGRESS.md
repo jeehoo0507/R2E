@@ -1,4 +1,11 @@
-# PROGRESS (갱신 2026-10-28 22:25 UTC, 라운드 11)
+# PROGRESS (갱신 2026-10-28 22:25 UTC, 라운드 12)
+
+## 라운드 12 (22:22 UTC~, 라운드 11 직후라 짧음)
+- 상태 정상: 드라이버 살아 있음, pod mem 17.6~19.0 GiB / 60, oom_kill 0. CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
+- r3 (3단 loop) distill iter 225, gpu peak 12.1 GB, OOM 0, ~1.6 s/iter. iter 200 val (보고서용 아님): pcb 3.13/fail 0.94, pkg 1.00/0.69, ip 0.69/0.25 (`runs/2026-10-28/r3_loop_distill/log.txt`).
+- eval 풀: 새로 끝난 것 없음 (pkg16_0, ip16 진행 중).
+- `scripts/fig_results.py` 수정: 기록을 풀 파일(set)별로 묶어 g+p와 **같은 파일끼리만** 짝지어 개수 비 계산. 이전 코드는 한 방법이 _0/_1 중 하나만 평가됐으면 배열 길이가 달라 그림이 죽었고, 같은 파일을 다시 평가하면 두 번 셌음. /tmp 가짜 기록으로 그림 2·3 실행 확인 (가짜 숫자는 runs/에 안 씀).
+- 다음 라운드: r3 distill `done:`(~23:05)·RL 시작·OOM 확인 → pkg16_0 완성 시간 기록.
 
 ## 라운드 11 (21:51 UTC~)
 - 상태 정상: 드라이버 살아 있음, pod mem 14.6~20.2 GiB / 60, oom_kill 0. 동시 CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.

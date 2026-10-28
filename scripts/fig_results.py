@@ -25,21 +25,27 @@ KIND = {"pcb": "PCB-like", "pkg": "package-like", "ip": "interposer-like"}
 
 
 def load(pattern):
-    """{(tech, size, method): merged record over the _0/_1 files of a set}."""
-    out = defaultdict(lambda: dict(ok=[], count=[], sec=[], n=0))
+    """{(tech, size, method): merged record over the _0/_1 files of a set}.
+    Keyed by pool file too (a re-run of the same file replaces, not doubles), so a method evaluated on
+    fewer files than greedy+prune is paired only on the files both have."""
+    per = defaultdict(dict)
     for f in sorted(glob.glob(pattern, recursive=True)):
         r = json.load(open(f))
-        k = (r["tech"], int(r["size"]), r["method"])
-        out[k]["ok"] += r["ok"]
-        out[k]["count"] += r["count"]
-        out[k]["sec"].append(r["sec_per_inst"])
-        out[k]["n"] += r["n"]
+        per[(r["tech"], int(r["size"]), r["method"])][r["set"]] = r
+    out = {}
+    for k, sets in per.items():
+        rs = [sets[s] for s in sorted(sets)]
+        out[k] = dict(ok=sum((r["ok"] for r in rs), []), count=sum((r["count"] for r in rs), []),
+                      sec=[r["sec_per_inst"] for r in rs], n=sum(r["n"] for r in rs), sets=dict(sets))
     return out
 
 
 def paired_ratio(rec, ref):
-    ok, cnt = np.asarray(rec["ok"], bool), np.asarray(rec["count"], float)
-    rok, rcnt = np.asarray(ref["ok"], bool), np.asarray(ref["count"], float)
+    common = sorted(set(rec["sets"]) & set(ref["sets"]))
+    ok = np.concatenate([np.asarray(rec["sets"][s]["ok"], bool) for s in common]) if common else np.zeros(0, bool)
+    cnt = np.concatenate([np.asarray(rec["sets"][s]["count"], float) for s in common]) if common else np.zeros(0)
+    rok = np.concatenate([np.asarray(ref["sets"][s]["ok"], bool) for s in common]) if common else np.zeros(0, bool)
+    rcnt = np.concatenate([np.asarray(ref["sets"][s]["count"], float) for s in common]) if common else np.zeros(0)
     both = ok & rok
     if not both.any():
         return np.nan, np.nan
