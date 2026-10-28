@@ -7,9 +7,10 @@ Rungs train one at a time: two train.py processes with all 27 pools dense on the
 24 GB (CUDA OOM at load, 15:15 UTC 10/28).
 
   0. teacher: make_teacher.py, 4 workers (skips finished files)          -> data/teacher/
-  GPU lane : r0 coord -> r1 modal -> r2 mott, each distill -> rl, CERTIFY_WORKERS=2   (2 workers)
+  GPU lane : r0 coord -> r1 modal -> r2 mott -> r3 loop, each distill -> rl, CERTIFY_WORKERS=2   (2 workers)
+             (r3 only after scripts/smoke_pipeline.py --arms loop passes, run in this lane: still 2 workers)
   CPU lane : eval pools side 10/16 -> E0 (greedy+prune, LS, modal rule) -> certified eval of each rung
-             as soon as it finishes -> collect_results -> eval pools side 20 -> everything on side 20
+             as soon as it finishes (r3 rl also at test-time R = 2, 4, 16) -> collect_results -> eval pools side 20 -> everything on side 20
              -> collect_results                                                     (2 workers)
 Every step skips work whose output already exists (pool/teacher files, eval records, finished
 training stages; a killed training stage continues from its resume.pt), and a step whose process is
@@ -33,7 +34,8 @@ POOL = "runs/pool_v1"
 DAY = "2026-10-28"
 N_TRAINVAL, N_EVAL20 = 30, 6     # side-20 eval pools: 3 kinds x 2 files
 DISTILL_H, RL_H = 0.75, 1.25
-RUNGS = (("r0_coord", "--feat coord"), ("r1_modal", "--feat modal"), ("r2_mott", "--model mott"))
+RUNGS = (("r0_coord", "--feat coord"), ("r1_modal", "--feat modal"), ("r2_mott", "--model mott"), ("r3_loop", "--model loop"))
+LOOP_R = (2, 4, 16)              # rung 3 extra test-time loop counts (training R ~ U{2..8}, default eval R = 8)
 DONE = {n: threading.Event() for n, _ in RUNGS}
 
 
@@ -83,6 +85,10 @@ def gpu_lane():
     for name, arm in RUNGS:
         if os.path.exists(os.path.join(ROOT, f"runs/{DAY}/{name}_rl/metrics.json")):
             log(f"{name}: rl stage finished, skip training")
+        elif name == "r3_loop" and not os.path.exists(os.path.join(ROOT, f"runs/{DAY}/{name}_distill")) and \
+                run(f"{PY} scripts/smoke_pipeline.py --arms loop --workers 2", "agent/logs/smoke_loop.log",
+                    "smoke r3 loop (tiny boards)", env={"CERTIFY_WORKERS": "2"}) != 0:
+            log("r3_loop smoke failed, skip rung 3 (see agent/logs/smoke_loop.log)")
         else:
             os.makedirs(os.path.join(ROOT, f"runs/{DAY}/{name}"), exist_ok=True)
             run(f"{PY} scripts/run_rung.py --name {name} --arm '{arm}' --day {DAY} --pool {POOL} "
@@ -101,7 +107,10 @@ def eval_rung(name):
     for tag in ("distill", "rl"):
         run_dir = f"runs/{DAY}/{name}_{tag}"
         if os.path.exists(os.path.join(ROOT, run_dir, "metrics.json")):
-            run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets 'eval_*' --policy {name}_{tag}={run_dir}/best.pt "
+            pols = f"{name}_{tag}={run_dir}/best.pt"
+            if name == "r3_loop" and tag == "rl":
+                pols += "".join(f" {name}_{tag}@R{R}={run_dir}/best.pt" for R in LOOP_R)
+            run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets 'eval_*' --policy {pols} "
                 f"--workers 2 --out {run_dir}", f"{run_dir}/eval.log", f"eval {name}_{tag}", attach=f"--workers 2 --out {run_dir}")
         else:
             log(f"{run_dir} not finished (no metrics.json), skip eval")

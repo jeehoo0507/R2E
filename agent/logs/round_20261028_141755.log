@@ -24,3 +24,5 @@ I applied the memory rules from QUEUE.md (the human's instruction file). Rung-0 
 - Evaluation on the 20-cell boards also uses only 2 processes, because those boards are the suspected cause of the memory blowups.
 
 I also briefly wrote an unverified count ("21 of 27 pools") into PROPOSALS.md. The real figure was 14, and I removed the number.
+To https://github.com/jeehoo0507/R2E.git
+   64cf0d3..5bab8a5  main -> main

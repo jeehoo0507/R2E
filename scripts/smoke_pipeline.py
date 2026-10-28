@@ -4,7 +4,8 @@
   3. train.py --stage distill (feat coord / modal / model mott), 3 iterations each
   4. train.py --stage rl --init <distill>, 3 iterations
   5. scripts/eval_policy.py (gp, ls, policies) + scripts/collect_results.py
-Stops at the first failure. Run: .venv/bin/python scripts/smoke_pipeline.py [--keep]
+Stops at the first failure. Run: .venv/bin/python scripts/smoke_pipeline.py [--keep] [--arms loop --workers 2]
+(--arms loop also evaluates the looped model at test-time R = 2 and 16; --workers caps every parallel step.)
 """
 import argparse
 import os
@@ -16,8 +17,8 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
-POOL, TEACH, RUNS = "runs/smoke_pipe/pool", "runs/smoke_pipe/teacher", "runs/smoke_pipe/runs"
 PY = sys.executable
+ARMS = {"coord": ["--feat", "coord"], "modal": ["--feat", "modal"], "mott": ["--model", "mott"], "loop": ["--model", "loop"]}
 
 
 def step(name, fn):
@@ -38,6 +39,7 @@ def run(cmd):
 
 
 def build_pools():
+    """POOL / TEACH / RUNS are set in main (one directory per --arms, so smokes do not collide)."""
     import numpy as np
     import torch
     torch.set_num_threads(1)
@@ -60,28 +62,30 @@ def build_pools():
     return ", ".join(out)
 
 
-def teacher():
-    return run([PY, "scripts/make_teacher.py", "--pool", POOL, "--out", TEACH, "--ls", "1x4", "--workers", "3"]).strip().splitlines()[-2]
+def teacher(workers):
+    return run([PY, "scripts/make_teacher.py", "--pool", POOL, "--out", TEACH, "--ls", "1x4", "--workers", str(workers)]).strip().splitlines()[-2]
 
 
-def train(dev):
+def train(dev, arms):
     common = ["--pool", POOL, "--teacher_dir", TEACH, "--val_pools", "val_pcb6_0,val_pkg6_0,val_ip6_0", "--iters", "3",
               "--val_every", "3", "--B", "4", "--M", "2", "--d", "32", "--layers", "1", "--heads", "2", "--device", dev]
-    arms = {"coord": ["--feat", "coord"], "modal": ["--feat", "modal"], "mott": ["--model", "mott"]}
-    for name, extra in arms.items():
+    for name in arms:
+        extra = ARMS[name]
         run([PY, "train.py", "--stage", "distill", "--out", f"{RUNS}/{name}_distill"] + common + extra)
         assert os.path.exists(f"{RUNS}/{name}_distill/best.pt"), name
         run([PY, "train.py", "--stage", "rl", "--init", f"{RUNS}/{name}_distill/best.pt", "--out", f"{RUNS}/{name}_rl"] + common + extra)
         assert os.path.exists(f"{RUNS}/{name}_rl/metrics.json"), name
-    return "coord / modal / mott: distill + rl, metrics written"
+    return f"{' / '.join(arms)}: distill + rl, metrics written"
 
 
-def evaluate():
+def evaluate(arms, workers):
+    pols = [f"{n}={RUNS}/{n}_rl/best.pt" for n in arms]
+    if "loop" in arms:                            # rung 3 test-time loop count, as in the real evaluation
+        pols += [f"loop@R{R}={RUNS}/loop_rl/best.pt" for R in (2, 16)]
     run([PY, "scripts/eval_policy.py", "--pool", POOL, "--sets", "eval_*", "--methods", "gp,ls", "--ls", "1x4",
-         "--policy", f"coord={RUNS}/coord_rl/best.pt", f"modal={RUNS}/modal_rl/best.pt", f"mott={RUNS}/mott_rl/best.pt",
-         "--rounds", "1", "--workers", "6", "--out", f"{RUNS}/eval_smoke"])
+         "--policy"] + pols + ["--rounds", "1", "--workers", str(workers), "--out", f"{RUNS}/eval_smoke"])
     n = len(os.listdir(f"{RUNS}/eval_smoke/eval"))
-    assert n == 3 * 5, n
+    assert n == 3 * (2 + len(pols)), n
     return f"{n} eval records"
 
 
@@ -89,14 +93,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--keep", action="store_true")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--arms", default="coord,modal,mott", help=f"comma list of {','.join(ARMS)}")
+    ap.add_argument("--workers", type=int, default=6, help="cap on parallel processes (teacher, eval)")
     a = ap.parse_args()
-    shutil.rmtree("runs/smoke_pipe", ignore_errors=True)
+    arms = a.arms.split(",")
+    global POOL, TEACH, RUNS
+    top = "runs/smoke_pipe" if a.arms == "coord,modal,mott" else f"runs/smoke_pipe_{'_'.join(arms)}"
+    POOL, TEACH, RUNS = f"{top}/pool", f"{top}/teacher", f"{top}/runs"
+    shutil.rmtree(top, ignore_errors=True)
     step("1 tiny pools (3 kinds)", build_pools)
-    step("2 teacher (g+p -> LS, certified)", teacher)
-    step("3+4 train distill -> rl (coord, modal, mott)", lambda: train(a.device))
-    step("5 eval_policy (gp, ls, 3 policies)", evaluate)
+    step("2 teacher (g+p -> LS, certified)", lambda: teacher(min(3, a.workers)))
+    step(f"3+4 train distill -> rl ({', '.join(arms)})", lambda: train(a.device, arms))
+    step("5 eval_policy (gp, ls, policies)", lambda: evaluate(arms, a.workers))
     if not a.keep:
-        shutil.rmtree("runs/smoke_pipe", ignore_errors=True)
+        shutil.rmtree(top, ignore_errors=True)
     print("PIPELINE SMOKE PASSED", flush=True)
 
 
