@@ -31,7 +31,11 @@ import time
 from dataclasses import asdict
 
 import numpy as np
-import torch
+
+# rl rollouts allocate [E,F,n,k] complex128 blocks whose k changes every step; with the default allocator
+# 5.7-6.5 GB stayed reserved but unusable and the rl stage hit CUDA OOM (10/28 17:15, 17:22)
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+import torch  # noqa: E402
 
 from decap_loop.bank import load_bank
 from decap_loop.baselines import greedy, local_search, trajectory_to
@@ -67,8 +71,9 @@ def parse():
     p.add_argument("--iters", type=int, default=5000)
     p.add_argument("--B", type=int, default=16, help="instances per batch")
     p.add_argument("--M", type=int, default=8, help="samples per instance (shared baseline, G in the method text)")
-    p.add_argument("--chunk", type=int, default=4, help="rl: instances per rollout/backward pass; gradients of the "
-                   "B/chunk passes accumulate into one step (memory only: B=16 x M=8 in one pass hit CUDA OOM)")
+    p.add_argument("--chunk", type=int, default=2, help="rl: instances per rollout/backward pass; gradients of the "
+                   "B/chunk passes accumulate into one step (memory only: B=16 x M=8 in one pass and chunk 4 "
+                   "both hit CUDA OOM on 24 GB)")
     p.add_argument("--sizes", default="8-12", help="(no pool) train board side range")
     p.add_argument("--shapes", default="rect,L,holes")
     p.add_argument("--targets", default="flat,step")
@@ -123,6 +128,10 @@ def make_policy(cfg, a):
 def batch_kw(args):
     return dict(shapes=tuple(args.shapes.split(",")), targets=tuple(args.targets.split(",")),
                 n_probe=rng_range(args.n_probe), difficulty=rng_range(args.difficulty, float))
+
+
+def gpu_peak():
+    return f" | gpu peak {torch.cuda.max_memory_allocated() / 2**30:.1f} GB" if torch.cuda.is_available() else ""
 
 
 class Tee:
@@ -379,7 +388,7 @@ def main():
             pname = pool_names[pi] if pool else f"{H}x{W}"
             log(f"it {it:6d} | {pname} P={batch.P} F={batch.freqs.shape[1]} cert-bad {n_bad} | count/ref {ratio:.3f} "
                 f"best-of-M {best_ratio:.3f} fail {fail_rate:.2f} lam {lam:.2f} | teach ok {teach['feasible'].float().mean():.2f} "
-                f"| loss {loss:.3f} | replaced {n_replaced} | {time.time()-t0:.0f}s")
+                f"| loss {loss:.3f} | replaced {n_replaced} | {time.time()-t0:.0f}s{gpu_peak()}")
         if it % args.val_every == 0 or it == args.iters:
             v = validate(policy, val_sets, args, cfg, dev)
             last_val = v
@@ -416,7 +425,8 @@ def main():
                    final_val={k: list(v) for k, v in last_val.items()}, best_val_score=best_val, best_iter=best_iter,
                    teacher_replaced=n_replaced, lam=lam)
     json.dump(metrics, open(os.path.join(args.out, "metrics.json"), "w"), indent=2)
-    log(f"done: {it_done} iters, {metrics['hours']:.2f} h, best iter {best_iter} score {best_val:.3f}, replaced {n_replaced}")
+    log(f"done: {it_done} iters, {metrics['hours']:.2f} h, best iter {best_iter} score {best_val:.3f}, replaced {n_replaced}"
+        f"{gpu_peak()}")
 
 
 if __name__ == "__main__":

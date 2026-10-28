@@ -1,4 +1,11 @@
-# PROGRESS (갱신 2026-10-28 16:27 UTC, 라운드 6)
+STUCK: RL 단계(stage 3) GPU OOM 두 번 — 한 번에 128 env (16:23) → `--chunk 4` (32 env)도 OOM (r1 17:15, r0 재실행 17:22). 지금 chunk 2 + expandable_segments로 2단 RL(~18:10)에서 자동 확인 중; 또 실패하면 RL 단계 전체가 막힌 것 — 다음 라운드는 `runs/2026-10-28/r2_mott/driver.log` 끝부터 볼 것.
+# PROGRESS (갱신 2026-10-28 17:40 UTC, 라운드 6)
+
+- **사고 4 (=STUCK): chunk 4도 RL에서 OOM.** 1단 RL 17:11 시작 → 17:15 OOM (할당 17.2 GB + 단편화로 놀던 5.7 GB), 드라이버 순서대로 0단 RL 재실행 17:16 → 17:22 같은 OOM (15.9 + 6.5 GB). 원인: `sim.loaded_state`가 [E,F,n,k] complex128 블록을 step마다 다른 k로 여러 개 잡음 (16 env·F 251·n 144·k 64면 블록 하나 0.6 GB) + 크기가 계속 바뀌어 단편화. 1·0단 distill 체크포인트는 그대로 있음 (`runs/2026-10-28/r{0,1}_*_distill/best.pt`; 1단 distill 2109 iter, best iter 600).
+- 수정 2: `--chunk` 기본 2 (16 env = distill의 선생님 replay와 같은 크기, 그건 풀 전체를 올린 채 0·1단 각 0.75 h 문제없이 돌았음) + `train.py`에서 `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` (단편화 제거). iter 로그·`done:`에 `gpu peak` 표시 추가. CPU smoke (`scripts/smoke_chunk.py`) 통과. 2단 distill이 GPU를 15.4 GB 쓰는 중이라 GPU에서 실제 크기 smoke는 못 함 (남은 8 GB로는 선생님 replay도 안 들어가 대표성 없음 → 지움).
+- 드라이버 17:38 재시작 → GPU 줄: r2 distill (ATTACH, 17:22 시작) → r2 RL (~18:10, 새 train.py) → **r0 RL → r1 RL** (distill 재사용) → r3.
+- 결정: chunk 2 (1이 아니라) — 16 env는 distill에서 실제로 검증된 크기이고, chunk 1은 RL iter 수를 더 줄임. 모든 단이 같은 값.
+- eval 풀: 17:38에도 16칸 첫 파일이 안 끝남 (2시간 23분째, 5/12 그대로). pod 메모리 29 GiB (풀 worker 둘이 8.8·8.1 GB로 커지는 중), oom_kill 0.
 
 - 라운드 6 (15:51~): 상태 정상 (mem 15.8 GiB, oom_kill 0). **0단 distill 끝** (16:22, 2192 iter / 0.77 h, best iter 1600; resume.pt 1003·1961에 저장됨 = 20분 체크포인트 동작 확인). best iter 중간 val (보고서용 아님): count/g+p pcb 1.75 fail 0.56 / pkg 1.50 fail 0.56 / ip 0.77 fail 0.19 (`runs/2026-10-28/r0_coord_distill/log.txt`). 0단 RL 시작 (`runs/2026-10-28/r0_coord_rl/`).
 - **사고 3: 0단 RL이 GPU OOM** (16:23, 첫 iter; B=16×G=8=128 env를 한 번에 rollout → `sim.loaded_state`가 2 GB를 더 할당하다 실패, 풀 9.5 GB + 18.4 GB 사용). 드라이버는 그대로 1단 distill로 넘어감 (16:24). 수정: `train.py --chunk` (기본 4) — RL 한 step의 16개 문제를 4개씩 rollout+backward 하고 gradient를 누적해 optimizer step 1번. 기준선은 문제별 G=8 샘플 안에서 정규화, loss scale은 전체 배치 기준(1/(B·G), 1/B) 그대로 → 같은 갱신, 메모리만 줄어듦. `scripts/smoke_chunk.py` 통과 (CPU, chunk 2 / 0). 1단 RL(~17:10 시작)부터 적용 (이미 떠 있는 run_rung이 새 train.py를 부름).
