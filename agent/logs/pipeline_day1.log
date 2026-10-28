@@ -61,3 +61,6 @@
 [18:25:18] ATTACH build eval pools side 10,16 (pid 13040 still running)
 [18:25:18] START train r0_coord (CERTIFY_WORKERS=2) | mem 9.2 GiB / 60.0 GiB, oom_kill 0
 [18:25:18] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r0_coord --arm '--feat coord' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r0_coord/rung_stdout.log)
+[19:41:35] END train r0_coord (CERTIFY_WORKERS=2) rc=0 | mem 15.1 GiB / 60.0 GiB, oom_kill 0
+[19:41:35] START train r1_modal (CERTIFY_WORKERS=2) | mem 15.1 GiB / 60.0 GiB, oom_kill 0
+[19:41:35] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r1_modal --arm '--feat modal' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r1_modal/rung_stdout.log)
