@@ -27,3 +27,9 @@
 [15:45:01] END teacher rc=0 | mem 12.7 GiB / 60.0 GiB, oom_kill 0
 [15:45:01] ATTACH build eval pools side 10,16 (pid 13040 still running)
 [15:45:01] ATTACH train r0_coord (CERTIFY_WORKERS=2) (pid 16503 still running)
+[15:48:59] driver start | mem 12.4 GiB / 60.0 GiB, oom_kill 0
+[15:48:59] START teacher | mem 12.4 GiB / 60.0 GiB, oom_kill 0
+[15:48:59] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 4  (log agent/logs/make_teacher.log)
+[15:49:01] END teacher rc=0 | mem 12.7 GiB / 60.0 GiB, oom_kill 0
+[15:49:01] ATTACH build eval pools side 10,16 (pid 13040 still running)
+[15:49:01] ATTACH train r0_coord (CERTIFY_WORKERS=2) (pid 16503 still running)
