@@ -1,0 +1,153 @@
+"""Certified evaluation on the held-out pools: classical baselines and trained policies.
+
+Every method runs inside verify.cutting_plane on a fresh copy of the pool (same rule for all: re-run
+on a grown grid until its claimed solutions are certified or the round cap is hit); success is the
+exact dense check (worst |Z| <= 1.01 Zt). One worker process per (pool file, method), torch
+single-threaded (decap_loop/safe_verify.py), so timings are "one CPU core, same calculator".
+
+Records -> <out>/eval/<set>__<method>.json:
+  {set, tech, size, n, method, ok[], count[], worst[], sec_per_inst, sec_method_last_round, rounds,
+   F_final, ckpt, git, time}
+RESULTS.md is generated from these by scripts/collect_results.py.
+
+Run:
+  .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*' --methods gp,ls --out runs/2026-10-28/baselines
+  .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*' --policy r1=runs/2026-10-28/r1_modal_rl/best.pt --out runs/2026-10-28/r1_modal_rl
+"""
+import argparse
+import glob
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from multiprocessing import Pool
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def git_hash():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
+def parse_set(name):
+    m = re.match(r"(eval|val|test)_([a-z]+)(\d+)_(\d+)", name)
+    return (m.group(2), int(m.group(3))) if m else ("?", 0)
+
+
+def job(args):
+    path, method, spec, out, rounds, samples, ls_cfg, device = args
+    import numpy as np
+    import torch
+    torch.set_num_threads(1)
+    from decap_loop.bank import load_bank
+    from decap_loop.baselines import greedy, local_search, modal_heuristic
+    from decap_loop.modal_env import make_env
+    from decap_loop.rollout import rollout
+    from decap_loop.sim import FEAS_TOL
+    from decap_loop.verify import cutting_plane, grid_worst
+    from train import make_policy
+    name = os.path.splitext(os.path.basename(path))[0]
+    tech, size = parse_set(name)
+    dst = os.path.join(out, "eval", f"{name}__{method}.json")
+    if os.path.exists(dst):
+        return name, method, "exists", None
+    b, _ = load_bank(path)                       # fresh copy of the grid for this method
+    cfg = b.cfg
+    box = {}
+
+    def timed(fn):
+        def run(bb):
+            t = time.time()
+            r = fn(bb)
+            box["last"] = time.time() - t
+            return r
+        return run
+
+    if method == "greedy+prune":
+        fn = lambda bb: greedy(bb, cfg)  # noqa: E731
+    elif method == "greedy":
+        fn = lambda bb: greedy(bb, cfg, prune=False)  # noqa: E731
+    elif method == "modal_rule":
+        fn = lambda bb: modal_heuristic(bb, cfg)  # noqa: E731
+    elif method == "local_search":
+        passes, trials = ls_cfg
+
+        def fn(bb):
+            g = greedy(bb, cfg)
+            occ = local_search(bb, cfg, g["occ"], g["feasible"], passes=passes, trials=trials)
+            inst = torch.arange(bb.B)
+            return dict(occ=occ, feasible=torch.from_numpy(grid_worst(bb, inst, occ, cfg) <= FEAS_TOL))
+    else:                                         # trained policy: method = "<name>" or "<name>@S"
+        ck = torch.load(spec, map_location="cpu", weights_only=False)
+        a = ck["args"]
+        dev = torch.device(device)
+        pol = make_policy(cfg, a).to(dev)
+        pol.load_state_dict(ck["model"])
+        pol.eval()
+        if hasattr(pol, "set_eval_R") and "@R" in method:
+            pol.set_eval_R(int(method.split("@R")[1]))
+        S = samples
+
+        @torch.no_grad()
+        def fn(bb):
+            if S <= 1:
+                env = make_env(bb, torch.arange(bb.B), cfg, a["feat"])
+                o = rollout(pol, env, greedy=True, amp=False)
+                return dict(occ=o["occ"], feasible=o["feasible"])
+            inst = torch.arange(bb.B).repeat_interleave(S)
+            env = make_env(bb, inst, cfg, a["feat"])
+            o = rollout(pol, env, amp=False, gen=torch.Generator().manual_seed(0))
+            key = (o["count"] + (~o["feasible"]) * 10 ** 6).view(bb.B, S)
+            j = key.argmin(1) + torch.arange(bb.B) * S
+            return dict(occ=o["occ"][j], feasible=o["feasible"][j])
+    t0 = time.time()
+    r, info = cutting_plane(timed(fn), b, cfg, max_rounds=rounds)
+    ok = info["worst"] <= np.log10(1.01)
+    cnt = (r["occ"] >= 0).sum(1).cpu().numpy()
+    rec = dict(set=name, tech=tech, size=size, n=int(b.B), method=method, ok=ok.tolist(), count=cnt.tolist(),
+               worst=[float(x) for x in info["worst"]], sec_per_inst=box.get("last", float("nan")) / b.B,
+               sec_total=time.time() - t0, rounds=int(info["rounds"]), F_final=int(b.freqs.shape[1]),
+               ckpt=spec, samples=samples if spec else None, git=git_hash(), time=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
+               occ=r["occ"].cpu().numpy().tolist())
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    json.dump(rec, open(dst, "w"))
+    return name, method, f"ok {ok.mean():.2f} count {cnt[ok].mean() if ok.any() else float('nan'):.2f} {rec['sec_per_inst']:.3f}s/inst rounds {info['rounds']}", rec
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--pool", default="runs/pool_v1")
+    ap.add_argument("--sets", default="eval_*", help="glob of pool files (without .pkl)")
+    ap.add_argument("--methods", default="", help="comma list of gp,greedy,ls,modal_rule")
+    ap.add_argument("--policy", nargs="*", default=[], help="name=path/to/ckpt.pt")
+    ap.add_argument("--samples", type=int, default=1, help="policy: best-of-S sampling (1 = greedy decoding)")
+    ap.add_argument("--rounds", type=int, default=4)
+    ap.add_argument("--ls", default="4x32")
+    ap.add_argument("--workers", type=int, default=14)
+    ap.add_argument("--device", default="cpu")
+    ap.add_argument("--out", required=True)
+    a = ap.parse_args()
+    files = sorted(glob.glob(os.path.join(a.pool, a.sets + ".pkl")))
+    files.sort(key=lambda f: -os.path.getsize(f))
+    names = {"gp": "greedy+prune", "greedy": "greedy", "ls": "local_search", "modal_rule": "modal_rule"}
+    methods = [(names[m], "") for m in a.methods.split(",") if m]
+    for p in a.policy:
+        n, path = p.split("=")
+        methods.append((n if a.samples <= 1 else f"{n}@{a.samples}", path))
+    ls_cfg = tuple(map(int, a.ls.split("x")))
+    jobs = [(f, m, spec, a.out, a.rounds, a.samples, ls_cfg, a.device) for f in files for m, spec in methods]
+    print(f"{len(files)} sets x {len(methods)} methods = {len(jobs)} jobs, {a.workers} workers -> {a.out}/eval", flush=True)
+    t0 = time.time()
+    with Pool(a.workers) as pool:
+        for name, m, status, rec in pool.imap_unordered(job, jobs):
+            print(f"[{time.time()-t0:6.0f}s] {name:14s} {m:28s} {status}", flush=True)
+    print("done", flush=True)
+
+
+if __name__ == "__main__":
+    main()

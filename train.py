@@ -1,34 +1,48 @@
 """Train the add / remove / change-type / stop policy (min decap count s.t. target impedance).
 
-Loss = REINFORCE with a shared multi-sample baseline (POMO style, M samples per instance)
-     + imitation of the best-known solution per instance (best sample, or the classical teacher
-       greedy+prune / local search, whichever has fewer decaps).
-Reward = -count / N_ref - lambda * (failed + violation), N_ref = greedy+prune count of the same
-instance. lambda is a Lagrange multiplier pushed up while the failure rate is above --fail_target.
+Fixed methodology (agent/AGENT_PROMPT.md, 2026-10-28), the same for every rung of the ladder:
+  stage 1  teacher   : offline greedy+prune -> local search per training instance (scripts/make_teacher.py,
+                       data/teacher/<pool>.npz). Not done here.
+  stage 2  distill   : --stage distill  imitation only: replay the teacher solution (trajectory_to) and
+                       maximise its log-likelihood. No reward, no lambda.
+  stage 3  rl        : --stage rl --init <distill ckpt>  REINFORCE with a shared M-sample baseline
+                       (POMO style), Lagrange penalty on certified failures, + imitation of the
+                       best-known solution; a certified sample with fewer decaps than the stored
+                       teacher replaces it (expert iteration).
+  --stage joint      : legacy behaviour (rl from scratch with the teacher as imitation target).
+Reward = -count / N_ref - lambda * (failed + violation), N_ref = greedy+prune count of the instance.
+
+Pools (--pool) hold certified instances of several board kinds (decap_loop/techs.py); each
+iteration draws one pool file, so the policy sees a mixture of kinds. Exact checks (verify.py) run
+through decap_loop/safe_verify.certify_parallel (single-threaded workers; MKL hang otherwise).
 
 Example (A5000):
-  python train.py --out runs/gnn_phys                      # main model
-  python train.py --out runs/gnn_coord --feat coord        # coordinate-input baseline (H1')
-  python train.py --out runs/gnn_k3 --layers 3             # message-passing depth (H2')
-  python train.py --out runs/gnn_noprune --no_prune        # add + stop only (H3')
+  python train.py --stage distill --feat coord --out runs/2026-10-28/r0_coord_distill --hours 0.75
+  python train.py --stage rl --init runs/2026-10-28/r0_coord_distill/best.pt --feat coord --out runs/2026-10-28/r0_coord_rl --hours 1.25
 """
 import argparse
 import csv
+import glob
 import json
 import os
+import subprocess
+import sys
 import time
 from dataclasses import asdict
 
 import numpy as np
 import torch
 
-from decap_loop.baselines import greedy, local_search, trajectory_to
 from decap_loop.bank import load_bank
+from decap_loop.baselines import greedy, local_search, trajectory_to
+from decap_loop.modal_env import feat_dim_any, make_env
 from decap_loop.model import MoTT, GridPolicy
 from decap_loop.pdn import PDNConfig, sample_batch
 from decap_loop.rollout import backward_logp, rollout
-from decap_loop.sim import K_MODES, Env, feat_dim, mott_dims
-from decap_loop.verify import certify
+from decap_loop.safe_verify import certify_parallel, pin_threads
+from decap_loop.sim import K_MODES, mott_dims
+
+TOL1 = np.log10(1.01)
 
 
 def rng_range(s, typ=int):
@@ -36,38 +50,48 @@ def rng_range(s, typ=int):
     return typ(a), typ(b)
 
 
+def git_hash():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
 def parse():
     p = argparse.ArgumentParser()
     p.add_argument("--out", default="runs/gnn_phys")
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--stage", choices=["distill", "rl", "joint"], default="joint")
+    p.add_argument("--init", default="", help="checkpoint to start from (stage rl: the distilled policy)")
     p.add_argument("--iters", type=int, default=5000)
     p.add_argument("--B", type=int, default=16, help="instances per batch")
-    p.add_argument("--M", type=int, default=8, help="samples per instance (shared baseline)")
-    p.add_argument("--sizes", default="8-12", help="train board side range (H, W sampled independently)")
+    p.add_argument("--M", type=int, default=8, help="samples per instance (shared baseline, G in the method text)")
+    p.add_argument("--sizes", default="8-12", help="(no pool) train board side range")
     p.add_argument("--shapes", default="rect,L,holes")
     p.add_argument("--targets", default="flat,step")
     p.add_argument("--n_probe", default="1-3")
-    p.add_argument("--difficulty", default="0.02-0.2", help="target level u (0 = hardest)")
+    p.add_argument("--difficulty", default="0.02-0.2", help="(no pool) target level u (0 = hardest)")
     p.add_argument("--max_steps", type=int, default=64)
-    p.add_argument("--feat", choices=["phys", "coord", "mott"], default="phys")
-    p.add_argument("--model", choices=["grid", "mott"], default="grid", help="mott implies --feat mott")
-    p.add_argument("--pool", default="", help="directory of certified pools (build_pool.py); train_*.pkl / test_*.pkl")
-    p.add_argument("--val_pools", default="test_pcb10_0,test_ip10_0")
-    p.add_argument("--pool_glob", default="train_*.pkl", help="comma-separated globs of training pool files (memory: "
-                   "each 12x12 batch holds ~0.6 GB of Z0 in complex64)")
+    p.add_argument("--feat", choices=["phys", "coord", "mott", "modal", "modal_only"], default="phys")
+    p.add_argument("--model", choices=["grid", "mott", "loop"], default="grid", help="mott/loop imply --feat mott")
+    p.add_argument("--pool", default="", help="directory of certified pools (scripts/build_pools.py)")
+    p.add_argument("--pool_glob", default="train_*.pkl", help="comma-separated globs of training pool files")
+    p.add_argument("--val_pools", default="val_pcb10_0,val_pkg10_0,val_ip10_0")
+    p.add_argument("--teacher_dir", default="data/teacher", help="stage-1 teacher solutions (<pool name>.npz)")
     p.add_argument("--hours", type=float, default=0, help="stop after this wall time (0 = off)")
-    p.add_argument("--certify", type=int, default=1, help="pools: exact-check the best sample of each instance every "
-                   "iteration; a violation counts as failure and its frequencies are added to the pool grid")
+    p.add_argument("--certify", type=int, default=1, help="exact-check the best sample of each instance every iteration")
     p.add_argument("--prior", action="store_true", help="grid model: add the physics prior (as in MoTT)")
     p.add_argument("--no_prune", action="store_true", help="ablation: no remove / change-type actions")
     p.add_argument("--layers", type=int, default=6)
     p.add_argument("--glob", action="store_true", help="add global self-attention to every block")
     p.add_argument("--d", type=int, default=128)
     p.add_argument("--heads", type=int, default=8)
+    p.add_argument("--loop_train", default="2-8", help="loop model: R ~ U{a..b} during training")
+    p.add_argument("--loop_eval", type=int, default=8, help="loop model: R at validation")
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--imit", type=float, default=1.0, help="weight of imitating the best-known solution (0=off)")
-    p.add_argument("--teacher", choices=["gp", "ls"], default="gp", help="greedy+prune, or + local search (slower)")
+    p.add_argument("--teacher", choices=["gp", "ls"], default="gp", help="(no pool) greedy+prune, or + local search")
     p.add_argument("--lam", type=float, default=1.0, help="initial Lagrange multiplier")
     p.add_argument("--lam_lr", type=float, default=0.05)
     p.add_argument("--fail_target", type=float, default=0.02)
@@ -83,7 +107,12 @@ def parse():
 def make_policy(cfg, a):
     if a.get("model") == "mott":
         return MoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], layers=a["layers"], heads=a["heads"])
-    return GridPolicy(feat_dim(cfg, a["feat"]), cfg.n_types, d=a["d"], layers=a["layers"],
+    if a.get("model") == "loop":
+        from decap_loop.loop_model import LoopMoTT
+        lo, hi = rng_range(a.get("loop_train", "2-8"))
+        return LoopMoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], heads=a["heads"],
+                        r_train=(lo, hi), r_eval=a.get("loop_eval", 8))
+    return GridPolicy(feat_dim_any(cfg, a["feat"]), cfg.n_types, d=a["d"], layers=a["layers"],
                       heads=a["heads"], glob=a["glob"], prior=a.get("prior", False))
 
 
@@ -92,30 +121,62 @@ def batch_kw(args):
                 n_probe=rng_range(args.n_probe), difficulty=rng_range(args.difficulty, float))
 
 
+class Tee:
+    def __init__(self, path):
+        self.f = open(path, "a")
+
+    def __call__(self, *a, **k):
+        s = " ".join(str(x) for x in a)
+        print(s, flush=True)
+        self.f.write(s + "\n")
+        self.f.flush()
+
+
 @torch.no_grad()
 def validate(policy, val_sets, args, cfg, dev):
+    """Greedy decoding on each validation pool; success by the exact check. Returns
+    {name: (count / greedy+prune on jointly solved, certified fail rate)}."""
     policy.eval()
+    if hasattr(policy, "set_eval_R"):
+        policy.set_eval_R(args.loop_eval)
     res = {}
-    for size, (vb, ref) in val_sets.items():
-        env = Env(vb, torch.arange(vb.B, device=dev), vb.cfg or cfg, allow_prune=not args.no_prune, feat_mode=args.feat)
+    for name, (vb, ref) in val_sets.items():
+        env = make_env(vb, torch.arange(vb.B, device=dev), vb.cfg or cfg, args.feat, allow_prune=not args.no_prune)
         out = rollout(policy, env, greedy=True, amp=not args.no_amp)
         feas = out["feasible"].clone()
         if args.pool:   # certified validation: a solution that violates the exact check is a failure
-            wv, _, _ = certify(vb, torch.arange(vb.B, device=dev), out["occ"], vb.cfg)
-            feas &= torch.from_numpy(wv <= np.log10(1.01)).to(dev)
-            out["feasible"] = feas
+            wv, _, _ = certify_parallel(vb, torch.arange(vb.B, device=dev), out["occ"], vb.cfg)
+            feas &= torch.from_numpy(wv <= TOL1).to(dev)
         ok = feas & ref["feasible"]
         ratio = (out["count"][ok].float() / ref["count"][ok].clamp(min=1).float()).mean().item() if ok.any() else float("nan")
-        res[size] = (ratio, 1 - out["feasible"].float().mean().item())
+        res[name] = (ratio, 1 - feas.float().mean().item())
     policy.train()
     return res
 
 
+def load_teacher(path, batch, dev, log):
+    """Teacher store for one pool file: occ [B,n], count [B], ok [B], gp_count [B] (all on dev)."""
+    if os.path.exists(path):
+        d = np.load(path)
+        occ, cnt, ok, gp = d["occ"], d["count"], d["ok"], d["gp_count"]
+        src = "teacher file"
+    else:
+        r = greedy(batch, batch.cfg)
+        occ, cnt, ok, gp = r["occ"].cpu().numpy(), r["count"].cpu().numpy(), r["feasible"].cpu().numpy(), r["count"].cpu().numpy()
+        src = "greedy+prune (no teacher file)"
+    log(f"  teacher {os.path.basename(path)}: {src}, ok {np.mean(ok):.2f}, count {np.mean(cnt[ok]):.2f}, g+p {np.mean(gp):.2f}")
+    return dict(occ=torch.from_numpy(np.asarray(occ)).long().to(dev), count=torch.from_numpy(np.asarray(cnt)).long().to(dev),
+                ok=torch.from_numpy(np.asarray(ok)).bool().to(dev), gp=torch.from_numpy(np.asarray(gp)).long().to(dev),
+                replaced=0)
+
+
 def main():
     args = parse()
-    if args.model == "mott":
+    if args.model in ("mott", "loop"):
         args.feat = "mott"
+    pin_threads()
     os.makedirs(args.out, exist_ok=True)
+    log = Tee(os.path.join(args.out, "log.txt"))
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
     dev = torch.device(args.device)
@@ -123,125 +184,188 @@ def main():
     smin, smax = rng_range(args.sizes)
     kw = batch_kw(args)
     amp = not args.no_amp
+    t_start = time.time()
 
     policy = make_policy(cfg, vars(args)).to(dev)
+    if args.init:
+        ck0 = torch.load(args.init, map_location=dev, weights_only=False)
+        policy.load_state_dict(ck0["model"])
+        log(f"init from {args.init} (iter {ck0.get('iter')})")
     policy.grad_ckpt = args.grad_ckpt
     opt = torch.optim.AdamW(policy.parameters(), lr=args.lr, weight_decay=1e-5)
-    print(f"params: {sum(p.numel() for p in policy.parameters())/1e6:.2f}M  device: {dev}")
-    meta = dict(args=vars(args), cfg=asdict(cfg))
+    log(f"params: {sum(p.numel() for p in policy.parameters())/1e6:.2f}M  device: {dev}  stage: {args.stage}  feat: {args.feat}  model: {args.model}")
+    meta = dict(args=vars(args), cfg=asdict(cfg), git=git_hash(), cmd=" ".join(sys.argv))
     json.dump(meta, open(os.path.join(args.out, "config.json"), "w"), indent=2)
 
     vrng = np.random.default_rng(12345)  # same val sets for every run
-    val_sets, pool = {}, []
+    val_sets, pool, teachers, pool_names = {}, [], [], []
     if args.pool:
-        import glob
         files = sorted({f for g in args.pool_glob.split(",") for f in glob.glob(os.path.join(args.pool, g))})
         for f in files:
             pb, _ = load_bank(f, dev, dense=True, z_dtype=torch.complex64)
             pool.append(pb)
+            name = os.path.splitext(os.path.basename(f))[0]
+            pool_names.append(name)
+            teachers.append(load_teacher(os.path.join(args.teacher_dir, name + ".npz"), pb, dev, log))
         for name in args.val_pools.split(","):
-            vb, _ = load_bank(os.path.join(args.pool, name + ".pkl"), dev)
-            val_sets[name] = (vb, greedy(vb, vb.cfg))
-        print(f"pool: {len(pool)} train batches, {sum(p.B for p in pool)} instances", flush=True)
+            vb, vres = load_bank(os.path.join(args.pool, name + ".pkl"), dev)
+            if "greedy+prune" in vres:
+                g = vres["greedy+prune"]
+                ref = dict(count=torch.from_numpy(np.asarray(g["count"])).long().to(dev),
+                           feasible=torch.from_numpy(np.asarray(g["ok"])).bool().to(dev))
+            else:
+                ref = greedy(vb, vb.cfg)
+            val_sets[name] = (vb, ref)
+        log(f"pool: {len(pool)} train batches, {sum(p.B for p in pool)} instances; "
+            f"GPU mem {torch.cuda.memory_allocated() / 2**30:.2f} GB" if dev.type == "cuda" else
+            f"pool: {len(pool)} train batches, {sum(p.B for p in pool)} instances")
     else:
         for s in map(int, args.val_sizes.split(",")):
             vb = sample_batch(args.val_n, s, s, cfg, vrng, device=dev, **kw)
             val_sets[s] = (vb, greedy(vb, cfg))
 
-    log = open(os.path.join(args.out, "log.csv"), "w", newline="")
-    w = csv.writer(log)
-    w.writerow(["iter", "ratio", "best_ratio", "fail", "lam", "loss", "sec"] +
+    logf = open(os.path.join(args.out, "log.csv"), "w", newline="")
+    w = csv.writer(logf)
+    w.writerow(["iter", "ratio", "best_ratio", "fail", "lam", "loss", "sec", "replaced"] +
                [f"val{s}_{m}" for s in val_sets for m in ("ratio", "fail")])
-    best_val, lam, t0 = 1e9, args.lam, time.time()
+    best_val, best_iter, lam, t0 = 1e9, 0, args.lam, time.time()
+    last_val, it_done, n_replaced = {}, 0, 0
     for it in range(1, args.iters + 1):
         if args.hours and time.time() - t0 > args.hours * 3600:
-            print(f"time limit reached at iter {it}", flush=True)
+            log(f"time limit reached at iter {it}")
             break
+        it_done = it
+        if hasattr(policy, "sample_R"):     # loop model: one R per iteration (rollout and backward must agree)
+            policy.sample_R(rng)
         if pool:
-            batch = pool[int(rng.integers(len(pool)))]
+            pi = int(rng.integers(len(pool)))
+            batch, tch = pool[pi], teachers[pi]
             H, W = batch.H, batch.W
             cfg = batch.cfg
             ib = torch.from_numpy(rng.permutation(batch.B)[:args.B]).to(dev)
+            n_ref = tch["gp"][ib].clamp(min=1).float()
+            # the imitation target: replay of the stored best-known solution (greedy order + prune)
+            teach = trajectory_to(batch, cfg, ib, tch["occ"][ib], max_steps=args.max_steps)
         else:
             H, W = (int(x) for x in rng.integers(smin, smax + 1, size=2))
             batch = sample_batch(args.B, H, W, cfg, rng, device=dev, **kw)
             ib = torch.arange(args.B, device=dev)
-        teach = greedy(batch, cfg, inst=ib, max_steps=args.max_steps)
-        n_ref = teach["count"].clamp(min=1).float()
-        if args.no_prune:  # the teacher may only use the actions the policy has
-            teach = greedy(batch, cfg, prune=False, inst=ib, max_steps=args.max_steps)
-        elif args.teacher == "ls":
-            assert not pool, "--teacher ls is not wired for pools"
-            occ = local_search(batch, cfg, teach["occ"], teach["feasible"], passes=2, trials=16, seed=it)
-            teach = trajectory_to(batch, cfg, ib, occ, max_steps=args.max_steps)
-
-        inst = ib.repeat_interleave(args.M)
-        env = Env(batch, inst, cfg, max_steps=args.max_steps, allow_prune=not args.no_prune, feat_mode=args.feat)
-        out = rollout(policy, env, store=True, amp=amp)
-        cnt, fail = out["count"].float().view(args.B, args.M), (~out["feasible"]).view(args.B, args.M).clone()
-        n_bad = n_add = 0
-        if pool and args.certify:
-            # the reward is computed on the working grid; without this the policy learns to prune into
-            # resonance peaks that fall between grid points (certified success of untrained policies ~50%)
-            j = (cnt + fail * 1e6).argmin(1)
-            sel = torch.nonzero(~fail[torch.arange(args.B, device=dev), j]).squeeze(-1)
-            if sel.numel():
-                e_idx = sel * args.M + j[sel]
-                wv, _, add = certify(batch, ib[sel], out["occ"][e_idx], cfg)
-                bad = torch.from_numpy(wv > 1e-3).to(dev)
-                fail[sel[bad], j[sel[bad]]] = True
-                n_bad = int(bad.sum())
-                if n_bad:
-                    n_add = batch.add_freqs(add)
-        R = -cnt / n_ref[:, None] - lam * (fail.float() + out["V"].float().view(args.B, args.M))
-        adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+            teach = greedy(batch, cfg, inst=ib, max_steps=args.max_steps)
+            n_ref = teach["count"].clamp(min=1).float()
+            if args.no_prune:  # the teacher may only use the actions the policy has
+                teach = greedy(batch, cfg, prune=False, inst=ib, max_steps=args.max_steps)
+            elif args.teacher == "ls":
+                occ = local_search(batch, cfg, teach["occ"], teach["feasible"], passes=2, trials=16, seed=it)
+                teach = trajectory_to(batch, cfg, ib, occ, max_steps=args.max_steps)
+        t_key = teach["count"].float() + (~teach["feasible"]) * 1e6
 
         opt.zero_grad(set_to_none=True)
-        E = inst.shape[0]
-        loss = backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
-        if args.imit > 0:  # imitate the best-known solution of each instance
-            key = cnt + fail * 1e6
-            best = key.min(1)
-            t_key = teach["count"].float() + (~teach["feasible"]) * 1e6
-            use_sample = best.values <= t_key
-            ep = torch.arange(args.B, device=dev) * args.M + best.indices
-            steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
-            wt = torch.zeros(E, device=dev)
-            wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
-            loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
-            tb = torch.nonzero(~use_sample & teach["feasible"]).squeeze(-1)
+        if args.stage == "distill":
+            tb = torch.nonzero(teach["feasible"]).squeeze(-1)
+            loss, ratio, best_ratio, fail_rate, n_bad = 0.0, float("nan"), float("nan"), float("nan"), 0
             if tb.numel():
-                tenv = Env(batch, ib[tb], cfg, max_steps=args.max_steps, allow_prune=not args.no_prune, feat_mode=args.feat)
+                tenv = make_env(batch, ib[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
                 rep = rollout(policy, tenv, forced=teach["actions"][tb], store=True, amp=amp)
                 tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
-                loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
+                loss = backward_logp(policy, rep["traj"], 1.0 / tsteps, H, W, amp, scale=1.0 / tb.numel())
+                ratio = (teach["count"][tb].float() / n_ref[tb]).mean().item()
+        else:
+            inst = ib.repeat_interleave(args.M)
+            env = make_env(batch, inst, cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
+            out = rollout(policy, env, store=True, amp=amp)
+            cnt, fail = out["count"].float().view(args.B, args.M), (~out["feasible"]).view(args.B, args.M).clone()
+            n_bad = 0
+            j = (cnt + fail * 1e6).argmin(1)                      # best sample per instance
+            cert_ok = torch.zeros(args.B, dtype=torch.bool, device=dev)
+            if pool and args.certify:
+                # the reward is computed on the working grid; without this the policy learns to prune into
+                # resonance peaks that fall between grid points
+                sel = torch.nonzero(~fail[torch.arange(args.B, device=dev), j]).squeeze(-1)
+                if sel.numel():
+                    e_idx = sel * args.M + j[sel]
+                    wv, _, add = certify_parallel(batch, ib[sel], out["occ"][e_idx], cfg)
+                    bad = torch.from_numpy(wv > 1e-3).to(dev)
+                    fail[sel[bad], j[sel[bad]]] = True
+                    cert_ok[sel[~bad]] = True
+                    n_bad = int(bad.sum())
+                    if n_bad:
+                        batch.add_freqs(add)
+            R = -cnt / n_ref[:, None] - lam * (fail.float() + out["V"].float().view(args.B, args.M))
+            adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+            E = inst.shape[0]
+            loss = backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
+            if args.imit > 0:  # imitate the best-known solution of each instance
+                key = cnt + fail * 1e6
+                best = key.min(1)
+                use_sample = best.values <= t_key
+                ep = torch.arange(args.B, device=dev) * args.M + best.indices
+                steps = (out["actions"] >= 0).sum(1).clamp(min=1).float()
+                wt = torch.zeros(E, device=dev)
+                wt[ep[use_sample]] = args.imit / steps[ep[use_sample]]
+                loss += backward_logp(policy, out["traj"], wt, H, W, amp, scale=1.0 / args.B)
+                tb = torch.nonzero(~use_sample & teach["feasible"]).squeeze(-1)
+                if tb.numel():
+                    tenv = make_env(batch, ib[tb], cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
+                    rep = rollout(policy, tenv, forced=teach["actions"][tb], store=True, amp=amp)
+                    tsteps = (rep["actions"] >= 0).sum(1).clamp(min=1).float()
+                    loss += backward_logp(policy, rep["traj"], args.imit / tsteps, H, W, amp, scale=1.0 / args.B)
+                if pool and args.stage == "rl":
+                    # expert iteration: a certified sample with fewer decaps than the stored teacher replaces it
+                    better = cert_ok & (best.values < tch["count"][ib].float())
+                    if better.any():
+                        bi = torch.nonzero(better).squeeze(-1)
+                        tch["occ"][ib[bi]] = out["occ"][ep[bi]]
+                        tch["count"][ib[bi]] = cnt[bi, best.indices[bi]].long()
+                        tch["ok"][ib[bi]] = True
+                        tch["replaced"] += int(bi.numel())
+                        n_replaced += int(bi.numel())
+            fail_rate = fail.float().mean().item()
+            lam = max(0.0, lam + args.lam_lr * (fail_rate - args.fail_target))
+            ok = ~fail
+            ratio = (cnt / n_ref[:, None])[ok].mean().item() if ok.any() else float("nan")
+            solved = ok.any(1)
+            best_ratio = ((cnt + fail * 1e6).min(1).values / n_ref)[solved].mean().item() if solved.any() else float("nan")
         torch.nn.utils.clip_grad_norm_(policy.parameters(), args.clip)
         opt.step()
-        fail_rate = fail.float().mean().item()
-        lam = max(0.0, lam + args.lam_lr * (fail_rate - args.fail_target))
 
-        ok = ~fail
-        ratio = (cnt / n_ref[:, None])[ok].mean().item() if ok.any() else float("nan")
-        solved = ok.any(1)  # instances with at least one feasible sample
-        best_ratio = ((cnt + fail * 1e6).min(1).values / n_ref)[solved].mean().item() if solved.any() else float("nan")
         if it % 25 == 0:
-            print(f"it {it:6d} | {H}x{W} P={batch.P} F={batch.freqs.shape[1]} cert-bad {n_bad} | count/ref {ratio:.3f} best-of-M {best_ratio:.3f} "
-                  f"fail {fail_rate:.2f} lam {lam:.2f} | loss {loss:.3f} | {time.time()-t0:.0f}s", flush=True)
+            pname = pool_names[pi] if pool else f"{H}x{W}"
+            log(f"it {it:6d} | {pname} P={batch.P} F={batch.freqs.shape[1]} cert-bad {n_bad} | count/ref {ratio:.3f} "
+                f"best-of-M {best_ratio:.3f} fail {fail_rate:.2f} lam {lam:.2f} | teach ok {teach['feasible'].float().mean():.2f} "
+                f"| loss {loss:.3f} | replaced {n_replaced} | {time.time()-t0:.0f}s")
         if it % args.val_every == 0 or it == args.iters:
             v = validate(policy, val_sets, args, cfg, dev)
-            print("  val " + "  ".join(f"{s}: count/greedy+prune={r:.3f} fail={f:.2f}" for s, (r, f) in v.items()), flush=True)
-            w.writerow([it, ratio, best_ratio, fail_rate, lam, loss, time.time() - t0] +
+            last_val = v
+            log("  val " + "  ".join(f"{s}: count/greedy+prune={r:.3f} fail={f:.2f}" for s, (r, f) in v.items()))
+            w.writerow([it, ratio, best_ratio, fail_rate, lam, loss, time.time() - t0, n_replaced] +
                        [x for r, f in v.values() for x in (r, f)])
-            log.flush()
+            logf.flush()
             ck = dict(model=policy.state_dict(), **meta, iter=it)
             torch.save(ck, os.path.join(args.out, "last.pt"))
-            # select checkpoints on in-distribution sizes only (larger sizes = test, no leakage)
-            ind = [(r, f) for s, (r, f) in v.items() if (isinstance(s, str) and "pcb10" in s) or
-                   (not isinstance(s, str) and smin <= s <= smax)] or list(v.values())
-            score = np.mean([(r if r == r else 9.0) + 2 * f for r, f in ind])
+            score = float(np.mean([(r if r == r else 9.0) + 2 * f for r, f in v.values()]))
             if score < best_val:
-                best_val = score
+                best_val, best_iter = score, it
                 torch.save(ck, os.path.join(args.out, "best.pt"))
+                log(f"  new best (score {score:.3f}) at iter {it}")
+    if not os.path.exists(os.path.join(args.out, "best.pt")) or not last_val:
+        v = validate(policy, val_sets, args, cfg, dev)
+        last_val = v
+        ck = dict(model=policy.state_dict(), **meta, iter=it_done)
+        torch.save(ck, os.path.join(args.out, "last.pt"))
+        if not os.path.exists(os.path.join(args.out, "best.pt")):
+            torch.save(ck, os.path.join(args.out, "best.pt"))
+            best_val, best_iter = float(np.mean([(r if r == r else 9.0) + 2 * f for r, f in v.values()])), it_done
+    if pool and args.stage == "rl":
+        os.makedirs(os.path.join(args.out, "teacher_final"), exist_ok=True)
+        for name, tch in zip(pool_names, teachers):
+            np.savez(os.path.join(args.out, "teacher_final", name + ".npz"), occ=tch["occ"].cpu().numpy(),
+                     count=tch["count"].cpu().numpy(), ok=tch["ok"].cpu().numpy(), gp_count=tch["gp"].cpu().numpy(),
+                     replaced=tch["replaced"])
+    metrics = dict(args=vars(args), git=meta["git"], iters=it_done, hours=(time.time() - t_start) / 3600,
+                   final_val={k: list(v) for k, v in last_val.items()}, best_val_score=best_val, best_iter=best_iter,
+                   teacher_replaced=n_replaced, lam=lam)
+    json.dump(metrics, open(os.path.join(args.out, "metrics.json"), "w"), indent=2)
+    log(f"done: {it_done} iters, {metrics['hours']:.2f} h, best iter {best_iter} score {best_val:.3f}, replaced {n_replaced}")
 
 
 if __name__ == "__main__":
