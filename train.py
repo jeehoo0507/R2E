@@ -101,6 +101,8 @@ def parse():
     p.add_argument("--val_every", type=int, default=250)
     p.add_argument("--val_sizes", default="10,20")
     p.add_argument("--val_n", type=int, default=16)
+    p.add_argument("--ckpt_min", type=float, default=20, help="write <out>/resume.pt every this many minutes; "
+                   "a restarted run with the same --out continues from it")
     return p.parse_args()
 
 
@@ -224,13 +226,47 @@ def main():
             vb = sample_batch(args.val_n, s, s, cfg, vrng, device=dev, **kw)
             val_sets[s] = (vb, greedy(vb, cfg))
 
-    logf = open(os.path.join(args.out, "log.csv"), "w", newline="")
-    w = csv.writer(logf)
-    w.writerow(["iter", "ratio", "best_ratio", "fail", "lam", "loss", "sec", "replaced"] +
-               [f"val{s}_{m}" for s in val_sets for m in ("ratio", "fail")])
     best_val, best_iter, lam, t0 = 1e9, 0, args.lam, time.time()
     last_val, it_done, n_replaced = {}, 0, 0
-    for it in range(1, args.iters + 1):
+    resume_path = os.path.join(args.out, "resume.pt")
+
+    def save_resume(it):
+        """Everything needed to continue after a pod restart (QUEUE 2026-10-28: every 20 min)."""
+        st = dict(model=policy.state_dict(), opt=opt.state_dict(), iter=it, lam=lam, best_val=best_val,
+                  best_iter=best_iter, last_val=last_val, n_replaced=n_replaced, elapsed=time.time() - t0,
+                  rng=rng.bit_generator.state, torch_rng=torch.get_rng_state(),
+                  cuda_rng=torch.cuda.get_rng_state_all() if dev.type == "cuda" else None,
+                  teachers=[{k: (v.cpu() if torch.is_tensor(v) else v) for k, v in t.items()} for t in teachers],
+                  pool_freqs=[pb.freqs for pb in pool])
+        torch.save(st, resume_path + ".tmp")
+        os.replace(resume_path + ".tmp", resume_path)
+
+    start_it = 0
+    if os.path.exists(resume_path):
+        st = torch.load(resume_path, map_location=dev, weights_only=False)
+        policy.load_state_dict(st["model"])
+        opt.load_state_dict(st["opt"])
+        start_it, lam, best_val, best_iter = st["iter"], st["lam"], st["best_val"], st["best_iter"]
+        last_val, n_replaced, it_done = st["last_val"], st["n_replaced"], st["iter"]
+        rng.bit_generator.state = st["rng"]
+        torch.set_rng_state(st["torch_rng"].cpu())
+        if st["cuda_rng"] is not None and dev.type == "cuda":
+            torch.cuda.set_rng_state_all([s.cpu() for s in st["cuda_rng"]])
+        for t, ts in zip(teachers, st["teachers"]):
+            t.update({k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in ts.items()})
+        for pb, fr in zip(pool, st["pool_freqs"]):   # grid points the exact checks added before the restart
+            if fr.shape[1] > pb.freqs.shape[1]:
+                pb.add_freqs([list(fr[b, pb.freqs.shape[1]:]) for b in range(pb.B)])
+        t0 = time.time() - st["elapsed"]
+        log(f"resumed from {resume_path}: iter {start_it}, {st['elapsed']/3600:.2f} h used, lam {lam:.2f}, "
+            f"best iter {best_iter}, replaced {n_replaced}")
+    logf = open(os.path.join(args.out, "log.csv"), "a" if start_it else "w", newline="")
+    w = csv.writer(logf)
+    if not start_it:
+        w.writerow(["iter", "ratio", "best_ratio", "fail", "lam", "loss", "sec", "replaced"] +
+                   [f"val{s}_{m}" for s in val_sets for m in ("ratio", "fail")])
+    t_ck = time.time()
+    for it in range(start_it + 1, args.iters + 1):
         if args.hours and time.time() - t0 > args.hours * 3600:
             log(f"time limit reached at iter {it}")
             break
@@ -347,6 +383,10 @@ def main():
                 best_val, best_iter = score, it
                 torch.save(ck, os.path.join(args.out, "best.pt"))
                 log(f"  new best (score {score:.3f}) at iter {it}")
+        if args.ckpt_min and time.time() - t_ck > args.ckpt_min * 60:
+            save_resume(it)
+            t_ck = time.time()
+            log(f"  resume checkpoint at iter {it}")
     if not os.path.exists(os.path.join(args.out, "best.pt")) or not last_val:
         v = validate(policy, val_sets, args, cfg, dev)
         last_val = v

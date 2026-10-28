@@ -1,0 +1,5 @@
+[12:15:48] wait for train/val pools
+[12:57:48] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 8  (log agent/logs/make_teacher.log)
+[14:20:44] driver start | mem 0.8 GiB / 60.0 GiB, oom_kill 0
+[14:20:44] START teacher | mem 0.8 GiB / 60.0 GiB, oom_kill 0
+[14:20:44] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 4  (log agent/logs/make_teacher.log)

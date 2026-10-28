@@ -28,6 +28,18 @@ def sh(cmd, log):
         raise SystemExit(f"failed: {cmd} (see {log})")
 
 
+def fresh(run_dir):
+    """True if the stage must run. A finished stage (metrics.json) is kept; a partial one with a
+    resume.pt (train.py, every 20 min) is continued in place; a partial one without it is moved aside
+    so its stale best.pt cannot be mistaken for a result."""
+    path = os.path.join(ROOT, run_dir)
+    if os.path.exists(os.path.join(path, "metrics.json")):
+        return False
+    if os.path.exists(path) and not os.path.exists(os.path.join(path, "resume.pt")):
+        os.rename(path, f"{path}_killed_{time.strftime('%H%M%S', time.gmtime())}")
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
@@ -49,9 +61,10 @@ def main():
     log = os.path.join(base, "driver.log")
     pools = f"--pool {a.pool} --teacher_dir {a.teacher_dir} --seed {a.seed}"
     dist, rl = f"{base}_distill", f"{base}_rl"
-    if not a.skip_distill:
+    if not a.skip_distill and fresh(dist):
         sh(f"{PY} train.py --stage distill {a.arm} {a.common} {pools} --hours {a.distill_hours} --out {dist}", log)
-    sh(f"{PY} train.py --stage rl {a.arm} {a.common} {pools} --hours {a.rl_hours} --init {dist}/best.pt --out {rl}", log)
+    if fresh(rl):
+        sh(f"{PY} train.py --stage rl {a.arm} {a.common} {pools} --hours {a.rl_hours} --init {dist}/best.pt --out {rl}", log)
     if not a.skip_eval:
         for tag, run in (("distill", dist), ("rl", rl)):
             sh(f"{PY} scripts/eval_policy.py --pool {a.pool} --sets {a.eval_sets} --policy {a.name}_{tag}={run}/best.pt "

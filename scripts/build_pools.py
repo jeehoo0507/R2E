@@ -27,12 +27,12 @@ VAL_N = 16
 SEED = {"pcb": 0, "pkg": 100000, "ip": 200000}
 
 
-def jobs(out, only):
+def jobs(out, only, eval_sizes=EVAL_SIZES):
     from decap_loop.techs import TECHS
     js = []
     for t in TECHS:
         if "eval" in only:
-            for s in EVAL_SIZES:
+            for s in eval_sizes:
                 for k in range(EVAL_K):
                     js.append((out, f"eval_{t}{s}_{k}", t, s, EVAL_N, SEED[t] + 9000 + 10 * s + k))
         if "val" in only:
@@ -82,9 +82,11 @@ def main():
     ap.add_argument("--out", default="runs/pool_v1")
     ap.add_argument("--workers", type=int, default=14)
     ap.add_argument("--only", default="eval,val,train")
+    ap.add_argument("--eval_sizes", default=",".join(map(str, EVAL_SIZES)),
+                    help="subset of eval board sides (20 last, 2 workers: QUEUE 2026-10-28 memory rule)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    js = jobs(a.out, a.only.split(","))
+    js = jobs(a.out, a.only.split(","), tuple(map(int, a.eval_sizes.split(","))))
     print(f"{len(js)} pool files -> {a.out}, {a.workers} workers", flush=True)
     t0 = time.time()
     with Pool(a.workers) as pool:
