@@ -16,3 +16,5 @@ This was a short round. The previous one ended only minutes before it started, s
 PROGRESS.md is updated (round 12). RESULTS.md is unchanged because no experiment finished. The work is committed as `e393afa` and pushed to `r2e main`, and the branch matches the remote.
 
 **Next round:** confirm rung-3 distill finishes (about 23:05) and its RL stage starts without OOM, then record when the pkg16_0 pool finishes.
+To https://github.com/jeehoo0507/R2E.git
+   e393afa..c22b3c0  main -> main

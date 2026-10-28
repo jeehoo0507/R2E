@@ -1,4 +1,10 @@
-# PROGRESS (갱신 2026-10-28 22:25 UTC, 라운드 12)
+# PROGRESS (갱신 2026-10-28 22:30 UTC, 라운드 13)
+
+## 라운드 13 (22:26 UTC~, 라운드 12 직후라 짧음)
+- 상태 정상: 드라이버 살아 있음, pod mem 19.5~24.3 GiB / 60, oom_kill 0. CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
+- r3 (3단 loop) distill iter 425, gpu peak 12.1 GB 그대로, OOM 0, ~1.6 s/iter. iter 400 val (보고서용 아님): pcb 0.94/fail 0.75, pkg 1.17/0.88, ip 0.69/0.19, val score 2.139 (new best; iter 100 2.393) (`runs/2026-10-28/r3_loop_distill/log.txt`). 0~2단 distill과 같이 val fail이 들쭉날쭉.
+- eval 풀: 새로 끝난 것 없음 (pkg16_0 ~4.2 h째, ip16 진행 중).
+- 다음 라운드: r3 distill `done:`(~23:05)·RL 시작·RL gpu peak 확인 (loop는 블록을 R번 반복해 RL activation이 2단보다 클 수 있음; OOM이면 train.py가 step을 버리고 chunk를 반으로 줄임 → `chunk_final` 기록) → pkg16_0 완성 시간.
 
 ## 라운드 12 (22:22 UTC~, 라운드 11 직후라 짧음)
 - 상태 정상: 드라이버 살아 있음, pod mem 17.6~19.0 GiB / 60, oom_kill 0. CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
