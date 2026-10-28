@@ -9,8 +9,8 @@ Rungs train one at a time: two train.py processes with all 27 pools dense on the
   0. teacher: make_teacher.py, 4 workers (skips finished files)          -> data/teacher/
   GPU lane : r0 coord -> r1 modal -> r2 mott -> r3 loop, each distill -> rl, CERTIFY_WORKERS=2   (2 workers)
              (r3 only after scripts/smoke_pipeline.py --arms loop passes, run in this lane: still 2 workers)
-  CPU lane : eval pools side 10/16 -> E0 (greedy+prune, LS, modal rule) -> certified eval of each rung
-             as soon as it finishes (r3 rl also at test-time R = 2, 4, 16) -> collect_results -> eval pools side 20 -> everything on side 20
+  CPU lane : eval pools side 10/16 -> E0 (greedy+prune, modal rule; LS side 10) -> certified eval of each rung
+             as soon as it finishes, side-16 LS one kind at a time while no rung is waiting (r3 rl also at test-time R = 2, 4, 16) -> collect_results -> eval pools side 20 -> everything on side 20
              -> collect_results                                                     (2 workers)
 Every step skips work whose output already exists (pool/teacher files, eval records, finished
 training stages; a killed training stage continues from its resume.pt), and a step whose process is
@@ -97,8 +97,8 @@ def gpu_lane():
         DONE[name].set()
 
 
-def eval_methods(stage):
-    run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets 'eval_*' --methods gp,ls,modal_rule --workers 2 "
+def eval_methods(stage, methods="gp,ls,modal_rule", sets="eval_*"):
+    run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets '{sets}' --methods {methods} --workers 2 "
         f"--out runs/{DAY}/baselines", f"runs/{DAY}/baselines_eval.log", f"E0 {stage}",
         attach=f"--workers 2 --out runs/{DAY}/baselines")
 
@@ -127,11 +127,23 @@ def collect():
 
 def cpu_lane():
     build_pools("10,16")
-    eval_methods("side 10/16")
-    for name, _ in RUNGS:
-        DONE[name].wait()
-        eval_rung(name)
-        collect()
+    # LS on side 16 (4x32 restarts inside cutting-plane) is by far the slowest eval; run it one kind at a
+    # time only while no finished rung is waiting, so rung evals are not queued behind it.
+    eval_methods("side 10/16 gp,modal_rule", "gp,modal_rule")
+    eval_methods("side 10 ls", "ls", "eval_*10_*")
+    ls16 = ["eval_pcb16_*", "eval_pkg16_*", "eval_ip16_*"]
+    pending = [n for n, _ in RUNGS]
+    while pending or ls16:
+        ready = [n for n in pending if DONE[n].is_set()]
+        if ready:
+            eval_rung(ready[0])
+            pending.remove(ready[0])
+            collect()
+        elif ls16:
+            eval_methods(f"side 16 ls {ls16[0]}", "ls", ls16.pop(0))
+            collect()
+        else:
+            time.sleep(60)
     build_pools("20")
     if n_pools("eval_*20_*.pkl") < N_EVAL20:
         log("side-20 eval pools incomplete")

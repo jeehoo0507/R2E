@@ -20,3 +20,5 @@ I've added rung 3 (the looped model) to the training queue, which was the main g
 - Rung 3 gets no extra GPU-memory settings, so its training conditions match the other rungs. If it runs out of GPU memory, the next round will record that and decide then.
 
 **Next round:** check rung 0's distill and RL logs, write the baseline results (greedy+prune and local search) to RESULTS.md once the 10/16-cell pools finish, and confirm rung 1 started. The first DAILY.md is due in the round around 10/29 05:30 UTC.
+To https://github.com/jeehoo0507/R2E.git
+   0f028c9..597318f  main -> main
