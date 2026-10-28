@@ -1,3 +1,4 @@
 12 pool files -> runs/pool_v1, 2 workers
 [  9944s] eval_pcb16_0     built    9941s F=292 rounds 10 g+p ok 0.80 count 10.8
 [ 10395s] eval_pcb16_1     built   10392s F=289 rounds 10 g+p ok 0.76 count 13.631578947368421
+[ 21715s] eval_pkg16_1     built   11319s F=298 rounds 10 g+p ok 0.68 count 16.235294117647058

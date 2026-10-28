@@ -9,3 +9,5 @@ Round 9 is done. Nothing went wrong, and the progress notes are committed and pu
 - **Memory is fine but rising:** 33.8 GiB of the 60 GiB limit at 21:13, and no processes killed for memory. All 4 allowed CPU processes are in use, so I started nothing new and changed no settings.
 
 Next round: log the 2단 result, confirm the 3단 smoke test passes and training starts, and record when the pkg16 boards finish. The first `DAILY.md` is due around 05:30 UTC on 10/29.
+To https://github.com/jeehoo0507/R2E.git
+   d73473a..a793c4e  main -> main

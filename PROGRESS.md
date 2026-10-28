@@ -1,4 +1,10 @@
-# PROGRESS (갱신 2026-10-28 21:14 UTC, 라운드 9)
+# PROGRESS (갱신 2026-10-28 21:40 UTC, 라운드 10)
+
+## 라운드 10 (21:15 UTC~)
+- 상태 정상: 드라이버 살아 있음, pod mem 20.8 GiB / 60, oom_kill 0, GPU 17.9 GB 사용 (r2 RL). 동시 CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
+- **eval 풀 `eval_pkg16_1` 완성** (11319 s = 3.1 h, F 298, g+p ok 0.68, count 16.2; `agent/logs/build_pools_v1_r3.log`). `eval_pkg16_0`은 21:38에도 진행 중 (~3.6 h째, pcb16 2.8 h보다 김). 남은 풀: pkg16_0, ip16 ×2, ip10_1 → 16칸 풀 3.1 h 실측 기준 10·16칸 전체 끝은 10/29 01시 전후, 그다음 E0·단 평가.
+- r2 (2단 mott) RL: iter 100까지 OOM 0, gpu peak 15.5 GB, ~14.4 s/iter, grid capped 8. iter 100 val (보고서용 아님): pcb 0.83/fail 0.62, pkg 0.97/fail 0.69, ip 0.69/fail 0.12, val score 1.788 (new best) (`runs/2026-10-28/r2_mott_rl/log.txt`). 0·1단과 같은 양상 (학습 배치 fail 0.01~0.23 vs val fail 0.12~0.69).
+- 다음 라운드: r2 RL `done:` (~22:15) 기록 → r3 loop smoke 통과·학습 시작 확인 (`agent/logs/smoke_loop.log`) → pkg16_0·ip16 풀 시간 기록.
 
 ## 라운드 9 (19:56 UTC~)
 - 상태 정상: 드라이버 살아 있음, pod mem 18.9 → 33.8 GiB / 60 (21:13, 16칸 풀 worker가 커지는 중), oom_kill 0. 동시 CPU 프로세스 = 풀 worker 2 + certify 2 = 4 (QUEUE 한도 꽉 참 → 새 실험 안 띄움).
