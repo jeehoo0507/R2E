@@ -1,4 +1,12 @@
-# PROGRESS (갱신 2026-10-28 22:30 UTC, 라운드 13)
+# PROGRESS (갱신 2026-10-28 23:24 UTC, 라운드 14)
+
+## 라운드 14 (22:32~23:24 UTC)
+- 상태 정상: 드라이버 살아 있음, pod mem 18.0 → 12.6 GiB / 60, oom_kill 0. CPU 프로세스 ≤4 → 새 실험 안 띄움.
+- **r3 (3단 loop) distill 끝** (23:05): 1500 iter / 0.77 h, best iter 1400 (val score 1.743), gpu peak 12.1 GB, OOM 0. 같은 시간 예산이라 iter 수가 0단(2192)·1단(2109)보다 적음 (loop가 블록을 R번 돌려 ~1.6 s/iter) — 사다리 조건(시간 예산)은 같고 iter 수 차이는 metrics.json·RESULTS.md에 기록됨. best val (보고서용 아님): pcb 0.91/fail 0.50, pkg 1.00/0.56, ip 0.69/0.25 (`runs/2026-10-28/r3_loop_distill/log.txt`).
+- **r3 RL 시작** (23:06): iter 75까지 OOM 0, gpu peak 13.3 (iter 25) → 14.6 GB (iter 75), ~13 s/iter, grid capped 3, 선생님 교체 134, λ 1.16 (`runs/2026-10-28/r3_loop_rl/log.txt`). 0~2단 RL과 같은 메모리 추세 → 24 GB 안에서 끝날 것으로 봄 (확인은 `done:`의 `cuda_oom_skipped`). 끝 예상 ~00:25.
+- **eval 풀 `eval_pkg16_0` 완성** (18523 s = 5.1 h, F 284, g+p ok 0.64, count 25.9; `agent/logs/build_pools_v1_r3.log`) — 16칸 중 가장 김 (pcb16 2.8 h, pkg16_1 3.1 h). 남은 것: ip16 ×2, ip10_1.
+- RESULTS.md 재생성 (r3 distill 행 추가, eval 기록 0개 — 풀 대기).
+- 다음 라운드: r3 RL `done:` (~00:25)·`cuda_oom_skipped` 기록 → ip16 풀 시간 → 풀 다 끝나면 E0·단 평가 시작 확인 → 10/29 05:30 무렵 첫 DAILY.md.
 
 ## 라운드 13 (22:26 UTC~, 라운드 12 직후라 짧음)
 - 상태 정상: 드라이버 살아 있음, pod mem 19.5~24.3 GiB / 60, oom_kill 0. CPU 프로세스 4 (풀 worker 2 + certify 2) → 새 실험 안 띄움.
