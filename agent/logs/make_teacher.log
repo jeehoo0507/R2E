@@ -24,3 +24,51 @@
 [     9s] train_pkg10_0    exists      0s 
 [     9s] train_pcb10_2    exists      0s 
 [     9s] train_pcb10_0    exists      0s 
+[   640s] train_ip12_0     built     632s g+p ok 0.56 LS ok 0.50 LS/g+p 0.34032269192678716 improved 0.875 teacher count 11.00
+[   640s] train_ip12_2     exists      0s 
+[   640s] train_pcb8_1     exists      0s 
+[   640s] train_pkg8_0     exists      0s 
+[   946s] train_pcb12_2    built     937s g+p ok 0.75 LS ok 0.31 LS/g+p 0.6806060606060605 improved 0.6 teacher count 11.67
+[   946s] train_ip10_1     exists      0s 
+[   946s] train_pkg8_1     exists      0s 
+[   946s] train_pkg8_2     exists      0s 
+[  1032s] train_pcb8_2     built      86s g+p ok 1.00 LS ok 0.56 LS/g+p 0.8148860398860399 improved 0.6666666666666666 teacher count 6.12
+[  1141s] train_ip10_0     built     109s g+p ok 0.69 LS ok 0.69 LS/g+p 0.8025415444770284 improved 0.36363636363636365 teacher count 3.00
+[  1170s] train_pcb8_0     built      29s g+p ok 1.00 LS ok 0.81 LS/g+p 0.9395604395604397 improved 0.23076923076923078 teacher count 3.88
+[  1273s] train_ip8_1      built     103s g+p ok 0.56 LS ok 0.56 LS/g+p 0.8520847891917074 improved 0.2222222222222222 teacher count 2.44
+[  1296s] train_pcb10_1    built    1287s g+p ok 0.81 LS ok 0.25 LS/g+p 0.5112229102167183 improved 0.75 teacher count 17.92
+[  1306s] train_ip8_2      built      10s g+p ok 0.44 LS ok 0.44 LS/g+p 0.9523809523809523 improved 0.14285714285714285 teacher count 2.14
+[  1318s] train_ip8_0      built      12s g+p ok 0.62 LS ok 0.62 LS/g+p 0.975 improved 0.1 teacher count 2.50
+[  1325s] train_ip10_2     built      53s g+p ok 0.62 LS ok 0.62 LS/g+p 0.8442307692307693 improved 0.2 teacher count 2.80
+[  1337s] train_ip12_1     built     697s g+p ok 0.69 LS ok 0.69 LS/g+p 0.7351239669421488 improved 0.45454545454545453 teacher count 4.00
+[  3244s] train_pcb12_1    built    3235s g+p ok 0.75 LS ok 0.31 LS/g+p 0.6318421052631579 improved 0.8 teacher count 27.08
+done
+27 pool files -> data/teacher, LS 4x32, 4 workers
+[     3s] train_pcb12_2    exists      0s 
+[     3s] train_pkg12_1    exists      0s 
+[     3s] train_pcb12_1    exists      0s 
+[     3s] train_pkg10_1    exists      0s 
+[     3s] train_pcb10_1    exists      0s 
+[     3s] train_pkg10_2    exists      0s 
+[     3s] train_pkg10_0    exists      0s 
+[     3s] train_pcb10_2    exists      0s 
+[     3s] train_pcb10_0    exists      0s 
+[     3s] train_ip12_0     exists      0s 
+[     3s] train_ip12_2     exists      0s 
+[     3s] train_pcb8_1     exists      0s 
+[     3s] train_pkg8_0     exists      0s 
+[     3s] train_ip12_1     exists      0s 
+[     3s] train_ip10_1     exists      0s 
+[     3s] train_pkg8_1     exists      0s 
+[     3s] train_pkg8_2     exists      0s 
+[     3s] train_pcb8_2     exists      0s 
+[     3s] train_ip10_0     exists      0s 
+[     3s] train_pcb8_0     exists      0s 
+[     3s] train_ip8_1      exists      0s 
+[     3s] train_ip10_2     exists      0s 
+[     3s] train_ip8_2      exists      0s 
+[     3s] train_ip8_0      exists      0s 
+[     3s] train_pkg12_0    exists      0s 
+[     3s] train_pkg12_2    exists      0s 
+[     3s] train_pcb12_0    exists      0s 
+done
