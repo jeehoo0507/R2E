@@ -64,3 +64,6 @@
 [19:41:35] END train r0_coord (CERTIFY_WORKERS=2) rc=0 | mem 15.1 GiB / 60.0 GiB, oom_kill 0
 [19:41:35] START train r1_modal (CERTIFY_WORKERS=2) | mem 15.1 GiB / 60.0 GiB, oom_kill 0
 [19:41:35] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r1_modal --arm '--feat modal' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r1_modal/rung_stdout.log)
+[20:57:51] END train r1_modal (CERTIFY_WORKERS=2) rc=0 | mem 19.5 GiB / 60.0 GiB, oom_kill 0
+[20:57:51] START train r2_mott (CERTIFY_WORKERS=2) | mem 19.5 GiB / 60.0 GiB, oom_kill 0
+[20:57:51] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r2_mott --arm '--model mott' --day 2026-10-28 --pool runs/pool_v1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-28/r2_mott/rung_stdout.log)

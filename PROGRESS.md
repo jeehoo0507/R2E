@@ -1,7 +1,11 @@
-# PROGRESS (갱신 2026-10-28 20:18 UTC, 라운드 9)
+# PROGRESS (갱신 2026-10-28 21:14 UTC, 라운드 9)
 
 ## 라운드 9 (19:56 UTC~)
-- 상태 정상: 드라이버 살아 있음, pod mem 18.9 GiB / 60, oom_kill 0. 동시 CPU 프로세스 = 풀 worker 2 + certify 2 = 4 (QUEUE 한도 꽉 참 → 새 실험 안 띄움).
+- 상태 정상: 드라이버 살아 있음, pod mem 18.9 → 33.8 GiB / 60 (21:13, 16칸 풀 worker가 커지는 중), oom_kill 0. 동시 CPU 프로세스 = 풀 worker 2 + certify 2 = 4 (QUEUE 한도 꽉 참 → 새 실험 안 띄움).
+- **r1 (1단) 학습 끝** (20:57, rc 0): RL 413 iter / 1.27 h, best iter 200 (val score 1.737), cuda_oom_skipped 0, chunk 2, gpu peak 17.2 GB, 선생님 교체 319, λ 1.64, grid capped 217 step, 27개 풀 모두 F 상한 1.5x 도달 (`runs/2026-10-28/r1_modal_rl/metrics.json`). RL best val (iter 200, 보고서용 아님): pcb 0.89/fail 0.44, pkg 0.92/fail 0.56, ip 0.66/fail 0.38 vs 1단 distill best (iter 600: 1.06/0.38, 1.10/0.44, 0.73/0.31) → 개수는 줄고 fail은 늘어남, val score로는 distill(1.714)이 RL(1.737)보다 약간 나음. r0와 같은 패턴 (작업 격자 과적합 의심). 평가는 드라이버가 distill·rl 둘 다 eval 풀 완성 후 실행.
+- **r2 (2단 mott) RL 시작** (20:58): iter 50 OOM 0, gpu peak 13.8 GB, ~16.5 s/iter (0·1단 ~12 s보다 느림 → 1.25 h에 ~270 iter 예상; iter 수는 metrics.json에 기록). 끝 ~22:15 → 그다음 r3 smoke+학습.
+- RESULTS.md 재생성 (`collect_results.py`, eval 기록은 아직 0개 — 10/16칸 풀 대기).
+- 다음 라운드: r2 RL `done:` 기록 → r3 loop smoke 통과·학습 시작 확인 (`agent/logs/smoke_loop.log`) → pkg16 풀 완성 시간 기록.
 - r1 (1단 modal) RL: iter 150까지 OOM 0, gpu peak 13.1 → 16.2 GB (r0와 같은 추세), ~11.8 s/iter, `grid capped` 1 (iter 75) → 29 (iter 150). iter 100 val (보고서용 아님): count/g+p pcb 0.92 fail 0.69 / pkg 0.90 fail 0.69 / ip 0.66 fail 0.38 (`runs/2026-10-28/r1_modal_rl/log.txt`). r0 RL iter 100 (fail 0.62 / 0.88 / 0.25)와 같은 양상: 학습 배치 fail 0.01~0.12 vs val 정확 검사 fail 0.38~0.69.
 - eval 풀: pkg16 ×2 생성 중 (~18:08 시작, pcb16 실측 2.8 h 기준 ~21:00 전후 예상). 
 - 다음: r1 RL `done:` (~21:00) 기록 → r2 RL 시작·OOM 확인.
