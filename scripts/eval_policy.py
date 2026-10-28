@@ -122,7 +122,7 @@ def job(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default="runs/pool_v1")
-    ap.add_argument("--sets", default="eval_*", help="glob of pool files (without .pkl)")
+    ap.add_argument("--sets", default="eval_*", help="glob of pool files (without .pkl), comma-separated for several")
     ap.add_argument("--methods", default="", help="comma list of gp,greedy,ls,modal_rule")
     ap.add_argument("--policy", nargs="*", default=[], help="name=path/to/ckpt.pt")
     ap.add_argument("--samples", type=int, default=1, help="policy: best-of-S sampling (1 = greedy decoding)")
@@ -132,7 +132,7 @@ def main():
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
-    files = sorted(glob.glob(os.path.join(a.pool, a.sets + ".pkl")))
+    files = sorted({f for s in a.sets.split(",") for f in glob.glob(os.path.join(a.pool, s + ".pkl"))})
     files.sort(key=lambda f: -os.path.getsize(f))
     names = {"gp": "greedy+prune", "greedy": "greedy", "ls": "local_search", "modal_rule": "modal_rule"}
     methods = [(names[m], "") for m in a.methods.split(",") if m]

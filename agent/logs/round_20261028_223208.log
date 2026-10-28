@@ -8,3 +8,5 @@ error: Please commit or stash them.
 - **상태:** 파드 메모리 12.6 GiB / 60, oom_kill 0, 동시 CPU 프로세스는 한도 4 이하입니다.
 
 다음 라운드에서는 3단 RL 종료와 `cuda_oom_skipped`를 확인하고, ip16 풀 소요 시간을 기록하고, 풀이 다 끝나면 평가가 시작됐는지 봅니다. 첫 DAILY.md는 10/29 05:30 UTC 무렵에 씁니다.
+To https://github.com/jeehoo0507/R2E.git
+   12af30b..ec36819  main -> main

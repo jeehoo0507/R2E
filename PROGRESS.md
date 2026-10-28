@@ -1,4 +1,12 @@
-# PROGRESS (갱신 2026-10-28 23:24 UTC, 라운드 14)
+# PROGRESS (갱신 2026-10-28 23:30 UTC, 라운드 15)
+
+## 라운드 15 (23:25 UTC~, 라운드 14 직후라 짧음)
+- 상태 정상: 드라이버 살아 있음, pod mem 11.7 GiB / 60, oom_kill 0. GPU 18.6 GB (r3 RL).
+- r3 (3단 loop) RL iter 100: OOM 0, gpu peak 14.7 GB, grid capped 7, resume.pt iter 93. iter 100 val (보고서용 아님): pcb 0.99/fail 0.44, pkg 0.98/0.62, ip 0.69/0.12, val score 1.679 (new best; 0~2단 RL best 1.999 / 1.737 / 1.691보다 낮음, val 16문제라 잡음 큼) (`runs/2026-10-28/r3_loop_rl/log.txt`).
+- **드라이버 CPU 줄 수정** (`scripts/pipeline_day1.py`): r3 RL이 끝나면 (~00:25) GPU 줄의 certify 2개가 비는데, 옛 순서는 ip16 ×2·ip10_1 풀이 다 끝날 때(~05시 예상)까지 아무 평가도 안 해서 CPU 2칸이 ~4.5 h 놀았음. 이제 풀 생성은 별도 스레드로 두고, **모든 단 학습이 끝나면 이미 만든 eval 풀 9개**(pcb·pkg 10/16 각 2, ip10_0)에서 단 평가 (r0~r3 distill·rl, r3 @R2/4/16) → E0 gp/modal_rule을 먼저 돌림. 평가 기록은 파일이 있으면 건너뛰므로 뒤의 원래 순서는 남은 풀만 채움. 동시 CPU 프로세스는 풀 2 + 평가 2 = 4 (QUEUE 한도 그대로). `eval_policy.py --sets`는 쉼표로 여러 glob 허용. mock 실행으로 순서 확인, 드라이버 23:27 재시작 (풀 생성·r3 학습 ATTACH, 끊김 없음).
+- 결정: 평가 순서만 앞당김 — 실험 조건(풀·검사·rounds·workers)은 그대로라 보수적 변경. 풀 파일은 .json이 써진 것만 (build_pools가 .pkl 다음에 씀) 골라 반쯤 쓴 풀을 읽지 않음.
+- 관찰 (계획용, 보고서 숫자 아님): eval 풀 생성 시간(cutting-plane 안 g+p, 16칸 2.8~5.1 h/풀)으로 보면 16칸 E0 gp·LS는 풀마다 몇 시간씩 걸림 → 16칸 E0 전체가 10/29 하루 이상 걸릴 수 있음. 정책 평가는 롤아웃이 싸서 훨씬 빠를 것 (val 48문제가 학습 중 수십 초) → 단 평가를 E0보다 먼저 둔 이유.
+- 다음 라운드: r3 RL `done:`(~00:25)·`cuda_oom_skipped` → 드라이버 로그에 `early evals while pools build` 시작 확인 → 첫 단 평가 기록 → RESULTS.md 평가 표 → 10/29 05:30 무렵 첫 DAILY.md.
 
 ## 라운드 14 (22:32~23:24 UTC)
 - 상태 정상: 드라이버 살아 있음, pod mem 18.0 → 12.6 GiB / 60, oom_kill 0. CPU 프로세스 ≤4 → 새 실험 안 띄움.
