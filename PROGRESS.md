@@ -1,4 +1,11 @@
-# PROGRESS (갱신 2026-10-28 18:40 UTC, 라운드 7)
+# PROGRESS (갱신 2026-10-28 19:25 UTC, 라운드 8)
+
+## 라운드 8 (18:52 UTC~)
+- 상태 정상: 드라이버 살아 있음, pod mem 15.5 GiB / 60, oom_kill 0. GPU 줄 r0 RL 진행 중 (18:25~).
+- r0 RL (격자 수정 후): iter 225까지 OOM 0, gpu peak 16.6 GB (iter 100 15.2 → 천천히 증가, 상한 1.5x F0이 걸려서 더 안 커질 것), ~13 s/iter. `grid capped` 6 (iter 100) → 73 (iter 225): 상한 뒤 실패가 빠르게 쌓임.
+- r0 RL iter 200 val (보고서용 아님): pcb count/g+p 1.00 fail 0.50 / pkg fail 1.00 (성공 0개라 count nan) / ip 0.85 fail 0.25. iter 100 대비 pcb fail 0.62→0.50, pkg 0.88→1.00. 학습 배치의 fail (작업 격자 기준) 0.05~0.21 vs val 정확 검사 fail 0.25~1.00 → **정책 해가 작업 격자에는 맞지만 700점 검사에서 떨어지는 간극**이 RL에서도 그대로. 보고서 고찰 후보 (격자 과적합). λ 1.0→1.62 계속 상승 (목표 0.02).
+- eval 풀: `eval_pcb16_0` 9941 s, `eval_pcb16_1` 10392 s에 완성 (g+p ok 0.80·0.76). 지금 pkg16 ×2 진행 → 그다음 ip16 ×2, ip10_1. 실측으로 16칸 시간 추정을 고침 (PROPOSALS.md 갱신: 이전 6~9 h/개 추정 → 실제 ~2.8 h). 10·16칸 풀 전체 끝은 10/29 새벽 예상 → 그때 E0·단 평가 시작.
+- 결정: 아무 설정도 바꾸지 않음 — RL 중간 val이 나빠도 학습법 변경은 금지 (AGENT_PROMPT), r0 RL 끝 체크포인트로 평가한다.
 
 - **RL OOM 원인 찾음 (이전 STUCK 해제, 확인 중):** RL은 정확 검사가 실패할 때마다 풀에 격자점을 추가하는데 (`batch.add_freqs`), `--chunk` 도입 후 chunk마다 따로 호출되어 매번 그 chunk의 가장 긴 목록으로 모든 인스턴스를 패딩 → step당 F가 chunk 수만큼 더 늘어남. 2단 RL(18:10, chunk 2)에서 pkg10_1 F 267→511 (iter 25), gpu peak 18.3 GB, 18:17 메모리 매핑 실패 경고. dense 풀과 rollout 블록 [E,F,n,k]가 모두 F에 비례하므로 chunk를 줄여도 결국 OOM. 즉 "같은 갱신"이라는 라운드 6 설명이 틀렸었음 (격자 증가가 달랐다).
 - 수정 3 (`train.py`): (1) 격자점은 step 끝에 한 번만 추가 (chunk 전 1-pass와 같은 동작), (2) `--grid_growth 0.5`: 풀마다 처음 F의 1.5배까지만 (넘는 실패도 정확 검사로 실패 처리 → 보상은 정직), (3) step 안 CUDA OOM이면 그 step을 버리고 (갱신 없음) chunk 반으로, 20번 넘으면 중단. iter 로그에 `grid capped`·`oom`, metrics.json에 `pool_F`(풀별 처음/끝 F)·`cuda_oom_skipped`·`chunk_final`. CPU smoke `scripts/smoke_rl_grid.py` 통과 (OOM 주입 → step 건너뜀·chunk 2→1·F 불변 / 상한 0.5 지킴). 상한 없이도 작은 smoke에서 pcb8_0 F 187→259 (6 iter) → 상한은 필요.

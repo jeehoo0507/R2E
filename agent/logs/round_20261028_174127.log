@@ -29,3 +29,5 @@ A CPU smoke test (`scripts/smoke_rl_grid.py`) passes, including an injected OOM.
   - **(c)** cut the 20-cell evaluation set from 25 to 8 problems per file.
 
 The next round will check r0's finished RL run (around 19:45) and confirm r1 starts.
+To https://github.com/jeehoo0507/R2E.git
+   1372119..ab61d2f  main -> main
