@@ -28,7 +28,9 @@
   {"name": "r0_coord_s2", "arm": "--feat coord", "seed": 2},
   {"name": "r1_modal_s2", "arm": "--feat modal", "seed": 2},
   {"name": "r2_mott_s2", "arm": "--model mott", "seed": 2},
-  {"name": "r3_loop_s2", "arm": "--model loop", "seed": 2}
+  {"name": "r3_loop_s2", "arm": "--model loop", "seed": 2},
+  {"name": "r2a_s1", "arm": "--model mott --fc_bias", "seed": 1},
+  {"name": "r2a_s2", "arm": "--model mott --fc_bias", "seed": 2}
  ],
  "cpu": [
   {

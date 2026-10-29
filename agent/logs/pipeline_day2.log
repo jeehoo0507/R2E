@@ -22,3 +22,18 @@
 [06:51:17] END collect_results rc=0 | mem 13.3 GiB / 60.0 GiB, oom_kill 0
 [06:52:47] START day1 eval10 r3_loop_distill | mem 13.2 GiB / 60.0 GiB, oom_kill 0
 [06:52:47] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_distill=runs/2026-10-28/r3_loop_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_distill  (log agent/logs/side_evals.log)
+[07:15:40] END train r2a (CERTIFY_WORKERS=2) rc=0 | mem 13.5 GiB / 60.0 GiB, oom_kill 0
+[07:15:40] START train bp_park (CERTIFY_WORKERS=2) | mem 13.5 GiB / 60.0 GiB, oom_kill 0
+[07:15:40] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name bp_park --arm '--model park_am --baseline rollout --imit 0' --day 2026-10-29 --pool runs/pool_v1 --seed 0 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-29/bp_park/rung_stdout.log)
+[07:15:51] END day1 eval10 r3_loop_distill rc=0 | mem 13.1 GiB / 60.0 GiB, oom_kill 0
+[07:15:51] START collect_results | mem 13.1 GiB / 60.0 GiB, oom_kill 0
+[07:15:51] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[07:15:57] END collect_results rc=0 | mem 13.1 GiB / 60.0 GiB, oom_kill 0
+[07:17:27] START eval10 r2a_rl | mem 14.1 GiB / 60.0 GiB, oom_kill 0
+[07:17:27] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r2a_rl=runs/2026-10-29/r2a_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-29/r2a_rl  (log runs/2026-10-29/r2a_rl/eval.log)
+[07:28:45] END eval10 r2a_rl rc=0 | mem 13.9 GiB / 60.0 GiB, oom_kill 0
+[07:28:45] START collect_results | mem 13.9 GiB / 60.0 GiB, oom_kill 0
+[07:28:45] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[07:28:52] END collect_results rc=0 | mem 13.9 GiB / 60.0 GiB, oom_kill 0
+[07:30:22] START day1 eval10 r2_mott_distill | mem 26.2 GiB / 60.0 GiB, oom_kill 0
+[07:30:22] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r2_mott_distill=runs/2026-10-28/r2_mott_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_distill  (log agent/logs/side_evals.log)

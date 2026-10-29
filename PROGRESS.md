@@ -1,6 +1,17 @@
-# PROGRESS (갱신 2026-10-29 06:55 UTC, 라운드 43)
+# PROGRESS (갱신 2026-10-29 07:40 UTC, 라운드 44)
 
-**지금 (06:55):** GPU **r2a** RL it 125 (OOM 0, gpu peak 15.6 GB, 끝 ~07:20 예상) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (day1 eval10 r3_loop_distill, 06:52~ → r2_mott_distill → **r2a 10칸 평가** (학습 끝나면 먼저) → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 13 GiB / 60, oom_kill 0.
+**지금 (07:40):** GPU **bp_park** distill (07:15~, gpu peak 12.1 GB, OOM 0; RL 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r2_mott_distill 07:30~ → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + bp_park RL 때 certify 2. GPU 큐: bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → **r2a seed 1·2 (새로 추가)**. pod 26 GiB / 60, oom_kill 0.
+
+## 라운드 44 (07:09~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.1 GiB / 60, oom_kill 0.
+- **r2a 학습 끝** (07:15): RL 361 iter / 1.27 h, best it 300 score 1.778, replaced 310, gpu peak 16.6 GB, OOM 0 (`runs/2026-10-29/r2a_rl/log.txt`). distill (1603 iter / 0.77 h) + RL 모두 r2·r3a와 같은 예산. 드라이버가 bp_park 시작 (distill 단계 OOM 0).
+- **r2a 10칸 평가 끝** (07:28, `runs/2026-10-29/r2a_rl/eval/`, 각 판 50문제, 0.30~1.12 s/문제) → RESULTS 재생성 (드라이버). 성공률 / 개수÷g+p / 개수÷E0+: ip 1.00 / 0.74 / 1.03 · pcb 0.96 / 0.82 / 0.20 · pkg 0.84 / 0.87 / 0.58.
+  - **r2a vs 편향 없는 r2_mott_rl (짝지은 bootstrap 95% CI):** 성공률 차 ip +0.00 · **pcb +0.08 [+0.02, +0.16] · pkg +0.12 [+0.02, +0.24]**; 개수 비 ip 1.011 [0.995, 1.027] · pcb 1.003 [0.953, 1.051] · pkg 0.987 [0.931, 1.047]. → **2단에서는 주파수 궁합 편향이 pcb·pkg 성공률을 올림 (CI가 0 밖), 개수는 같음.** 3단(r3a vs r3)에서는 유의한 차이 없음. 주의: seed 1개; r2_mott_rl은 사다리 중 pkg 성공률이 낮은 편 (0.72 vs r3 0.88)이라 r2a는 r3 수준으로 "따라잡은" 것일 수 있음 → seed로 확인 필요.
+  - **r2a vs E0+:** ip 성공률 차 +0.00, 개수 비 1.029 [1.000, 1.067] → **ip에서 E0+를 넘지 못함** (2·3단 모두 같은 개수 근처). pcb 0.203 · pkg 0.583 (E0+가 종류를 섞지 못하는 판). 그대로 보고.
+- **day1 eval10 r3_loop_distill 끝** (07:15, `runs/2026-10-28/r3_loop_distill/eval/`): 성공률 ip 0.82 · pcb 0.84 · pkg 0.80 → 3단은 RL이 ip 성공률을 0.82 → 0.98로 올림 (그 밖은 RESULTS 표).
+- 결정: **최종 후보(QUEUE 03:10 3번 시드 대상)를 r2a로 잠정 선택, GPU 큐 끝에 r2a seed 1·2 추가** (`agent/day2_queue.json`). 이유: 지금까지 바꾼 아키텍처 중 부모 대비 CI가 0 밖인 개선은 r2a 성공률뿐 (r3a는 없음). 큐 맨 끝이라 앞 순서(선행 연구 기준선 → 사다리 seed)를 바꾸지 않음; (c) 결과로 후보가 바뀌면 이 두 줄만 교체.
+- 결정: (c) "여러 수 초안 검산 루프"는 아직 만들지 않음 — 큐 앞(bp_park → bm_manoharan, ~4 h)이 QUEUE 03:30 지시이고, (c)는 PROPOSALS 33줄대로 1수 검산이 이미 입력에 있어 새것이 되려면 다수 수 rollout(CPU 비용)이 필요. 설계만 다음 라운드에 PROPOSALS에 적음.
+- 다음 라운드: bp_park distill→RL OOM 확인 (RL certify 2개 시작 시 CPU 4 확인), (c) 설계 메모. bp_park 끝(~09:20) → 10칸 평가 → "선행 연구 재구현" 표.
 
 ## 라운드 43 (06:33~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 26.2 GiB / 60, oom_kill 0. r2a RL it 100 val score 1.976 (new best), it 125.
