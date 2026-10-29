@@ -1,6 +1,15 @@
-# PROGRESS (갱신 2026-10-29 04:45 UTC, 라운드 36)
+# PROGRESS (갱신 2026-10-29 04:58 UTC, 라운드 37)
 
-**지금 (04:45):** GPU r3a **RL** it 225 (2845 s, oom 0, gpu peak 17.2 GB) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (3/6 끝: pcb10_0·pcb10_1·pkg10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 15.9 GiB, oom_kill 0.
+**지금 (04:58):** GPU r3a **RL** it 275 (3514 s, oom 0, gpu peak 17.2 GB) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (5/6 끝, 남은 것 ip10_1) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 16.3 GiB, oom_kill 0.
+
+## 라운드 37 (04:57~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.3 GiB / 60, oom_kill 0. r3a RL it 275 (`runs/2026-10-29/r3a_rl/log.txt`).
+- **종류 2 g+p ip10_0·pkg10_1 끝 → E0+ 기록 5/6** (`collect_results.py`, RESULTS 재생성; `runs/2026-10-29/baselines_e0plus/eval/`):
+  - **ip 10 (25문제, 파일 0)**: E0+ 성공 1.00, 개수 7.92 (모두 종류 0) vs g+p 0.40 → E0+/g+p 개수 비 0.765. 정책 vs E0+: 성공률 차 모두 +0.00, **개수 비 0단 1.437 [1.260, 1.628] · 1단 1.206 [1.112, 1.304] · 2단 1.019 [0.979, 1.064] · 3단 1.026 [0.997, 1.072]** → ip에서는 E0+가 강한 기준선이고, 2·3단만 E0+와 같은 개수 (CI가 1 포함), 0·1단은 더 많이 씀. 사다리 효과가 E0+ 기준으로는 ip에서 보임 (g+p 기준으로는 안 보였던 것). 정책이 E0+를 넘지는 못함 — 그대로 보고.
+  - **pkg 10 (50문제, 파일 0·1)**: E0+ 성공 0.82, 개수 12.44, E0+/g+p 개수 비 1.586 [1.372, 1.836]. 정책 vs E0+: 개수 비 0.53~0.59, 성공률 차 −0.14~+0.06 (모두 CI 0 포함).
+  - "판 종류마다 맞는 decap 종류" 표: 단일 종류 최선 ip → 0 (1.00), pcb → 1 (0.64), pkg → 0 (0.74), pkg는 E0+가 고른 종류가 0·1 섞임 (0.41 / 0.54).
+- 결정: 새 실험·코드 변경 없음 (CPU 4칸 꽉 참; 남은 판단은 r3a RL `done:` ~05:15 → 10칸 평가, ip10_1 종류 2 → E0+ 6/6).
+- 다음 라운드: r3a 10칸 평가 기록 → ablation 표 (r3a vs r3) + E0+ 대비 판정 → RESULTS 재생성. ip10_1 종류 2 끝나면 ip E0+ 50문제로.
 
 ## 라운드 36 (04:45~ UTC, 라운드 35 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.9 GiB / 60, oom_kill 0. r3a RL it 225 (train_pcb10_2 cert-bad 5, OOM 0, grid capped 51). E0+ 기록 3/6 그대로 → 새로 끝난 실험 없음, RESULTS 재생성 없음.

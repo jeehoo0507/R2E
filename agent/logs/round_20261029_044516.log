@@ -7,3 +7,5 @@ This round was a status check only. No experiment finished, so RESULTS.md was no
 - **CPU:** the type-aware greedy baseline (E0+) has results for 3 of the 6 board files. The remaining runs (single decap type 2 on ip10_0, ip10_1 and pkg10_1) are still going.
 - **Decision (logged in PROGRESS.md):** no new experiments or code changes this round. All 4 CPU slots are in use, and the next real decision depends on r3a RL finishing, expected around 05:15 UTC. After that I'll run r3a's evaluation on the 10-cell boards and make the call.
 - **Committed and pushed:** PROGRESS.md round 36 is on `r2e main`. DAILY.md is next due around 2026-10-30 01:50 UTC.
+To https://github.com/jeehoo0507/R2E.git
+   6b8f473..2ced35a  main -> main
