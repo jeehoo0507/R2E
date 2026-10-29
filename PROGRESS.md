@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 08:00 UTC, 라운드 45)
+# PROGRESS (갱신 2026-10-29 08:15 UTC, 라운드 46)
 
-**지금 (08:00):** GPU **bp_park** distill it 1550 (07:15~, gpu peak 12.1 GB, OOM 0; RL 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r1_modal_distill 07:56~ → r0_coord_distill → r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → **r2am (새로 추가, arch c')** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 17.7 GiB / 60, oom_kill 0.
+**지금 (08:15):** GPU **bp_park** RL it 25 (08:01~, gpu peak 13.0 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r0_coord_distill → r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.6 GiB / 60, oom_kill 0.
+
+## 라운드 46 (08:10~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 14.6 GiB / 60, oom_kill 0.
+- **bp_park distill 끝** (08:01, `runs/2026-10-29/bp_park_distill/log.txt`): 2210 iter / 0.77 h (다른 run과 같은 시간 예산; 모델이 작아 iter가 더 많음), best it 1300 score 2.921, gpu peak 12.1 GB. 마지막 val (16문제, 보고서용 아님): pcb 7.99/fail 0.62 · pkg 5.67/0.50 · ip 0.75/0.25 → 좌표 포인터 정책은 증류 뒤 pcb·pkg에서 개수가 매우 많음 (r2a distill val pcb 1.04 · pkg 1.07). RL 시작 (rollout 기준선, `--imit 0`), it 25: count/ref 2.19, fail 0.20, OOM 0, 25 iter당 577 s (r2a 403 s보다 느림 — rollout 기준선 greedy 해 계산 때문으로 보임; 시간 예산 1.25 h는 같음).
+- **day1 eval10 r1_modal_distill 끝** (08:12, `runs/2026-10-28/r1_modal_distill/eval/`, 각 판 50문제) → `collect_results.py`로 RESULTS 재생성. 성공률 / 개수÷g+p / 개수÷E0+: ip 1.00 / 0.91 / 1.59 · pcb 0.88 / 1.08 / 0.24 · pkg 0.90 / 1.13 / 0.82. → 1단에서 RL은 개수를 크게 줄이지만 (ip ÷E0+ 1.59→1.23, pcb ÷g+p 1.08→0.75, pkg 1.13→0.75) **pkg 성공률은 떨어뜨림 (0.90→0.68)**; pcb 성공률은 올림 (0.88→0.98). 2·3단은 RL이 성공률을 올리거나 유지 (라운드 44·45) — 1단만 개수↔성공률 맞바꿈. seed 1개라 사다리 seed 1·2로 확인.
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸 꽉 참 (certify 2 + 드라이버 CPU 줄 1 + side16_gp 1), GPU는 bp_park, 다음 판정(선행 연구 재구현 표)은 bp_park 10칸 평가가 있어야 가능.
+- 다음 라운드: bp_park RL 진행·OOM 확인, r0_coord_distill 10칸 평가 기록 (~08:35). bp_park 끝(~09:20) → 10칸 평가 → "선행 연구 재구현" 표 (bp_park vs E0+·r2a).
 
 ## 라운드 45 (07:47~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 17.7 GiB / 60, oom_kill 0. bp_park distill it 1550 val (16문제, 보고서용 아님): pcb 3.74/fail 0.62 · pkg 1.43/0.69 · ip 0.74/0.25.

@@ -28,3 +28,5 @@ error: Please commit or stash them.
 - bp_park가 끝나면 10칸 평가 후 "선행 연구 재구현" 표를 만듭니다.
 
 DAILY.md는 01:50 UTC에 썼으므로, 24시간이 되는 10/30 01:50 이후에 새로 씁니다.
+To https://github.com/jeehoo0507/R2E.git
+   a76fed1..61cd782  main -> main
