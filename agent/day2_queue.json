@@ -15,6 +15,11 @@
    "name": "bp_park",
    "arm": "--model park_am --baseline rollout --imit 0",
    "seed": 0
+  },
+  {
+   "name": "bm_manoharan",
+   "arm": "--model manoharan",
+   "seed": 0
   }
  ],
  "cpu": [

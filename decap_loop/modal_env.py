@@ -39,12 +39,18 @@ def feat_dim_any(cfg: PDNConfig, mode: str):
         dm, de = modal_dims(T)
         base = feat_dim(cfg, "coord") if mode == "modal" else 4 + T + (2 * cfg.n_feat_freq + 3)
         return base + K_PORT * (dm + de) + 2 * (T + 1)
+    if mode == "manoharan":   # prior-work baseline B-Manoharan (baselines_ml/manoharan.py)
+        from baselines_ml.manoharan import feat_dim as mfd
+        return mfd(cfg)
     return feat_dim(cfg, mode)
 
 
 def make_env(batch, inst, cfg, feat_mode, **kw):
     if feat_mode in ("modal", "modal_only"):
         return ModalEnv(batch, inst, cfg, feat_mode=feat_mode, **kw)
+    if feat_mode == "manoharan":
+        from baselines_ml.manoharan import ManoharanEnv
+        return ManoharanEnv(batch, inst, cfg, **kw)
     return Env(batch, inst, cfg, feat_mode=feat_mode, **kw)
 
 

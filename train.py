@@ -83,9 +83,10 @@ def parse():
     p.add_argument("--n_probe", default="1-3")
     p.add_argument("--difficulty", default="0.02-0.2", help="(no pool) target level u (0 = hardest)")
     p.add_argument("--max_steps", type=int, default=64)
-    p.add_argument("--feat", choices=["phys", "coord", "mott", "modal", "modal_only"], default="phys")
-    p.add_argument("--model", choices=["grid", "mott", "loop", "park_am"], default="grid",
-                   help="mott/loop imply --feat mott; park_am (prior-work baseline B-Park, baselines_ml/park_am.py) --feat coord")
+    p.add_argument("--feat", choices=["phys", "coord", "mott", "modal", "modal_only", "manoharan"], default="phys")
+    p.add_argument("--model", choices=["grid", "mott", "loop", "park_am", "manoharan"], default="grid",
+                   help="mott/loop imply --feat mott; park_am (prior-work baseline B-Park, baselines_ml/park_am.py) --feat coord; "
+                   "manoharan (B-Manoharan, baselines_ml/manoharan.py: fixed port order, type-or-skip) --feat manoharan")
     p.add_argument("--baseline", choices=["group", "rollout"], default="group", help="rl advantage: group = normalised "
                    "within the M samples of an instance (POMO, ours); rollout = R - R(greedy rollout of a frozen copy, "
                    "replaced at every new best validation) (Kool 2019 / Park 2022, B-Park)")
@@ -131,6 +132,9 @@ def make_policy(cfg, a):
         lo, hi = rng_range(a.get("loop_train", "2-8"))
         return LoopMoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], heads=a["heads"],
                         r_train=(lo, hi), r_eval=a.get("loop_eval", 8), fc=a.get("fc_bias", False))
+    if a.get("model") == "manoharan":
+        from baselines_ml.manoharan import ManoharanNet
+        return ManoharanNet(cfg.n_types, cfg.n_feat_freq, d=a["d"], heads=a["heads"])
     if a.get("model") == "park_am":
         from baselines_ml.park_am import ParkAM
         return ParkAM(feat_dim_any(cfg, a["feat"]), cfg.n_types, d=a["d"], layers=a["layers"], heads=a["heads"])
@@ -202,6 +206,8 @@ def main():
         args.feat = "mott"
     elif args.model == "park_am":
         args.feat = "coord"
+    elif args.model == "manoharan":
+        args.feat = "manoharan"
     pin_threads()
     os.makedirs(args.out, exist_ok=True)
     log = Tee(os.path.join(args.out, "log.txt"))
@@ -319,7 +325,11 @@ def main():
             ib = torch.from_numpy(rng.permutation(batch.B)[:args.B]).to(dev)
             n_ref = tch["gp"][ib].clamp(min=1).float()
             # the imitation target: replay of the stored best-known solution (greedy order + prune)
-            teach = trajectory_to(batch, cfg, ib, tch["occ"][ib], max_steps=args.max_steps)
+            if args.model == "manoharan":   # the teacher solution replayed in the fixed port order
+                from baselines_ml.manoharan import manoharan_teacher
+                teach = manoharan_teacher(batch, cfg, ib, tch["occ"][ib], max_steps=args.max_steps)
+            else:
+                teach = trajectory_to(batch, cfg, ib, tch["occ"][ib], max_steps=args.max_steps)
         else:
             H, W = (int(x) for x in rng.integers(smin, smax + 1, size=2))
             batch = sample_batch(args.B, H, W, cfg, rng, device=dev, **kw)
