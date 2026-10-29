@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 05:48 UTC, 라운드 40)
+# PROGRESS (갱신 2026-10-29 06:04 UTC, 라운드 41)
 
-**지금 (05:48):** GPU **r2a** distill it 1175 (05:13 시작, 2단 + `--fc_bias`, val best it 1100 score 1.856, OOM 0, gpu peak 12.1 GB; RL ~05:58 시작 예상) · CPU = r2a 학습 (RL부터 certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, 37분째 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 23.7 GiB / 60, oom_kill 0.
+**지금 (06:04):** GPU **r2a** RL 시작 (~06:00, distill 끝: 1603 iter / 0.77 h, best it 1500 score 1.843, OOM 0, gpu peak 12.1 GB; RL init = distill best.pt) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, 53분째, 기록 아직 없음 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 26.1 GiB / 60, oom_kill 0, load 3.3.
+
+## 라운드 41 (06:02~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 26.1 GiB / 60, oom_kill 0.
+- **r2a distill 끝** (`runs/2026-10-29/r2a_distill/log.txt`): 1603 iter / 0.77 h, best it 1500 score 1.843 (r3a distill과 같은 예산). 마지막 val (16문제, 보고서용 아님): pcb 1.035/fail 0.75 · pkg 1.071/0.50 · ip 0.691/0.12. RL이 best.pt에서 시작, certify 2.
+- 새로 끝난 평가 없음 → RESULTS 재생성 없음.
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸 (r2a certify 2 + e0plus16 1 + side16_gp 1) 꽉 참. r3a 10칸 평가는 드라이버가 e0plus16 pcb16_0 종류 0 뒤에 자동 시작.
+- 다음 라운드: 라운드 38과 같음 (r3a 10칸 평가 기록 → ablation 표 r3a vs r3 + E0+ 대비 판정 → RESULTS 재생성; r2a RL OOM 확인, 끝 ~07:20 예상).
 
 ## 라운드 40 (05:47~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, load 3.6, pod 23.7 GiB / 60, oom_kill 0. 새로 끝난 실험 없음 → RESULTS 재생성 없음.
