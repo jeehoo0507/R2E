@@ -107,6 +107,32 @@ def ladder_table(recs):
     return lines + [""]
 
 
+def type_table(recs):
+    """Share of each decap type among the placed decaps (record occ: cell -> type, -1 empty), split by
+    whether the exact check passed. Library per kind in decap_loop/techs.py (type 0 = largest C)."""
+    acc = defaultdict(lambda: defaultdict(list))
+    for r in recs:
+        if "occ" not in r:
+            continue
+        occ, ok = np.asarray(r["occ"]), np.asarray(r["ok"], bool)
+        for tag, sel in (("성공", ok), ("실패", ~ok)):
+            acc[(r["tech"], int(r["size"]))][(r["method"], tag)].append(occ[sel])
+    if not acc:
+        return []
+    lines = ["## decap 종류 비율 (놓인 decap 중, 정확 검사 성공/실패 문제별; 종류 0 = C가 가장 큰 것, `decap_loop/techs.py`)", "",
+             "| 판 | 방법 | 문제 | 문제 수 | 평균 개수 | 종류 0 | 종류 1 | 종류 2 |", "|---|---|---|---|---|---|---|---|"]
+    for key in sorted(acc):
+        for (m, tag) in sorted(acc[key], key=lambda k: (k[0] != "greedy+prune", k[0], k[1])):
+            o = np.concatenate(acc[key][(m, tag)])
+            if len(o) == 0:
+                continue
+            placed = o[o >= 0]
+            share = np.bincount(placed, minlength=3) / max(len(placed), 1)
+            lines.append(f"| {key[0]} {key[1]} | {m} | {tag} | {len(o)} | {(o >= 0).sum(1).mean():.1f} | "
+                         + " | ".join(f"{s:.2f}" for s in share[:3]) + " |")
+    return lines + [""]
+
+
 def train_table():
     lines = []
     files = sorted(glob.glob("runs/**/metrics.json", recursive=True))
@@ -151,6 +177,7 @@ def main():
              "## 평가 (정확 검사)", ""]
     lines += ladder_table(recs)
     lines += eval_tables(recs)
+    lines += type_table(recs)
     lines += train_table()
     lines += teacher_table()
     open(a.out, "w").write("\n".join(lines) + "\n")
