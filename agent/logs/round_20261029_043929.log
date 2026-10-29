@@ -10,3 +10,5 @@ error: Please commit or stash them.
   - **한 종류만 쓸 때 가장 잘 되는 종류가 판 종류마다 다릅니다:** pcb는 종류 1, pkg와 ip는 종류 0입니다. QUEUE 03:15 4번이 요구한 이 대비 문장은 이제 RESULTS에 자동으로 생성됩니다.
 - **결정:** 새 실험과 코드 변경은 하지 않았습니다. CPU 4칸이 모두 차 있고, 다음 판정(r3a 10칸 평가 → 편향 없는 r3 및 E0+와 비교)은 r3a RL이 끝나는 ~05:15 이후에 가능합니다.
 - **남은 것:** ip10_0, ip10_1, pkg10_1의 종류 2 g+p가 끝나면 E0+가 6/6이 됩니다. 다음 DAILY.md는 10/30 01:50 무렵에 씁니다.
+To https://github.com/jeehoo0507/R2E.git
+   868a705..163ce03  main -> main

@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:40 UTC, 라운드 34)
+# PROGRESS (갱신 2026-10-29 04:43 UTC, 라운드 35)
 
-**지금 (04:40):** GPU r3a **RL** it 175 (2216 s, oom 0, gpu peak 16.4 GB; resume ckpt it 192) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (3/6 끝: pcb10_0·pcb10_1·pkg10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 22.3 GiB, oom_kill 0.
+**지금 (04:43):** GPU r3a **RL** it 200 (2503 s, oom 0, gpu peak 16.6 GB; resume ckpt it 192) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (3/6 끝: pcb10_0·pcb10_1·pkg10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 22.3 GiB, oom_kill 0.
+
+## 라운드 35 (04:42~ UTC, 라운드 34 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.6 GiB / 60, oom_kill 0. E0+ 기록 3/6 그대로 → 새로 끝난 실험 없음, RESULTS 재생성 없음.
+- r3a RL it 200 val (16문제, 보고서용 아님): pcb 1.124/fail 0.62 · pkg 1.000/0.88 · ip 0.691/0.12 → it 100 (score 1.678, best 유지)보다 나쁨. 같은 시점 r3 RL: pcb 0.990/0.75 · pkg 0.964/0.56 · ip 0.691/0.19 — r3도 best가 it 100이었음 → 두 run 모두 RL 후반에 val이 나빠지는 같은 모양, 평가는 best ckpt로 하므로 조건 동일.
+- 결정: 새 실험·코드 변경 없음 (라운드 23~34와 같은 이유: CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤).
+- 다음 라운드: 라운드 22와 같음 (남은 종류 2: ip10_0·ip10_1·pkg10_1 → E0+ 6/6).
 
 ## 라운드 34 (04:39~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 22.3 GiB / 60, oom_kill 0. r3a RL 마지막 줄 it 175 그대로 (resume ckpt it 192 저장).
