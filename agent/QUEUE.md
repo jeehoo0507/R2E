@@ -75,3 +75,31 @@ C. 재구현이 원 논문과 다를 수 있는 점(학습 예산, 행동 공간
    - **드라이버(GPU·CPU 큐)와 지금 도는 학습·평가는 멈추지 마라.** 끝까지 돌게 둔다. 사람이 나중에 결과를 회수한다. 큐 순서는 지금 그대로 둔다.
    - `agent/STOP` 파일을 만든다 (loop.sh가 다음 라운드에서 종료한다).
    - commit, push.
+
+## 2026-10-29 14:20 UTC — 종료 전 마지막 실험: 한 종류 빼고 학습 (위 08:40보다 우선)
+사람 결정: 보고서 주장을 "처음 보는 기술 종류로의 범용화"로 올린다. 같은 종류 안에서는 coord도 잘해서 표현 차이가 안 보였다. 종류를 넘어갈 때 coord는 무너지고 modal은 버티는지가 질문이다 (근거: research_notes/토큰 데이터 분석/결과.md, coord·loop-L은 종류 사이에서 뒤집히고 modal 참여비·1-step 효과는 전이됨).
+
+08:40의 "새 코드·실험 금지"는 이 실험에 한해 풀린다. 새 모델·새 학습 코드는 여전히 금지 (기존 `train.py` 옵션만 쓴다).
+
+1. **큐 추가.** `agent/day2_queue.json`의 `train` 맨 앞에 아래 9개를 이 순서로 넣는다 (지금 도는 `r0_coord_s1`은 그대로 끝까지 돌게 두고, 그다음부터 이것들이 먼저 돈다). 기존 seed 항목은 뒤로 밀린다.
+   - 학습 풀 이름 규칙 `train_{tech}{size}_{k}.pkl` (`scripts/build_pools.py`), tech = pcb·pkg·ip.
+   - **뺀 종류의 val도 빼야 한다** (best.pt 고르기에 뺀 종류가 새면 안 된다).
+   ```
+   {"name": "lo_ip_r0",  "arm": "--feat coord  --pool_glob train_pcb*.pkl,train_pkg*.pkl --val_pools val_pcb10_0,val_pkg10_0", "seed": 0}
+   {"name": "lo_ip_r1",  "arm": "--feat modal  --pool_glob train_pcb*.pkl,train_pkg*.pkl --val_pools val_pcb10_0,val_pkg10_0", "seed": 0}
+   {"name": "lo_ip_r2",  "arm": "--model mott  --pool_glob train_pcb*.pkl,train_pkg*.pkl --val_pools val_pcb10_0,val_pkg10_0", "seed": 0}
+   {"name": "lo_pcb_r0", "arm": "--feat coord  --pool_glob train_pkg*.pkl,train_ip*.pkl --val_pools val_pkg10_0,val_ip10_0", "seed": 0}
+   {"name": "lo_pcb_r1", "arm": "--feat modal  --pool_glob train_pkg*.pkl,train_ip*.pkl --val_pools val_pkg10_0,val_ip10_0", "seed": 0}
+   {"name": "lo_pcb_r2", "arm": "--model mott  --pool_glob train_pkg*.pkl,train_ip*.pkl --val_pools val_pkg10_0,val_ip10_0", "seed": 0}
+   {"name": "lo_pkg_r0", "arm": "--feat coord  --pool_glob train_pcb*.pkl,train_ip*.pkl --val_pools val_pcb10_0,val_ip10_0", "seed": 0}
+   {"name": "lo_pkg_r1", "arm": "--feat modal  --pool_glob train_pcb*.pkl,train_ip*.pkl --val_pools val_pcb10_0,val_ip10_0", "seed": 0}
+   {"name": "lo_pkg_r2", "arm": "--model mott  --pool_glob train_pcb*.pkl,train_ip*.pkl --val_pools val_pcb10_0,val_ip10_0", "seed": 0}
+   ```
+   arm의 다른 옵션은 사다리 0·1·2단과 같아야 한다 (`r0_coord`, `r1_modal`, `r2_mott`의 arm 그대로 + 풀·val 두 옵션만 추가). 같지 않으면 맞춰라.
+2. **확인 (GPU 쓰지 말 것, 지금 r0_coord_s1이 돌고 있다).** 각 glob이 실제로 고르는 학습 풀 파일 목록을 python으로 찍어 PROGRESS에 적는다 (빼려는 종류 파일이 0개, 남는 두 종류가 각각 기존과 같은 개수인지). `train.py`가 val_pools 2개를 받는지 코드로 확인. 문제가 있으면 큐에 넣지 말고 PROGRESS에 이유를 적는다.
+3. **평가는 드라이버가 자동으로 한다** (끝난 rung마다 10칸 eval 풀 전부). 판정에 쓰는 것은 **뺀 종류의 eval 50문제**다.
+4. **결과 표.** `scripts/collect_results.py`에 절 하나 추가: "한 종류 빼고 학습 (처음 보는 기술 종류)". 뺀 종류마다 lo_*_r0 / r1 / r2와 같은 단 전체 학습 run (r0_coord_rl, r1_modal_rl, r2_mott_rl), 종류 인식 greedy, modal_rule의 성공률 / 개수, 그리고 짝지은 bootstrap CI: (a) r1 vs r0, (b) r2 vs r0, (c) 각 lo run vs 같은 단 전체 학습 run (얼마나 떨어지나). 없는 결과는 "–".
+5. **자동 보고.** 루프가 끝난 뒤에도 결과가 올라오게, 백그라운드 감시 스크립트 하나 (`scripts/report_watch.py`, `scripts/bg.py`나 nohup로 띄움): 30분마다 새 eval json이 생겼으면 `collect_results.py` → `git add RESULTS.md runs/**/eval/*.json` 등 결과 파일만 → commit "results: auto (lo_*)" → push. 9개 rung 평가가 모두 끝나면 마지막으로 한 번 더 push하고 스스로 끝난다. 실패해도 드라이버는 건드리지 않는다. 띄운 뒤 첫 사이클이 도는지 (push 안 해도 되는 상태면 "변화 없음" 로그) 확인한다.
+6. **그다음 08:40 종료 절차를 한다** (루프 종료 요약에 이 실험의 예상 일정 포함: 학습 rung당 ~2 h, 9개 ~18 h + 평가). `agent/STOP`, commit, push.
+
+**늦어도 2026-10-29 16:30 UTC 전에 STOP까지 끝낸다.** 1~2번이 막히면 5·6번만 하고 끝낸다 (그때 감시 스크립트는 기존 run 결과만 올린다).
