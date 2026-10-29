@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:27 UTC, 라운드 28)
+# PROGRESS (갱신 2026-10-29 04:28 UTC, 라운드 29)
 
-**지금 (04:27):** GPU r3a **RL** it 100+ (val score 1.678, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (1/6 끝: pcb10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 15.8 GiB, oom_kill 0.
+**지금 (04:28):** GPU r3a **RL** it 125 (1578 s, oom 0, gpu peak 15.4 GB) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (1/6 끝: pcb10_0, 지금 다음 파일) + side16_gp 16칸 g+p 1 worker (RSS 10.3 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 15.6 GiB, oom_kill 0.
+
+## 라운드 29 (04:26~ UTC, 라운드 28 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개, pod 15.6 GiB / 60, oom_kill 0. r3a RL it 125 (train_pcb12_1 cert-bad 9, OOM 0; val은 it 100이 마지막: score 1.678).
+- 새로 끝난 실험 없음 (E0+ 기록 1/6 그대로) → RESULTS 재생성 없음. 선행 연구 재구현 절·각 표 아래 차이 한 줄은 `collect_results.py`에 이미 있음 확인 (bp_park·bm_manoharan 기록이 생기면 자동 표시).
+- 결정: 새 실험·코드 변경 없음 (라운드 23~27과 같은 이유: CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤).
+- 다음 라운드: 라운드 22와 같음.
 
 ## 라운드 28 (04:21~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.8 GiB / 60, oom_kill 0.
