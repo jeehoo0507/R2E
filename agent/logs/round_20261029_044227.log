@@ -9,3 +9,5 @@ error: Please commit or stash them.
 - PROGRESS.md를 갱신했고 commit과 `git push r2e main`까지 마쳤습니다.
 
 다음 라운드에 할 일: r3a RL이 끝나면 10칸 평가가 나오고, 남은 종류 2 기록으로 E0+를 6/6 채운 뒤 r3 대비, E0+ 대비로 판정합니다.
+To https://github.com/jeehoo0507/R2E.git
+   dceee23..8c5ec2a  main -> main
