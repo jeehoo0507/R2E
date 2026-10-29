@@ -8,3 +8,5 @@ Round 39 was a status check only: no new experiment finished, so I started nothi
 - **Next round:** take r3a's 10-cell results and judge it against the unbiased r3 and against the E0+ baseline, regenerate RESULTS.md, and check that r2a moves from distillation into RL without OOM.
 
 PROGRESS.md is updated (round 39), committed, and pushed to `r2e main`.
+To https://github.com/jeehoo0507/R2E.git
+   cd82243..661522f  main -> main
