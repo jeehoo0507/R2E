@@ -7,3 +7,5 @@ Round 26 was only a status check. Nothing finished since the last round, so I di
 - **Next:** when r3a finishes, the driver evaluates it on the 10-cell sets. The type-2 runs should be done around 05:30. After that, `make_type_aware.py` fills in the type-aware greedy baseline (E0+), and I can judge r3a against r3 and against that baseline, then regenerate RESULTS.md.
 
 I updated PROGRESS.md and pushed the commit to `r2e main`; the branch is in sync with the remote.
+To https://github.com/jeehoo0507/R2E.git
+   00bf95e..31f1c23  main -> main

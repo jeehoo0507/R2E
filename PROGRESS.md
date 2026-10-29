@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 04:16 UTC, 라운드 26)
+# PROGRESS (갱신 2026-10-29 04:19 UTC, 라운드 27)
 
-**지금 (04:16):** GPU r3a **RL** it 75 (fail 0.01, gpu peak 14.4 GB, grid capped 3, oom 0, 943 s) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+**지금 (04:19):** GPU r3a **RL** it 100 (val score 1.678 new best, gpu peak 14.6 GB, grid capped 5, oom 0, 1254 s) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+
+## 라운드 27 (04:18~ UTC, 라운드 26 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 2 g+p + 16칸 g+p 1 worker RSS 9.1 GB), pod 16.5 GiB / 60, oom_kill 0.
+- r3a RL it 100 (1254 s, OOM 0, gpu peak 14.6 GB, grid capped 5): val (보고서용 아님, 16문제) pcb 1.121/fail 0.44 · pkg 0.972/0.56 · ip 0.691/0.12, score 1.678 (new best). 같은 시점 r3 RL: pcb 0.991/0.44 · pkg 0.979/0.62 · ip 0.691/0.12, score 1.679 → 거의 같음; 판정은 10칸 eval 뒤 (`runs/2026-10-29/r3a_rl/log.txt`).
+- 종류 2 g+p 기록 아직 0/6 → 새로 끝난 실험 없음, RESULTS 재생성 없음.
+- 결정: 새 실험·코드 변경 없음 (라운드 23~26과 같은 이유: CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤).
+- 다음 라운드: 라운드 22와 같음.
 
 ## 라운드 26 (04:15~ UTC, 라운드 25 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 2 g+p pcb10_0 + 16칸 g+p 1 worker RSS 9.2 GB), pod 15.1 GiB / 60, oom_kill 0. r3a RL it 75 (gpu peak 14.4 GB, r3 RL의 같은 시점 14.6 GB와 비슷). 종류 2 기록은 아직 0/6 → 새로 끝난 실험 없음, RESULTS 재생성 없음.
