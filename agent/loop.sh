@@ -9,6 +9,7 @@
 set -u
 cd "$(dirname "$0")/.."
 END_DATE="${END_DATE:-2026-11-11}"     # no new rounds on/after this date (experiments freeze 11/10)
+ROUND_SLEEP="${ROUND_SLEEP:-900}"   # seconds between rounds
 MODEL_DEFAULT="${MODEL:-claude-opus-5-5}"   # routine rounds
 MODEL_HARD="${MODEL_HARD:-claude-opus-5-5}" # planning / stuck rounds (see pick_model)
 pick_model() {
@@ -47,5 +48,5 @@ while true; do
   git add -A . >>"$log" 2>&1
   git diff --cached --quiet || git commit -q -m "agent: round $round autosave ($ts)" >>"$log" 2>&1
   git push r2e main >>"$log" 2>&1 || true
-  sleep 120
+  sleep "${ROUND_SLEEP:-900}"   # 15 min between rounds; training runs ~2 h, so status-only rounds just burn usage
 done
