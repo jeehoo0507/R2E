@@ -1,6 +1,14 @@
-# PROGRESS (갱신 2026-10-29 10:45 UTC, 라운드 49)
+# PROGRESS (갱신 2026-10-29 11:25 UTC, 라운드 50)
 
-**지금 (10:45):** GPU **r2am** (arch c') RL (끝 ~11:25 예상, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry 10:34~ → [r2am 10칸 평가] …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: r2am → **bm_manoharan (다시)** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.1 GiB / 60, oom_kill 0.
+**지금 (11:25):** GPU **bm_manoharan** distill (11:22~, 끝 ~13:30 예상, 첫 backward 통과, OOM 0) · CPU = 드라이버 CPU 줄 1 (10칸 modal_rule 기준선 11:12~ → **r2am 10칸 평가** → e0plus16 pcb16_0 종류 0 retry2 …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 15.7 GiB / 60, oom_kill 0.
+
+## 라운드 50 (10:58~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 28.9 → 15.7 GiB / 60, oom_kill 0.
+- **r2am (arch c' `--mode_head`) 학습 끝** (11:22, `runs/2026-10-29/r2am_rl/log.txt`): RL 356 iter / 1.27 h, best it 200 score 1.644, replaced 291, grid capped 139, gpu peak 16.6 GB, OOM 0. 다른 run과 같은 예산 (r2a: 361 iter, best it 300 score 1.778; val 16문제라 판정용 아님). 판정은 10칸 평가로.
+- **bm_manoharan 다시 시작 (11:22) → distill it 25 통과** (loss 0.535, gpu peak 12.1 GB, OOM 0, `runs/2026-10-29/bm_manoharan/driver.log`): 라운드 49의 mul-sum 고침으로 triton backward 문제 해결 확인.
+- 결정: **e0plus16 pcb16_0 종류 0 retry (10:34~, 36분째)를 멈추고 10칸 modal_rule 기준선을 그 자리에** (`kill_pat.py`; 큐에서 modal_rule 항목을 맨 끝에서 e0plus16 앞으로, e0plus16 이름은 "retry2"로 — 드라이버 FAILED 집합 우회). 이유: 이 16칸 작업은 진행 출력이 없어 끝 시각을 모름 (16칸 g+p 1 파일이 1.8 h; 종류 0만이면 pcb에서 더 많이 채워 더 느림), r2am이 11:22에 끝나면 그 평가가 그 뒤에 1 h 넘게 막힘 (라운드 49에 적은 규칙). modal_rule 10칸은 파일당 ~7분 (`eval_pkg10_1__modal_rule.json` 417 s)이라 r2am 끝까지의 틈을 채움. 버린 것: CPU 36분. CPU 수 4 그대로.
+  - 주의: 이 16칸 E0+ 작업은 세 번째로 멈춤 (09:30, 11:10 포함). 15:00 루프 종료 뒤에는 아무도 멈추지 않으므로 밤새 이어서 돎. 13:30 bm_manoharan 평가 때는 다시 멈추지 않을 생각 (그대로면 bm 평가는 e0plus16 뒤 — 판정은 사람이 회수).
+- 다음: modal_rule 끝 (~11:50) → r2am 10칸 평가 (~20~60분) → arch c' 판정 (r2a_rl·E0+ 대비, 드라이버가 RESULTS 재생성).
 
 ## 라운드 49 (09:14~ UTC)
 - **bp_park 학습 끝** (09:18, `runs/2026-10-29/bp_park_rl/log.txt`): RL 199 iter / 1.27 h, best it 100 score 3.219, replaced 0, gpu peak 16.6 GB, OOM 0 (distill 2210 iter / 0.77 h, 라운드 46). 다른 run과 같은 예산.
