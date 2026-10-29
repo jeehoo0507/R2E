@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 01:23 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 01:37 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -9,26 +9,28 @@
 | 방법 | ip 10 | pcb 10 | pkg 10 |
 |---|---|---|---|
 | greedy+prune | 0.40 / 1.00 [50] | 0.90 / 1.00 [50] | 0.90 / 1.00 [50] |
-| r3_loop_rl | – | – | 0.88 / 0.82 [25] |
+| r3_loop_rl | 0.98 / 0.74 [50] | 0.84 / 0.84 [50] | 0.88 / 0.84 [50] |
 
 ### ip 10×10
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|
 | greedy+prune | 50 (0, 1) | 0.40 | 10.30 | 1.000 | 2.944 | `runs/2026-10-28/baselines/eval/eval_ip10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_ip10_1__greedy+prune.json` |
+| r3_loop_rl | 50 (0, 1) | 0.98 | 8.39 | 0.736 | 0.574 | `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl.json` |
 
 ### pcb 10×10
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|
 | greedy+prune | 50 (0, 1) | 0.90 | 12.02 | 1.000 | 4.838 | `runs/2026-10-28/baselines/eval/eval_pcb10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_pcb10_1__greedy+prune.json` |
+| r3_loop_rl | 50 (0, 1) | 0.84 | 7.40 | 0.845 | 0.920 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl.json` |
 
 ### pkg 10×10
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|
 | greedy+prune | 50 (0, 1) | 0.90 | 8.07 | 1.000 | 3.786 | `runs/2026-10-28/baselines/eval/eval_pkg10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_pkg10_1__greedy+prune.json` |
-| r3_loop_rl | 25 (1) | 0.88 | 6.86 | 0.823 | 3.090 | `runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_1__r3_loop_rl.json` |
+| r3_loop_rl | 50 (0, 1) | 0.88 | 6.27 | 0.840 | 1.763 | `runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_1__r3_loop_rl.json` |
 
 ## 학습 기록 (train.py metrics.json)
 

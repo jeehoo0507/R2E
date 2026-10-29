@@ -86,3 +86,13 @@
 [00:20:45] early evals while pools build: eval_ip10_0,eval_ip10_1,eval_ip16_0,eval_pcb10_0,eval_pcb10_1,eval_pcb16_0,eval_pcb16_1,eval_pkg10_0,eval_pkg10_1,eval_pkg16_0,eval_pkg16_1
 [00:20:45] START eval r0_coord_distill (built pools) | mem 8.0 GiB / 60.0 GiB, oom_kill 0
 [00:20:45] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_ip10_0,eval_ip10_1,eval_ip16_0,eval_pcb10_0,eval_pcb10_1,eval_pcb16_0,eval_pcb16_1,eval_pkg10_0,eval_pkg10_1,eval_pkg16_0,eval_pkg16_1' --policy r0_coord_distill=runs/2026-10-28/r0_coord_distill/best.pt --workers 2 --out runs/2026-10-28/r0_coord_distill  (log runs/2026-10-28/r0_coord_distill/eval.log)
+[01:36:06] driver start | mem 38.7 GiB / 60.0 GiB, oom_kill 0
+[01:36:06] START teacher | mem 38.7 GiB / 60.0 GiB, oom_kill 0
+[01:36:06] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 4  (log agent/logs/make_teacher.log)
+[01:36:09] END teacher rc=0 | mem 39.4 GiB / 60.0 GiB, oom_kill 0
+[01:36:09] ATTACH build eval pools side 10,16 (pid 13040 still running)
+[01:36:09] r0_coord: rl stage finished, skip training
+[01:36:09] r1_modal: rl stage finished, skip training
+[01:36:09] r2_mott: rl stage finished, skip training
+[01:36:09] r3_loop: rl stage finished, skip training
+[01:37:09] ATTACH eval from previous driver (pid 95481)

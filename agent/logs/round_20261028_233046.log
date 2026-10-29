@@ -25,3 +25,5 @@ All four rungs of the ladder (0–3) have now finished training. Evaluation has 
 - The GPU is idle, but I didn't start new training because no CPU check slots are free.
 
 **Next round:** record how long the first side-16 eval takes. If side 16 would take too long, consider evaluating the four RL rungs first and moving distill and the R = 2, 4, 16 runs later. Only the order would change, not the eval conditions. Then fill in the side-10 ladder table and write the first `DAILY.md` around 05:30 UTC.
+To https://github.com/jeehoo0507/R2E.git
+   e5eb65b..2ed2a53  main -> main

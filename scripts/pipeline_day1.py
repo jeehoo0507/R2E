@@ -9,7 +9,8 @@ Rungs train one at a time: two train.py processes with all 27 pools dense on the
   0. teacher: make_teacher.py, 4 workers (skips finished files)          -> data/teacher/
   GPU lane : r0 coord -> r1 modal -> r2 mott -> r3 loop, each distill -> rl, CERTIFY_WORKERS=2   (2 workers)
              (r3 only after scripts/smoke_pipeline.py --arms loop passes, run in this lane: still 2 workers)
-  CPU lane : eval pools side 10/16 (once the GPU lane is done: rung evals + E0 gp/modal_rule on pools already built)
+  CPU lane : eval pools side 10/16 (once the GPU lane is done: rung evals on side 16, rl rungs first;
+             side 10 by scripts/side_evals.py, side-16 gp/modal_rule by scripts/side16_gp.py, 1 worker each)
              -> E0 (greedy+prune, modal rule; LS side 10) -> certified eval of each rung
              as soon as it finishes, side-16 LS one kind at a time while no rung is waiting (r3 rl also at test-time R = 2, 4, 16) -> collect_results -> eval pools side 20 -> everything on side 20
              -> collect_results                                                     (2 workers)
@@ -107,12 +108,12 @@ def eval_methods(stage, methods="gp,ls,modal_rule", sets="eval_*"):
         attach=f"--workers 2 --out runs/{DAY}/baselines")
 
 
-def eval_rung(name, sets="eval_*"):
-    for tag in ("distill", "rl"):
+def eval_rung(name, sets="eval_*", tags=("distill", "rl"), loop_r=True):
+    for tag in tags:
         run_dir = f"runs/{DAY}/{name}_{tag}"
         if os.path.exists(os.path.join(ROOT, run_dir, "metrics.json")):
             pols = f"{name}_{tag}={run_dir}/best.pt"
-            if name == "r3_loop" and tag == "rl":
+            if name == "r3_loop" and tag == "rl" and loop_r:
                 pols += "".join(f" {name}_{tag}@R{R}={run_dir}/best.pt" for R in LOOP_R)
             run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets '{sets}' --policy {pols} "
                 f"--workers 2 --out {run_dir}", f"{run_dir}/eval.log", f"eval {name}_{tag}" + ("" if sets == "eval_*" else " (built pools)"),
@@ -130,9 +131,9 @@ def collect():
     run(f"{PY} scripts/collect_results.py", "agent/logs/collect_results.log", "collect_results")
 
 
-def built_eval_sets():
+def built_eval_sets(pattern="eval_*.json"):
     """eval pool files whose .json is written (build_pools writes it after the .pkl), comma-joined for --sets."""
-    return ",".join(sorted(os.path.basename(f)[:-5] for f in glob.glob(os.path.join(ROOT, POOL, "eval_*.json"))
+    return ",".join(sorted(os.path.basename(f)[:-5] for f in glob.glob(os.path.join(ROOT, POOL, pattern))
                            if os.path.exists(f[:-5] + ".pkl")))
 
 
@@ -145,15 +146,24 @@ def cpu_lane():
     builder.start()
     while builder.is_alive() and not all(e.is_set() for e in DONE.values()):
         time.sleep(60)
-    if builder.is_alive():
-        sets = built_eval_sets()
-        log(f"early evals while pools build: {sets}")
-        for name, _ in RUNGS:
-            eval_rung(name, sets)
+    pid = alive("--workers 2 --out runs/")          # an eval started by the previous driver keeps its 2 slots
+    if pid:
+        log(f"ATTACH eval from previous driver (pid {pid})")
+        while alive("--workers 2 --out runs/"):
+            time.sleep(60)
+    if all(e.is_set() for e in DONE.values()):
+        # 10/29 01:40: a side-16 policy job takes > 75 min, so one rung stage on the side-16 pools is hours.
+        # Side 10 is covered by scripts/side_evals.py (1 slot), greedy+prune and modal rule on side 16 by
+        # scripts/side16_gp.py (the slot the pool builder frees), so here: side 16 only, rl rungs first (the
+        # ladder and figure 2 use them), then distill, then r3 at test-time R.
+        sets = built_eval_sets("eval_*16_*.json")
+        log(f"rung evals on side 16 (side 10 in side_evals.py, gp in side16_gp.py): {sets}")
+        for tags, loop_r in ((("rl",), False), (("distill",), False), (("rl",), True)):
+            for name, _ in RUNGS:
+                if loop_r and name != "r3_loop":
+                    continue
+                eval_rung(name, sets, tags, loop_r)
         collect()
-        if builder.is_alive():
-            eval_methods("built pools gp,modal_rule", "gp,modal_rule", sets)
-            collect()
     builder.join()
     # LS on side 16 (4x32 restarts inside cutting-plane) is by far the slowest eval; run it one kind at a
     # time only while no finished rung is waiting, so rung evals are not queued behind it.
