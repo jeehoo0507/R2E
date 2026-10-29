@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 02:05 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 02:08 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -84,6 +84,12 @@
 | pkg 10 | r3_loop_rl | 실패 | 6 | 18.7 | 0.73 | 0.06 | 0.21 |
 | pkg 16 | r0_coord_distill | 성공 | 20 | 31.1 | 0.46 | 0.07 | 0.47 |
 | pkg 16 | r0_coord_distill | 실패 | 5 | 37.4 | 0.21 | 0.06 | 0.73 |
+
+## greedy+prune 실패 문제의 최악 주파수 (`scripts/analyze_ip_gp_fail.py`, 기록된 occ로 정확 검사 격자 재계산)
+
+| 세트 | g+p 실패 문제 | g+p 최악 Z/Zt (중앙값) | g+p 최악 주파수 / 맨판 최악 주파수 (중앙값, 범위) | 맨판 최악보다 낮은 비율 | 같은 문제 정책 성공 | 총 C g+p / 정책 (중앙값) | 출처 |
+|---|---|---|---|---|---|---|---|
+| eval_ip10_0,eval_ip10_1 | 30 | 1.83 | 0.36 (0.28~0.45) | 1.00 | r3_loop_rl 29 | 0.95 | `runs/analysis/ip_gp_fail.json` |
 
 ## 학습 기록 (train.py metrics.json)
 

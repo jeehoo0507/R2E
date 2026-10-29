@@ -133,6 +133,28 @@ def type_table(recs):
     return lines + [""]
 
 
+def gp_fail_table():
+    """scripts/analyze_ip_gp_fail.py output: where greedy+prune fails (exact-check worst frequency vs the bare
+    board's worst) and total placed C vs a policy that passes the same instance."""
+    lines = []
+    for f in sorted(glob.glob("runs/analysis/*gp_fail*.json")):
+        d = json.load(open(f))
+        rows = d["rows"]
+        if not rows:
+            continue
+        pm = d["args"]["policy"].split(":")[1]
+        rat = np.array([r["gp_f"] / r["bare_f"] for r in rows])
+        pol = [r for r in rows if r["pol_ok"]]
+        if not lines:
+            lines = ["## greedy+prune 실패 문제의 최악 주파수 (`scripts/analyze_ip_gp_fail.py`, 기록된 occ로 정확 검사 격자 재계산)", "",
+                     "| 세트 | g+p 실패 문제 | g+p 최악 Z/Zt (중앙값) | g+p 최악 주파수 / 맨판 최악 주파수 (중앙값, 범위) | "
+                     "맨판 최악보다 낮은 비율 | 같은 문제 정책 성공 | 총 C g+p / 정책 (중앙값) | 출처 |", "|---|---|---|---|---|---|---|---|"]
+        cr = np.median([r["gp_cap_pF"] / r["pol_cap_pF"] for r in pol]) if pol else None
+        lines.append(f"| {d['args']['sets']} | {len(rows)} | {np.median([r['gp_worst'] for r in rows]):.2f} | "
+                     f"{np.median(rat):.2f} ({rat.min():.2f}~{rat.max():.2f}) | {np.mean(rat < 1):.2f} | {pm} {len(pol)} | {fmt(cr)} | `{f}` |")
+    return lines + [""] if lines else []
+
+
 def train_table():
     lines = []
     files = sorted(glob.glob("runs/**/metrics.json", recursive=True))
@@ -178,6 +200,7 @@ def main():
     lines += ladder_table(recs)
     lines += eval_tables(recs)
     lines += type_table(recs)
+    lines += gp_fail_table()
     lines += train_table()
     lines += teacher_table()
     open(a.out, "w").write("\n".join(lines) + "\n")
