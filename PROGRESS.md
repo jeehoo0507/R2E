@@ -1,6 +1,17 @@
-# PROGRESS (갱신 2026-10-29 08:15 UTC, 라운드 46)
+# PROGRESS (갱신 2026-10-29 08:45 UTC, 라운드 47)
 
-**지금 (08:15):** GPU **bp_park** RL it 25 (08:01~, gpu peak 13.0 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r0_coord_distill → r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.6 GiB / 60, oom_kill 0.
+**지금 (08:45):** GPU **bp_park** RL it 100 (08:01~, gpu peak 13.6 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 13.4 GiB / 60, oom_kill 0.
+
+## 라운드 47 (08:30~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 14.3 GiB / 60, oom_kill 0. bp_park RL it 100 val (16문제, 보고서용 아님): pcb 3.10/fail 0.88 · pkg 1.67/0.94 · ip 0.65/0.31, new best score 3.219 (`runs/2026-10-29/bp_park_rl/log.txt`).
+- **day1 eval10 r0_coord_distill 끝** (08:41, `runs/2026-10-28/r0_coord_distill/eval/`, 각 판 50문제) → 이제 사다리 0~3단 distill·rl 10칸 평가가 다 있음. 성공률 / 개수÷g+p / 개수÷E0+: ip 0.96 / 1.17 / 2.04 · pcb 0.76 / 1.78 / 0.48 · pkg 0.90 / 1.59 / 1.16.
+- **RESULTS에 "증류 → RL" 표 추가** (`scripts/collect_results.py` `distill_rl_table`: 같은 단 `*_rl` vs `*_distill`, 짝지은 bootstrap 95% CI, 같은 문제). 방법론의 핵심 질문(RL이 증류를 넘었나)에 대한 표:
+  - **0·1단:** RL이 개수를 크게 줄임 (둘 다 성공한 문제 개수 비 pcb 0.67·0.79, pkg 0.66·0.72, CI가 1 밖) **대신 pkg 성공률이 떨어짐** (0단 −0.14 [−0.28, −0.02], 1단 −0.22 [−0.38, −0.08]); pcb 성공률은 올라감 (+0.20·+0.10, CI 0 밖).
+  - **2·3단:** RL이 개수는 거의 그대로 (비 0.94~1.01) 두고 성공률을 올림 (ip 2단 +0.08 [+0.02, +0.16], 3단 +0.16 [+0.08, +0.26]; pcb·pkg는 +0.00~+0.10, CI가 0 포함).
+  - 해석 (seed 1개라 잠정): 모드 토큰이 있는 단은 증류만으로 개수가 이미 g+p보다 적고 (개수÷g+p 0.74~0.97), RL은 실패를 줄이는 쪽으로 감; 모드 토큰이 없는 단은 증류 해가 커서 (÷g+p 1.08~1.78) RL이 개수를 줄이다가 pkg에서 실패를 늘림. 사다리 seed 1·2 (GPU 큐에 있음)로 확인.
+- 같은 수정: ablation 표 제목에서 r2am vs r2a_rl을 "편향 없는"이라고 잘못 부르던 문제 고침 (부모 설명을 ABLATIONS 항목마다 따로).
+- 결정: 새 실험 없음 — CPU 4칸 꽉 참 (certify 2 + 드라이버 CPU 줄 1 + side16_gp 1), GPU는 bp_park. 다음 판정(선행 연구 재구현 표)은 bp_park 10칸 평가가 있어야 가능.
+- 다음 라운드: bp_park 끝(~09:20) → 드라이버가 10칸 평가를 r3@R 작업 다음에 고름 → "선행 연구 재구현" 표 (bp_park vs E0+·r2a). bm_manoharan 시작·OOM 확인.
 
 ## 라운드 46 (08:10~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 14.6 GiB / 60, oom_kill 0.

@@ -20,3 +20,5 @@ Round 46 is done and pushed to `r2e main` (commit `2c9db72`). Nothing broke: pod
 **Decision (logged in PROGRESS.md):** I started no new experiments and changed no code, because all four CPU slots are in use and the GPU is busy with bp_park.
 
 **Next round:** record the rung-0 result. Once bp_park finishes, run its 10-cell evaluation and fill in the "선행 연구 재구현" (prior-work reimplementation) table, comparing bp_park against E0+ and r2a.
+To https://github.com/jeehoo0507/R2E.git
+   2c9db72..b21cd59  main -> main

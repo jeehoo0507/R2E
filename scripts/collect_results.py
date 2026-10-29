@@ -313,24 +313,45 @@ def ci_table(recs, ref=TA, title="종류 인식 greedy", only=None):
              "| 판 | 방법 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |", "|---|---|---|---|---|"]
     for key in sorted(pr):
         for m in sorted(pr[key], key=order):
-            om, orf, cm, cr = pr[key][m]
-            n = len(om)
-            d = om.mean() - orf.mean()
-            lo, hi = boot_ci(lambda i: om[i].mean() - orf[i].mean(), n)
-
-            def ratio(i):
-                b = om[i] & orf[i]
-                return (cm[i][b] / np.maximum(cr[i][b], 1)).mean() if b.any() else np.nan
-            rt = ratio(np.arange(n))
-            rlo, rhi = boot_ci(ratio, n)
-            lines.append(f"| {key[0]} {key[1]} | {m} | {n} | {d:+.2f} [{lo:+.2f}, {hi:+.2f}] | {fmt(rt, 3)} [{fmt(rlo, 3)}, {fmt(rhi, 3)}] |")
+            lines.append(f"| {key[0]} {key[1]} | {m} | " + ci_cells(*pr[key][m]) + " |")
     return lines + [""]
 
 
+def ci_cells(om, orf, cm, cr):
+    """'n | success diff [CI] | count ratio [CI]' for one paired (method, reference) comparison."""
+    n = len(om)
+    d = om.mean() - orf.mean()
+    lo, hi = boot_ci(lambda i: om[i].mean() - orf[i].mean(), n)
+
+    def ratio(i):
+        b = om[i] & orf[i]
+        return (cm[i][b] / np.maximum(cr[i][b], 1)).mean() if b.any() else np.nan
+    rt = ratio(np.arange(n))
+    rlo, rhi = boot_ci(ratio, n)
+    return f"{n} | {d:+.2f} [{lo:+.2f}, {hi:+.2f}] | {fmt(rt, 3)} [{fmt(rlo, 3)}, {fmt(rhi, 3)}]"
+
+
+DISTILL_RL = [(f"{r}_rl", f"{r}_distill") for r in ("r0_coord", "r1_modal", "r2_mott", "r3_loop")]
+
+
+def distill_rl_table(recs):
+    """Method question (AGENT_PROMPT): does RL beat distillation alone? Same rung, same eval instances, seed 0."""
+    rows = []
+    for var, base in DISTILL_RL:
+        pr = paired(recs, base)
+        rows += [f"| {key[0]} {key[1]} | {var} | {base} | " + ci_cells(*pr[key][var]) + " |"
+                 for key in sorted(pr) if var in pr[key]]
+    if not rows:
+        return []
+    return ["## 증류 → RL: 같은 단 `*_rl` vs `*_distill` 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)", "",
+            "| 판 | RL | 증류만 | 문제 수 | 성공률 차 (RL − 증류) [95% CI] | 개수 비 RL/증류 (둘 다 성공) [95% CI] |",
+            "|---|---|---|---|---|---|"] + rows + [""]
+
+
 ABLATIONS = [  # QUEUE 10/29 03:15 item 3: one change vs the same rung without it (same budget, seed 0)
-    ("r3a_rl", "r3_loop_rl", "3단 + 주파수 궁합 편향 (dec_from_mode)"),
-    ("r2a_rl", "r2_mott_rl", "2단 + 주파수 궁합 편향 (dec_from_mode)"),
-    ("r2am_rl", "r2a_rl", "r2a + 모드 경유 add 점수 (--mode_head)"),
+    ("r3a_rl", "r3_loop_rl", "3단 + 주파수 궁합 편향 (dec_from_mode)", "같은 단 편향 없는"),
+    ("r2a_rl", "r2_mott_rl", "2단 + 주파수 궁합 편향 (dec_from_mode)", "같은 단 편향 없는"),
+    ("r2am_rl", "r2a_rl", "r2a + 모드 경유 add 점수 (--mode_head)", "모드 경유 점수 없는 부모"),
 ]
 
 
@@ -413,8 +434,9 @@ def main():
     lines += ladder_table(recs)
     lines += ci_table(recs)
     lines += ci_table(recs, ref="greedy+prune", title="greedy+prune")
-    for var, base, what in ABLATIONS:
-        lines += ci_table(recs, ref=base, title=f"{what}: `{var}` vs 같은 단 편향 없는 `{base}`", only={var})
+    for var, base, what, base_desc in ABLATIONS:
+        lines += ci_table(recs, ref=base, title=f"{what}: `{var}` vs {base_desc} `{base}`", only={var})
+    lines += distill_rl_table(recs)
     lines += eval_tables(recs)
     lines += type_table(recs)
     lines += gp_fail_table()

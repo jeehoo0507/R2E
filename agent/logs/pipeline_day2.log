@@ -49,3 +49,9 @@
 [08:12:55] END collect_results rc=0 | mem 13.8 GiB / 60.0 GiB, oom_kill 0
 [08:14:25] START day1 eval10 r0_coord_distill | mem 13.6 GiB / 60.0 GiB, oom_kill 0
 [08:14:25] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r0_coord_distill=runs/2026-10-28/r0_coord_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_distill  (log agent/logs/side_evals.log)
+[08:41:13] END day1 eval10 r0_coord_distill rc=0 | mem 13.5 GiB / 60.0 GiB, oom_kill 0
+[08:41:13] START collect_results | mem 13.5 GiB / 60.0 GiB, oom_kill 0
+[08:41:13] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[08:41:22] END collect_results rc=0 | mem 13.4 GiB / 60.0 GiB, oom_kill 0
+[08:42:52] START day1 eval10 r3@R | mem 14.5 GiB / 60.0 GiB, oom_kill 0
+[08:42:52] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_rl@R2=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R4=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R16=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl  (log agent/logs/side_evals.log)
