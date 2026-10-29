@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 12:15 UTC, 라운드 52)
+# PROGRESS (갱신 2026-10-29 12:33 UTC, 라운드 53)
 
-**지금 (12:15):** GPU **bm_manoharan** RL (12:08~, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 29.7 GiB / 60, oom_kill 0.
+**지금 (12:33):** GPU **bm_manoharan** RL (12:08~, it 100, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 22.5 GiB / 60, oom_kill 0.
+
+## 라운드 53 (12:30~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 27.1 → 22.5 GiB / 60, oom_kill 0, load 3.5.
+- **bm_manoharan RL it 100 val도 세 종류 모두 fail 1.00** (`runs/2026-10-29/bm_manoharan_rl/log.txt`). RL 학습 중 샘플링 fail도 it 25~100에서 0.98~1.00 (count/ref 대부분 nan = 성공 0). → 샘플링 REINFORCE가 distill의 "빈칸 쏠림"을 아직 풀지 못함. it 100 resume checkpoint 정상, OOM 0.
+- 결정: 계속 아무것도 바꾸지 않음 (라운드 51 결정 유지 — QUEUE 08:40 새 코드 금지, 기준선 재구현을 결과 보고 고치지 않음). RL 끝(~13:25) 뒤 드라이버가 10칸 평가를 돌리면 그 결과 그대로 RESULTS "선행 연구 재구현"에 넣고, 계속 0개면 라운드 51에 적은 차이 줄을 붙인다.
+- 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- 다음 라운드: bm_manoharan RL it 200+ val·OOM; 13:25 뒤 10칸 평가 시작 확인; 15:00 UTC 뒤 첫 라운드에서 종료 절차.
 
 ## 라운드 52 (12:14~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 29.7 GiB / 60, oom_kill 0, load 3.5~3.8 (CPU 4칸: e0plus16 1 + side16_gp 1 + bm RL certify 2). bm_manoharan distill → RL 넘어감 (`runs/2026-10-29/bm_manoharan_rl/log.txt`, 6분째, 아직 첫 val 없음).
