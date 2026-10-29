@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 13:45 UTC, 라운드 57)
+# PROGRESS (갱신 2026-10-29 13:58 UTC, 라운드 58)
 
-**지금 (13:45):** GPU **r0_coord_s1** (사다리 0단 seed 1, 13:25~ distill it 750, 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 2.1 h째, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + RL certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 26.0 GiB / 60, oom_kill 0.
+**지금 (13:58):** GPU **r0_coord_s1** (사다리 0단 seed 1, 13:25~ distill it 1525, 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 2.3 h째, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 36.6 GiB / 60, oom_kill 0.
+
+## 라운드 58 (13:57~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 36.6 GiB / 60 (45 미만; side16_gp worker rss 25.8 GB가 가장 큼), oom_kill 0, load 3.6.
+- r0_coord_s1 distill it 1525 (`runs/2026-10-29/r0_coord_s1/driver.log`): it 1500 val pcb 2.07/fail 0.62 · pkg 1.04/0.56 · ip 0.72/0.38 (16문제, 판정용 아님), gpu peak 12.1 GB, OOM 0.
+- 라운드 57 뒤 새 평가 json 없음 → RESULTS 재생성 없음. 15:00 UTC 전 → QUEUE 08:40대로 새 코드·실험 없음. DAILY.md 01:50 UTC 작성 → 24시간 안 지남.
+- 결정: 아무것도 바꾸지 않음 (라운드 50·51 결정 유지, 큐 순서 그대로).
+- 다음 라운드: 15:00 UTC 뒤 첫 라운드에서 QUEUE 08:40 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로).
 
 ## 라운드 57 (13:41~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 26.0 GiB / 60, oom_kill 0, load 3.6.
