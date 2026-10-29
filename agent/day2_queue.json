@@ -16,12 +16,12 @@
    "arm": "--model park_am --baseline rollout --imit 0",
    "seed": 0
   },
+  {"name": "r2am", "arm": "--model mott --fc_bias --mode_head", "seed": 0},
   {
    "name": "bm_manoharan",
    "arm": "--model manoharan",
    "seed": 0
   },
-  {"name": "r2am", "arm": "--model mott --fc_bias --mode_head", "seed": 0},
   {
    "name": "r0_coord_s1",
    "arm": "--feat coord",

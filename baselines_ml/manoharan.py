@@ -139,7 +139,9 @@ class ManoharanNet(nn.Module):
         tok = torch.cat([self.embed_dec(dec), self.empty.expand(E, 1, self.d).to(s.dtype)], 1)   # [E,T+1,d]
         y, _ = self.tok_attn(tok, tok, tok, need_weights=False)
         tok = self.n1(tok + y)
-        score = torch.einsum("ed,etd->et", self.q(s), self.k(tok)) / self.d ** 0.5           # [E,T+1]
+        # mul-sum, not einsum/bmm: their CUDA backward here goes through triton, which can't build in this image
+        # (no Python.h; bm_manoharan crashed 2026-10-29 09:19, scripts/diag_triton.py) — same value
+        score = (self.q(s)[:, None] * self.k(tok)).sum(-1) / self.d ** 0.5                     # [E,T+1]
         logits = torch.zeros(E, n, T + 1, dtype=score.dtype, device=x.device)
         logits[torch.arange(E, device=x.device), idx] = score
         return logits, self.stop_head(s)[:, 0]

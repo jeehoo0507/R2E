@@ -1,6 +1,17 @@
-# PROGRESS (갱신 2026-10-29 09:00 UTC, 라운드 48)
+# PROGRESS (갱신 2026-10-29 09:35 UTC, 라운드 49)
 
-**지금 (09:00):** GPU **bp_park** RL it 150 (08:01~, 3339 s, gpu peak 15.9 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 13.4 GiB / 60, oom_kill 0.
+**지금 (09:35):** GPU **r2am** (arch c') distill (09:19~, 끝 ~11:25 예상) · CPU = 드라이버 CPU 줄 1 (**bp_park 10칸 평가** 09:30~ → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker + RL/distill certify 2. GPU 큐: r2am → **bm_manoharan (다시)** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.1 GiB / 60, oom_kill 0.
+
+## 라운드 49 (09:14~ UTC)
+- **bp_park 학습 끝** (09:18, `runs/2026-10-29/bp_park_rl/log.txt`): RL 199 iter / 1.27 h, best it 100 score 3.219, replaced 0, gpu peak 16.6 GB, OOM 0 (distill 2210 iter / 0.77 h, 라운드 46). 다른 run과 같은 예산.
+- **bm_manoharan distill이 79초 만에 실패** (09:19, `runs/2026-10-29/bm_manoharan/driver.log`): 첫 backward에서 triton이 드라이버 모듈을 gcc로 빌드하다 `Python.h: No such file or directory` (이 이미지에 python3.14 헤더 없음). 드라이버는 실패 이름을 기억하고 다음 r2am으로 넘어감.
+  - 원인 찾기 (`scripts/diag_triton.py`, GPU 작은 텐서): `ManoharanNet` 점수 `einsum("ed,etd->et")`의 CUDA backward가 triton을 부름 (`bmm(k, q[:,:,None])`도 같음; MHA·LayerNorm·index_put은 괜찮음). 3D×3D einsum인 park_am·model.py `mode_add`는 GPU에서 이미 돌았음 (bp_park, r2am distill 지금 진행 중).
+  - 고침: `baselines_ml/manoharan.py` 142줄을 같은 값의 `(q[:,None]*k).sum(-1)`로 (모델·행동 공간 그대로, CPU smoke와 같은 값). diag의 전체 망 backward 통과.
+  - 결정: **드라이버 재시작** (실패 이름을 메모리에서 지우려면 필요; 이름을 바꾸면 run 경로·RESULTS 표 이름이 달라짐). 재시작이 지금 도는 작업을 다시 띄우지 않게: `pipeline_day2.py` CPU 줄도 GPU 줄처럼 같은 명령이 살아 있으면 ATTACH (기다리기만 함); `agent/day2_queue.json`에서 bm_manoharan을 r2am **바로 뒤**로 (원래 r2am 앞이었음 — 그대로면 새 드라이버가 r2am 학습 중에 bm_manoharan을 GPU에 띄워 두 train.py가 겹침). 그 밖의 큐 순서는 그대로. 새 드라이버: `ATTACH train r2am` 확인.
+- **r3@R2/4/16 10칸 평가 끝** (09:14, `runs/2026-10-28/r3_loop_rl/eval/*@R*.json`, 각 판 50문제; 학습은 루프 2~8회, 기본 평가 8회). 성공률 (ip / pcb / pkg): R2 1.00 / 0.90 / 0.74 · R4 1.00 / 0.88 / 0.88 · **R8 0.98 / 0.84 / 0.88** · R16 1.00 / 0.78 / 0.78; 개수÷g+p는 0.74 / 0.82~0.89 / 0.82~0.84로 거의 같음. → **평가 때 반복을 늘려도 좋아지지 않음** (학습 범위 밖 R16은 pcb·pkg가 낮은 쪽, 50문제라 차 ±0.1은 잡음 범위). "생각을 더 하면 낫다"는 주장은 이 결과로 못 함 — 그대로 보고.
+- 결정: **e0plus16 pcb16_0 종류 0 retry (09:15~, 12분째)를 멈추고 bp_park 10칸 평가를 먼저** (`kill_pat.py`). 이유: r3@R이 09:14에 끝나고 bp_park 학습은 09:18에 끝나서, 그 4분 사이 드라이버가 16칸 작업(~3~5 h)을 골라 선행 연구 판정(QUEUE 03:30)이 오후까지 막힐 상황 (라운드 43과 같은 문제). 버린 것: CPU 12분. 재시작한 드라이버는 bp_park 평가 (09:30~, ~25분) 다음에 같은 16칸 작업을 다시 돌림 (출력 없음 → 자동). CPU 수 4 그대로.
+- QUEUE 08:40 확인: 이번 변경은 실패한 기준선(QUEUE 03:30 B-Manoharan)을 돌게 하는 버그 고침과 드라이버 재시작 안전장치 — 새 아키텍처·실험 아님.
+- 다음 라운드: bp_park 10칸 평가 (~09:55 끝) → "선행 연구 재구현" 표 (bp_park vs E0+·r2a) 기록. r2am 끝 (~11:25) → bm_manoharan GPU 시작·OOM 확인 (이번엔 backward 통과해야 함).
 
 ## 라운드 48 (08:58~ UTC, 라운드 47 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.7 GiB / 60, oom_kill 0. bp_park RL it 150 (count/ref 1.80, fail 0.16, grid capped 29, OOM 0; best 그대로 it 100 score 3.219). CPU 줄 = r3_loop_rl@R2 10칸 평가 (08:42~), side16_gp 16칸 g+p 1 worker, RL certify 2.

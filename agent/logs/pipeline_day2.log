@@ -55,3 +55,7 @@
 [08:41:22] END collect_results rc=0 | mem 13.4 GiB / 60.0 GiB, oom_kill 0
 [08:42:52] START day1 eval10 r3@R | mem 14.5 GiB / 60.0 GiB, oom_kill 0
 [08:42:52] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_rl@R2=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R4=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R16=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl  (log agent/logs/side_evals.log)
+[09:28:32] driver day2 start | mem 13.9 GiB / 60.0 GiB, oom_kill 0
+[09:28:32] ATTACH train r2am
+[09:30:02] START eval10 bp_park_rl | mem 14.1 GiB / 60.0 GiB, oom_kill 0
+[09:30:02] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy bp_park_rl=runs/2026-10-29/bp_park_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-29/bp_park_rl  (log runs/2026-10-29/bp_park_rl/eval.log)

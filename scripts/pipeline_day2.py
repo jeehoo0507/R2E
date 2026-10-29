@@ -132,7 +132,14 @@ def cpu_lane():
             time.sleep(120)
             continue
         j = todo[0]
-        rc = run(j["cmd"], j.get("log", "agent/logs/day2_cpu.log"), j["name"])
+        attach = j["cmd"].replace("'", "")     # the child's command line (the shell strips the quotes)
+        if alive(attach):                      # a driver restarted while this job lives: wait, don't rerun it
+            log(f"ATTACH {j['name']}")
+            while alive(attach):
+                time.sleep(60)
+            rc = 0
+        else:
+            rc = run(j["cmd"], j.get("log", "agent/logs/day2_cpu.log"), j["name"])
         if rc != 0:
             FAILED.add(j["name"])
             log(f"{j['name']} failed rc={rc}, skipped until driver restart")
