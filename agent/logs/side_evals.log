@@ -30,3 +30,7 @@ done
 [01:47:21] END rc=0 | mem 43.1 GiB / 60.0 GiB, oom_kill 0
 [01:47:21] START --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt | mem 43.2 GiB / 60.0 GiB, oom_kill 0
 6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/r1_modal_rl/eval
+[   432s] eval_pkg10_1   r1_modal_rl                  ok 0.56 count 5.86 3.104s/inst rounds 4
+[   536s] eval_pcb10_0   r1_modal_rl                  ok 1.00 count 6.44 0.489s/inst rounds 4
+[   649s] eval_pkg10_0   r1_modal_rl                  ok 0.80 count 5.15 0.627s/inst rounds 4
+[   760s] eval_pcb10_1   r1_modal_rl                  ok 0.96 count 6.17 0.519s/inst rounds 4

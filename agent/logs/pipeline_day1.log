@@ -96,3 +96,15 @@
 [01:36:09] r2_mott: rl stage finished, skip training
 [01:36:09] r3_loop: rl stage finished, skip training
 [01:37:09] ATTACH eval from previous driver (pid 95481)
+[01:59:44] driver start | mem 10.2 GiB / 60.0 GiB, oom_kill 0
+[01:59:44] START teacher | mem 10.2 GiB / 60.0 GiB, oom_kill 0
+[01:59:44] $ /home/coder/R2E/.venv/bin/python scripts/make_teacher.py --pool runs/pool_v1 --out data/teacher --workers 4  (log agent/logs/make_teacher.log)
+[01:59:47] END teacher rc=0 | mem 10.2 GiB / 60.0 GiB, oom_kill 0
+[01:59:47] ATTACH build eval pools side 10,16 (pid 13040 still running)
+[01:59:47] r0_coord: rl stage finished, skip training
+[01:59:47] r1_modal: rl stage finished, skip training
+[01:59:47] r2_mott: rl stage finished, skip training
+[01:59:47] r3_loop: rl stage finished, skip training
+[02:00:47] rung evals on side 16 (side 10 in side_evals.py, gp in side16_gp.py): eval_ip16_0,eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1
+[02:00:47] START eval r0_coord_rl (eval_ip16_0,eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1, 1 workers) | mem 9.9 GiB / 60.0 GiB, oom_kill 0
+[02:00:47] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_ip16_0,eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1' --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl  (log runs/2026-10-28/r0_coord_rl/eval.log)

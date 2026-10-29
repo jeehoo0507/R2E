@@ -40,7 +40,8 @@ def parse_set(name):
 
 
 def job(args):
-    path, method, spec, out, rounds, samples, ls_cfg, device = args
+    path, method, spec, out, rounds, samples, ls_cfg, device, inst_chunk = args
+    import resource
     import numpy as np
     import torch
     torch.set_num_threads(1)
@@ -96,9 +97,16 @@ def job(args):
         @torch.no_grad()
         def fn(bb):
             if S <= 1:
-                env = make_env(bb, torch.arange(bb.B), cfg, a["feat"])
-                o = rollout(pol, env, greedy=True, amp=False)
-                return dict(occ=o["occ"], feasible=o["feasible"])
+                # greedy decoding is per instance, so rolling out inst_chunk instances at a time gives the same
+                # solutions with a smaller peak (side 16: ~22 GB per worker for 25 at once, 10/29 01:50)
+                step = inst_chunk if inst_chunk > 0 else bb.B
+                occ, feas = [], []
+                for i in range(0, bb.B, step):
+                    env = make_env(bb, torch.arange(i, min(i + step, bb.B)), cfg, a["feat"])
+                    o = rollout(pol, env, greedy=True, amp=False)
+                    occ.append(o["occ"])
+                    feas.append(o["feasible"])
+                return dict(occ=torch.cat(occ), feasible=torch.cat(feas))
             inst = torch.arange(bb.B).repeat_interleave(S)
             env = make_env(bb, inst, cfg, a["feat"])
             o = rollout(pol, env, amp=False, gen=torch.Generator().manual_seed(0))
@@ -112,7 +120,9 @@ def job(args):
     rec = dict(set=name, tech=tech, size=size, n=int(b.B), method=method, ok=ok.tolist(), count=cnt.tolist(),
                worst=[float(x) for x in info["worst"]], sec_per_inst=box.get("last", float("nan")) / b.B,
                sec_total=time.time() - t0, rounds=int(info["rounds"]), F_final=int(b.freqs.shape[1]),
-               ckpt=spec, samples=samples if spec else None, git=git_hash(), time=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
+               ckpt=spec, samples=samples if spec else None, inst_chunk=inst_chunk if spec else None,
+               peak_rss_mb=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024,
+               git=git_hash(), time=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
                occ=r["occ"].cpu().numpy().tolist())
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     json.dump(rec, open(dst, "w"))
@@ -130,6 +140,7 @@ def main():
     ap.add_argument("--ls", default="4x32")
     ap.add_argument("--workers", type=int, default=14)
     ap.add_argument("--device", default="cpu")
+    ap.add_argument("--inst_chunk", type=int, default=0, help="policy greedy rollout: instances per rollout (0 = all)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     files = sorted({f for s in a.sets.split(",") for f in glob.glob(os.path.join(a.pool, s + ".pkl"))})
@@ -140,10 +151,12 @@ def main():
         n, path = p.split("=")
         methods.append((n if a.samples <= 1 else f"{n}@{a.samples}", path))
     ls_cfg = tuple(map(int, a.ls.split("x")))
-    jobs = [(f, m, spec, a.out, a.rounds, a.samples, ls_cfg, a.device) for f in files for m, spec in methods]
+    jobs = [(f, m, spec, a.out, a.rounds, a.samples, ls_cfg, a.device, a.inst_chunk) for f in files for m, spec in methods]
     print(f"{len(files)} sets x {len(methods)} methods = {len(jobs)} jobs, {a.workers} workers -> {a.out}/eval", flush=True)
     t0 = time.time()
-    with Pool(a.workers) as pool:
+    # one fresh process per job: a side-16 job's peak stayed resident in the worker into the next job
+    # (10/29 01:50, 22 GB), and peak_rss_mb in the record is then that job's own peak
+    with Pool(a.workers, maxtasksperchild=1) as pool:
         for name, m, status, rec in pool.imap_unordered(job, jobs):
             print(f"[{time.time()-t0:6.0f}s] {name:14s} {m:28s} {status}", flush=True)
     print("done", flush=True)

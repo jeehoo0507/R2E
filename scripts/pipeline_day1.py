@@ -38,6 +38,9 @@ N_TRAINVAL, N_EVAL20 = 30, 6     # side-20 eval pools: 3 kinds x 2 files
 DISTILL_H, RL_H = 0.75, 1.25
 RUNGS = (("r0_coord", "--feat coord"), ("r1_modal", "--feat modal"), ("r2_mott", "--model mott"), ("r3_loop", "--model loop"))
 LOOP_R = (2, 4, 16)              # rung 3 extra test-time loop counts (training R ~ U{2..8}, default eval R = 8)
+INST_CHUNK = 5                   # eval_policy --inst_chunk for the driver's policy evals (memory, same solutions)
+W16 = 1                          # side-16 rung-eval workers until a record's peak_rss_mb shows 2 fit (10/29)
+PREV_EVAL = ("--workers 2 --out runs/", f"--inst_chunk {INST_CHUNK} --out runs/")
 DONE = {n: threading.Event() for n, _ in RUNGS}
 
 
@@ -108,7 +111,9 @@ def eval_methods(stage, methods="gp,ls,modal_rule", sets="eval_*"):
         attach=f"--workers 2 --out runs/{DAY}/baselines")
 
 
-def eval_rung(name, sets="eval_*", tags=("distill", "rl"), loop_r=True):
+def eval_rung(name, sets="eval_*", tags=("distill", "rl"), loop_r=True, workers=2):
+    # --inst_chunk 5: side-16 policy jobs peaked at ~22 GB per worker with all 25 instances in one rollout
+    # (10/29 01:50, pod 51.6 GiB with 2 of them); greedy decoding per instance, so the same solutions
     for tag in tags:
         run_dir = f"runs/{DAY}/{name}_{tag}"
         if os.path.exists(os.path.join(ROOT, run_dir, "metrics.json")):
@@ -116,8 +121,9 @@ def eval_rung(name, sets="eval_*", tags=("distill", "rl"), loop_r=True):
             if name == "r3_loop" and tag == "rl" and loop_r:
                 pols += "".join(f" {name}_{tag}@R{R}={run_dir}/best.pt" for R in LOOP_R)
             run(f"{PY} scripts/eval_policy.py --pool {POOL} --sets '{sets}' --policy {pols} "
-                f"--workers 2 --out {run_dir}", f"{run_dir}/eval.log", f"eval {name}_{tag}" + ("" if sets == "eval_*" else " (built pools)"),
-                attach=f"--workers 2 --out {run_dir}")
+                f"--workers {workers} --inst_chunk {INST_CHUNK} --out {run_dir}", f"{run_dir}/eval.log",
+                f"eval {name}_{tag}" + ("" if sets == "eval_*" else f" ({sets}, {workers} workers)"),
+                attach=f"--inst_chunk {INST_CHUNK} --out {run_dir}")
         else:
             log(f"{run_dir} not finished (no metrics.json), skip eval")
 
@@ -146,10 +152,10 @@ def cpu_lane():
     builder.start()
     while builder.is_alive() and not all(e.is_set() for e in DONE.values()):
         time.sleep(60)
-    pid = alive("--workers 2 --out runs/")          # an eval started by the previous driver keeps its 2 slots
+    pid = next(filter(None, map(alive, PREV_EVAL)), None)   # an eval started by the previous driver keeps its slots
     if pid:
         log(f"ATTACH eval from previous driver (pid {pid})")
-        while alive("--workers 2 --out runs/"):
+        while any(map(alive, PREV_EVAL)):
             time.sleep(60)
     if all(e.is_set() for e in DONE.values()):
         # 10/29 01:40: a side-16 policy job takes > 75 min, so one rung stage on the side-16 pools is hours.
@@ -162,7 +168,7 @@ def cpu_lane():
             for name, _ in RUNGS:
                 if loop_r and name != "r3_loop":
                     continue
-                eval_rung(name, sets, tags, loop_r)
+                eval_rung(name, sets, tags, loop_r, workers=W16)
         collect()
     builder.join()
     # LS on side 16 (4x32 restarts inside cutting-plane) is by far the slowest eval; run it one kind at a
