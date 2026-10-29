@@ -1,6 +1,14 @@
-# PROGRESS (갱신 2026-10-29 11:40 UTC, 라운드 50)
+# PROGRESS (갱신 2026-10-29 12:00 UTC, 라운드 51)
 
-**지금 (11:40):** GPU **bm_manoharan** distill (11:22~, 끝 ~13:30 예상, 첫 backward 통과, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~ → 16칸 작업들 …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 15.7 GiB / 60, oom_kill 0.
+**지금 (12:00):** GPU **bm_manoharan** distill it 1125 (→ ~12:08 RL 시작, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 22.8 GiB / 60, oom_kill 0.
+
+## 라운드 51 (11:56~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 22.8 GiB / 60, oom_kill 0. 15:00 전이라 QUEUE 08:40대로 새 코드·실험 없음.
+- **bm_manoharan distill val이 처음부터 세 종류 모두 fail 1.00** (`runs/2026-10-29/bm_manoharan/driver.log`, it 100~1100; 다른 run은 같은 시점 ip fail ~0.2). 원인 확인 (`scripts/diag_bm_val.py`, 읽기 전용, CPU 1 thread 1분; `last.pt` it 1100, `val_ip10_0` 16문제):
+  - greedy: 1195 step 중 skip 1179, **놓은 decap 0개**, 성공 0.00 · 샘플링 (seed 0): 놓은 82개 (문제당 5.12), env 성공 0.25.
+  - → 버그 아님. 고정 순서 + 종류/빈칸 행동에서 선생님 궤적의 대부분이 "빈칸"이라 (스텝 ~95%) argmax가 늘 빈칸을 고름. stop은 목표 만족 또는 순서 끝에서만 합법이라 빈칸만 고르면 끝까지 0개.
+  - 결정: **아무것도 바꾸지 않음** — 평가는 모든 방법이 greedy (`eval_policy.py --samples 1`)로 같은 규약이고, 재구현을 고쳐 기준선을 좋게 만드는 것은 QUEUE 08:40 (새 코드 금지)·정직성 규칙에 어긋남. RL (샘플링 REINFORCE)이 이 쏠림을 풀지는 13:25 이후 10칸 평가로 판정. 계속 0개면 RESULTS 재구현 차이 줄에 "distill 뒤 greedy가 전부 빈칸 (클래스 쏠림), 원 논문은 샘플링/ε 탐색일 수 있음 — 확인 필요"로 적을 것.
+- 다음 라운드: bm_manoharan RL val (fail이 1.00에서 내려오는지)·OOM 확인; 15:00 UTC 뒤 첫 라운드에서 QUEUE 08:40 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로).
 
 ## 라운드 50 (10:58~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 28.9 → 15.7 GiB / 60, oom_kill 0.
