@@ -20,7 +20,15 @@
    "name": "bm_manoharan",
    "arm": "--model manoharan",
    "seed": 0
-  }
+  },
+  {"name": "r0_coord_s1", "arm": "--feat coord", "seed": 1},
+  {"name": "r1_modal_s1", "arm": "--feat modal", "seed": 1},
+  {"name": "r2_mott_s1", "arm": "--model mott", "seed": 1},
+  {"name": "r3_loop_s1", "arm": "--model loop", "seed": 1},
+  {"name": "r0_coord_s2", "arm": "--feat coord", "seed": 2},
+  {"name": "r1_modal_s2", "arm": "--feat modal", "seed": 2},
+  {"name": "r2_mott_s2", "arm": "--model mott", "seed": 2},
+  {"name": "r3_loop_s2", "arm": "--model loop", "seed": 2}
  ],
  "cpu": [
   {

@@ -1,5 +1,7 @@
 # PROGRESS (갱신 2026-10-29 03:25 UTC, 라운드 20)
 
+**지금 (03:22):** GPU r3a distill (iter 325, ~1.7 s/iter, r3와 같음) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 pkg10_1 중) + side16_gp 16칸 g+p 1 worker (03:13 시작; **eval 풀 10·16칸 12개 모두 완성**, `eval_ip16_1` 14517 s, g+p ok 0.48 count 84.6). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.5 GiB, oom_kill 0.
+
 ## 라운드 20 (02:59~ UTC) — QUEUE 2일차 지시 + 03:15 수정 반영
 - **지금 도는 것:** GPU `r3a` = 3단 loop + `--fc_bias` (QUEUE 03:15 3번: `dec_from_mode`에만 편향 −|log f_k − log SRF_t|/τ_h, τ head마다 학습, init 1 decade; 나머지·COMMON·seed·distill 0.75 h + RL 1.25 h는 r3와 같음), 03:10 시작 (`runs/2026-10-29/r3a_distill/log.txt`). 큐: r3a → r2a (2단 + 같은 편향) → bp_park. CPU: ip16_1 풀 (11.9 h째) + 10칸 종류 하나 g+p (종류 0→1→2, `agent/logs/side10_base.log`) + 학습 certify 2 = 4.
 - **새 드라이버 `scripts/pipeline_day2.py`** (`agent/logs/pipeline_day2.log`): `agent/day2_queue.json`을 매 단계 다시 읽음 → GPU 줄 학습 하나씩 (CERTIFY_WORKERS=2), CPU 줄 1 worker: 끝난 학습의 10칸 평가 → "cpu" 항목 순서 (E0+ 10칸 → 16칸을 풀 파일 하나씩: E0+ 종류 0·1·2 + rl 사다리 4단 → 1일차 남은 10칸 r3@R·distill). `ensure_running.py`는 day2 드라이버 + side16_gp (+ 16칸 풀 파일이 없으면 build_pools 1 worker).
@@ -8,7 +10,10 @@
 - 결정: 03:04에 시작한 `a2_fc` (2단 + 편향 + 모드←decap 역방향 attention 추가 = 두 가지 변경)는 QUEUE 03:15 수정과 달라 6분 만에 멈춤 → `runs/2026-10-29/a2_fc*_killed_031014_spec_changed`. 역방향 코드는 지움.
 - **E0+ 종류 인식 greedy (정식):** `scripts/make_type_aware.py` (종류별 g+p 기록에서 문제마다 성공 해 중 최소 개수, 셋 다 실패면 실패, 시간은 종류 합) → 보통 eval 기록 `runs/2026-10-29/baselines_e0plus/eval/`. `collect_results.py`가 먼저 실행; 요약표·종류별 표에 "개수÷종류 인식 greedy" 열, 새 표 "판 종류마다 맞는 decap 종류" + 숫자에서 자동 생성되는 한 문장 (QUEUE 4번). 10칸 종류 1·2 기록이 끝나면 자동으로 채워짐 (/tmp 가짜 기록으로 선택 규칙·표 확인).
 - **B-Park 구현** (`baselines_ml/park_am.py`, `train.py --model park_am --baseline rollout --imit 0`): 좌표 입력 transformer 인코더 + 문맥 glimpse + C·tanh 포인터 (채널마다 query), RL = frozen copy greedy rollout 기준선. CPU smoke 통과. RESULTS "선행 연구 재구현" 절 + 원 논문과 다른 점 4줄 (기록이 생기면 표시). QUEUE대로 r3a 결과 뒤에 학습 (큐 3번째).
-- 다음: r3a distill/RL 진행 확인 → r3a 10칸 평가 (CPU 줄 최우선, ~05:30 이후) → r3 대비·종류 인식 greedy 대비 판정 → B-Manoharan 구현 (고정 포트 순서 env + 종류/건너뛰기, 순서대로 바꾼 선생님 궤적으로 distill).
+- **B-Manoharan 구현** (`baselines_ml/manoharan.py`, `--model manoharan`): 포트 순서 = 최악 탐침에서 본 loop L (포트 단락, 맨판 최악 위반 주파수 f0 한 점) 오름차순, 행동 = 현재 포트에 종류 또는 빈칸, 상태 = 고정 특징 주파수 |Z|/Zt MLP + 포트 L 임베딩, decap 토큰 + 빈칸 토큰 attention 점수, 갱신은 env rank-1. 선생님 해를 고정 순서로 다시 걷는 궤적으로 distill. 확인: val ip10_0·pcb10_0 32문제에서 고정 순서 재생이 선생님 개수와 같게 성공 (1.00, 개수 비 1.000), CPU 학습 smoke (distill·rl 3 iter) rc 0. 원 논문과 다른 점 4줄은 RESULTS "선행 연구 재구현" 절에 (기록이 생기면 표시).
+- **짝지은 bootstrap 95% CI** (`collect_results.py`, 2000회, seed 0): 종류 인식 greedy 대비 + g+p 대비 성공률 차·개수 비. 예: g+p 대비 ip10 3단 rl 성공률 +0.58 [+0.44, +0.70], 개수 비 0.736 [0.578, 0.887]; pcb10 3단 rl −0.06 [−0.20, +0.08], 0.845 [0.738, 0.949].
+- 결정: 사다리 seed 1·2 학습 8개를 GPU 큐 끝에 미리 넣음 (QUEUE 3번; GPU가 놀지 않게). 최종 후보 seed는 r3a/r2a 판정 뒤 추가.
+- 다음 라운드: r3a distill `done:` → RL 진행·OOM → r3a 10칸 평가 (CPU 줄 최우선, ~05:30 이후 시작 예상) → 10칸 종류별 g+p 끝 (~05:30) → 종류 인식 greedy 표 확인 → r3 대비·종류 인식 greedy 대비 판정 → RESULTS.
 
 ## 라운드 19 (02:22~ UTC)
 - 상태 정상: 드라이버 살아 있음 (16칸 r0 rl 평가 1 worker, RSS ~10 GB, 첫 기록 아직), side_evals 0단 rl 10칸 4/6, ip16_1 풀 3.3 h째, pod mem 21 GiB / 60, oom_kill 0.
