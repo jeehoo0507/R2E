@@ -387,6 +387,45 @@ def prior_table(recs):
     return lines
 
 
+LO_TECHS = ("ip", "pcb", "pkg")
+LO_RUNGS = (("r0", "r0_coord_rl", "0단 좌표"), ("r1", "r1_modal_rl", "1단 모달"), ("r2", "r2_mott_rl", "2단 MoTT"))
+
+
+def leave_out_table(recs):
+    """QUEUE 10/29 14:20: train on two board types (pools and val), evaluate on the held-out type's 10×10 eval
+    pools. Per held-out type: lo_<t>_r{0,1,2}_rl, the same rung trained on all three types, E0+ and modal_rule;
+    paired CIs (a) r1 vs r0, (b) r2 vs r0, (c) each lo run vs the same rung trained on all types."""
+    by = merged(recs)
+    if not any(m.startswith("lo_") for ms in by.values() for m in ms):
+        return []
+    lines = ["## 한 종류 빼고 학습 (처음 보는 기술 종류)", "",
+             "`lo_<t>_r*`: 종류 t의 학습 풀·val을 빼고 나머지 두 종류로 학습 (같은 예산 distill 0.75 h + RL 1.25 h, seed 0, "
+             "arm은 사다리 0·1·2단 그대로 + `--pool_glob`·`--val_pools`). 아래는 **뺀 종류 t의 10×10 eval 풀**에서만 잰 값. 없는 결과는 \"–\".", "",
+             "| 뺀 종류 (평가 판) | 방법 | 문제 수 | 정확 검사 성공률 | 개수 (성공 평균) | 개수÷종류 인식 greedy (둘 다 성공) |",
+             "|---|---|---|---|---|---|"]
+    for t in LO_TECHS:
+        ms = by.get((t, 10), {})
+        for m in [f"lo_{t}_{r}_rl" for r, _, _ in LO_RUNGS] + [full for _, full, _ in LO_RUNGS] + [TA, "modal_rule"]:
+            r = ms.get(m)
+            if r is None:
+                lines.append(f"| {t} 10 | {m} | – | – | – | – |")
+                continue
+            ok, cnt = r["ok"], r["cnt"]
+            lines.append(f"| {t} 10 | {m} | {len(ok)} | {ok.mean():.2f} | {fmt(cnt[ok].mean() if ok.any() else None)} | {fmt(r['rel_ta'], 3)} |")
+    lines += ["", "짝지은 bootstrap 95% CI (뺀 종류의 eval 문제, 같은 문제를 함께 다시 뽑음, 2000회, seed 0):", "",
+              "| 뺀 종류 | 비교 | 방법 | 기준 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |",
+              "|---|---|---|---|---|---|---|"]
+    for t in LO_TECHS:
+        lo = {r: f"lo_{t}_{r}_rl" for r, _, _ in LO_RUNGS}
+        pairs = [("(a) 1단 vs 0단", lo["r1"], lo["r0"]), ("(b) 2단 vs 0단", lo["r2"], lo["r0"])]
+        pairs += [(f"(c) {desc}: 뺀 학습 vs 전체 학습", lo[r], full) for r, full, desc in LO_RUNGS]
+        for what, m, ref in pairs:
+            pm = paired(recs, ref).get((t, 10), {}).get(m)
+            cells = ci_cells(*pm) if pm is not None else "– | – | –"
+            lines.append(f"| {t} 10 | {what} | {m} | {ref} | {cells} |")
+    return lines + [""]
+
+
 def train_table():
     lines = []
     files = sorted(glob.glob("runs/**/metrics.json", recursive=True))
@@ -446,6 +485,7 @@ def main():
     lines += one_type_table(recs)
     lines += type_aware_table()
     lines += prior_table(recs)
+    lines += leave_out_table(recs)
     lines += train_table()
     lines += teacher_table()
     open(a.out, "w").write("\n".join(lines) + "\n")

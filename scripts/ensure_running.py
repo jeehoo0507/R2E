@@ -16,6 +16,9 @@ JOBS = [  # (pattern in cmdline, log, command)
     # own slot: side16_gp.py waits for build_pools.py, which only runs if a pool file is missing.
     ("scripts/pipeline_day2.py", "agent/logs/pipeline_day2.log", f"{PY} scripts/pipeline_day2.py"),
     ("scripts/side16_gp.py", "agent/logs/side16_gp.log", f"{PY} scripts/side16_gp.py"),
+    # QUEUE 10/29 14:20: commits RESULTS.md + new eval records every 30 min after the loop stops (exits by itself
+    # once the lo_* rungs are evaluated and pushed; a relaunch after that does one cycle and exits)
+    ("scripts/report_watch.py", "agent/logs/report_watch.log", f"{PY} scripts/report_watch.py"),
 ]
 POOL16 = [f"runs/pool_v1/eval_{k}16_{i}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)]
 GP16 = [f"runs/2026-10-28/baselines/eval/eval_{k}16_{i}__{m}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)
