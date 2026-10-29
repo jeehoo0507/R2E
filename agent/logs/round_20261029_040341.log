@@ -21,3 +21,5 @@ Option (c) (checking the impedance exactly before placing) adds nothing new at a
 3. Judge r3a against the unbiased r3 and against type-aware greedy, on both decap count and success rate.
 
 DAILY.md was written at 01:50 today, so it isn't due for a rewrite yet. There are no new instructions in QUEUE.md.
+To https://github.com/jeehoo0507/R2E.git
+   1f6394e..b70790d  main -> main

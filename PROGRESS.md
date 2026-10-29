@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:12 UTC, 라운드 22)
+# PROGRESS (갱신 2026-10-29 04:10 UTC, 라운드 23)
 
-**지금 (04:05):** GPU r3a **RL** it 25 (fail 0.10, gpu peak 13.3 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 1: ip10_0 끝 04:03, ip10_1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 13.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 17.9 GiB, oom_kill 0.
+**지금 (04:08):** GPU r3a **RL** it 25 (fail 0.10, gpu peak 13.3 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 6파일·종류 1 5파일 끝, ip10_1 종류 1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 9.4 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+
+## 라운드 23 (04:07~ UTC, 라운드 22 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, 프로세스 목록에 CPU 바쁜 것 4개 (certify 2 + 종류 g+p 1 + 16칸 g+p 1), oom_kill 0. 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- `analyze_gp_one_type.py`가 `--skip_existing`를 받는 것 확인 (드라이버 CPU 줄의 e0plus 항목이 같은 인자를 씀; side10_base.log의 argparse 오류는 수정 전 흔적).
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸이 차 있고, 다음 판단(r3a 10칸 평가, E0+ 열)은 ~05:15 이후 기록이 있어야 가능.
+- 다음 라운드: 라운드 22와 같음 (r3a RL `done:` → r3a 10칸 평가 → 종류 2 끝 → `make_type_aware.py` → r3 대비·E0+ 대비 판정).
 
 ## 라운드 22 (04:03~ UTC)
 - 상태 정상 (드라이버·side16_gp·종류 루프 살아 있음, oom_kill 0). 새로 끝난 실험 없음 → RESULTS 재생성 없음.
