@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 05:20 UTC, 라운드 38)
+# PROGRESS (갱신 2026-10-29 05:35 UTC, 라운드 39)
 
-**지금 (05:20):** GPU **r2a** distill (05:13 시작, 2단 + `--fc_bias`) · CPU = r2a 학습 (RL부터 certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker. GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 24.2 GiB, oom_kill 0.
+**지금 (05:35):** GPU **r2a** distill it 600 (05:13 시작, 2단 + `--fc_bias`, OOM 0, gpu peak 12.1 GB) · CPU = r2a 학습 (RL부터 certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, RSS 19.5 GB → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~, 아직 16칸 파일 0/6). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 33.3 GiB / 60, oom_kill 0.
+
+## 라운드 39 (05:31~ UTC, 라운드 38 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 33.3 GiB / 60 (< 45), oom_kill 0. 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- 확인: `pipeline_day2.py`는 CPU 줄 다음 항목을 고를 때 "끝난 학습의 10칸 평가"를 먼저 넣음 → r3a 10칸 평가는 지금 도는 e0plus16 pcb16_0 종류 0 (16칸 파일 하나) 바로 뒤. 10칸 pcb 종류 0이 8~16분이었으니 16칸은 더 걸림 (시작 22분째, 기록 아직 없음).
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸 꽉 참, 다음 판단(r3a vs r3, E0+ 대비)은 r3a 10칸 기록이 있어야 가능.
+- 다음 라운드: 라운드 38과 같음 (r3a 10칸 평가 기록 → ablation 표 + E0+ 대비 판정 → RESULTS 재생성; r2a distill→RL·OOM 확인).
 
 ## 라운드 38 (05:13~ UTC)
 - **r3a 학습 끝** (05:13): RL 346 iter / 1.27 h, best iter 100 (val score 1.678), replaced 307, gpu peak 17.5 GB, OOM 0 (`runs/2026-10-29/r3a_rl/log.txt`). distill + RL 모두 r3와 같은 예산. 드라이버가 r2a를 바로 시작.
