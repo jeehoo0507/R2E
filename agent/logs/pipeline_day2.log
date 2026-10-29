@@ -80,3 +80,9 @@
 [11:22:59] END collect_results rc=0 | mem 15.4 GiB / 60.0 GiB, oom_kill 0
 [11:24:29] START eval10 r2am_rl | mem 14.2 GiB / 60.0 GiB, oom_kill 0
 [11:24:29] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r2am_rl=runs/2026-10-29/r2am_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-29/r2am_rl  (log runs/2026-10-29/r2am_rl/eval.log)
+[11:36:23] END eval10 r2am_rl rc=0 | mem 15.7 GiB / 60.0 GiB, oom_kill 0
+[11:36:23] START collect_results | mem 15.7 GiB / 60.0 GiB, oom_kill 0
+[11:36:23] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[11:36:39] END collect_results rc=0 | mem 13.8 GiB / 60.0 GiB, oom_kill 0
+[11:38:09] START e0plus16 eval_pcb16_0 type0 retry2 | mem 15.7 GiB / 60.0 GiB, oom_kill 0
+[11:38:09] $ .venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type  (log agent/logs/e0plus16.log)
