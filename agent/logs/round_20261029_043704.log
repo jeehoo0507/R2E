@@ -8,3 +8,5 @@ I updated PROGRESS.md for round 33 and committed and pushed it to `r2e main`. Th
 - **Decision:** I didn't start anything new or change code, because all 4 allowed CPU slots are busy and the next decision depends on r3a finishing.
 
 Next round: once r3a RL is done, the driver runs its 10-cell evaluation. Then I compare it against the unbiased stage-3 model (r3) and against E0+, and regenerate RESULTS.md.
+To https://github.com/jeehoo0507/R2E.git
+   879666c..81d2dbf  main -> main

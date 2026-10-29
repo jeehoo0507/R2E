@@ -1,6 +1,16 @@
-# PROGRESS (갱신 2026-10-29 04:37 UTC, 라운드 33)
+# PROGRESS (갱신 2026-10-29 04:40 UTC, 라운드 34)
 
-**지금 (04:37):** GPU r3a **RL** it 175 (2216 s, oom 0, gpu peak 16.4 GB) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (1/6 끝: pcb10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 16.8 GiB, oom_kill 0.
+**지금 (04:40):** GPU r3a **RL** it 175 (2216 s, oom 0, gpu peak 16.4 GB; resume ckpt it 192) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (3/6 끝: pcb10_0·pcb10_1·pkg10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 22.3 GiB, oom_kill 0.
+
+## 라운드 34 (04:39~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 22.3 GiB / 60, oom_kill 0. r3a RL 마지막 줄 it 175 그대로 (resume ckpt it 192 저장).
+- **종류 2 g+p pcb10_1·pkg10_0 끝 → E0+ 기록 3/6** (`collect_results.py` → `make_type_aware.py`, RESULTS 재생성):
+  - pcb 10 (50문제, 파일 0·1): E0+ 성공 0.66, 개수 45.3 vs g+p 0.90 / 12.0 → 개수 비 E0+/g+p 4.83 [3.85, 5.84]. 정책 vs E0+ 개수 비 0.18~0.22, 성공률 차 +0.18~+0.32.
+  - pkg 10 (25문제, 파일 0만): E0+ 성공 0.84, 개수 12.9 vs g+p 0.90 → 개수 비 1.83 [1.46, 2.28], 성공률 차 −0.08 [−0.24, +0.08]. 정책 vs E0+ 개수 비 0.51~0.56, 성공률 차 −0.04~+0.04 (CI 0 포함).
+  - 종류 2만: pcb10_1 0.08, pkg10_0 0.08. 단일 종류로 가장 잘 되는 종류: **pcb → 1, pkg → 0 (ip → 0)** → RESULTS에 "판 종류마다 다르다" 문장이 자동으로 나옴 (QUEUE 03:15 4번 대비 문장).
+  - 해석: pcb·pkg 모두 "종류 하나 고정" E0+는 g+p보다 약함 (종류를 섞어야 하는 판). ip에서만 E0+가 강할 것으로 예상 (종류 0만 50/50) — ip 종류 2 끝나면 확인. PROPOSALS (d') 그대로 (사람 결정).
+- 결정: 새 실험·코드 변경 없음 (CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤).
+- 다음 라운드: 라운드 22와 같음 (남은 종류 2: ip10_0·ip10_1·pkg10_1 → E0+ 6/6).
 
 ## 라운드 33 (04:37~ UTC, 라운드 32 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.8 GiB / 60, oom_kill 0. r3a RL it 175 (train_pcb10_0 cert-bad 2, OOM 0, gpu peak 16.4 GB). E0+ 기록 1/6 그대로 → 새로 끝난 실험 없음, RESULTS 재생성 없음.
