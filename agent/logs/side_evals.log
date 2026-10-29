@@ -92,3 +92,6 @@ done
 6 sets x 3 methods = 18 jobs, 1 workers -> runs/2026-10-28/r3_loop_rl/eval
 [     2s] eval_pkg10_1   r3_loop_rl@R2                exists
 [     5s] eval_pkg10_1   r3_loop_rl@R4                exists
+[     7s] eval_pkg10_1   r3_loop_rl@R16               exists
+[    10s] eval_pcb10_0   r3_loop_rl@R2                exists
+[    12s] eval_pcb10_0   r3_loop_rl@R4                exists
