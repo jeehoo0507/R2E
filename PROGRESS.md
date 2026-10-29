@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:05 UTC, 라운드 21)
+# PROGRESS (갱신 2026-10-29 04:12 UTC, 라운드 22)
 
-**지금 (04:00):** GPU r3a **RL** (03:57 시작, 풀 GPU 9.53 GB) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 끝, 종류 1 pcb·pkg 끝 — 성공 pcb 0.72/0.56, pkg 0.40/0.56, RESULTS "한 종류만" 표; 이어서 나머지 → 종류 2) + side16_gp 16칸 g+p 1 worker (RSS 9.7 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 16.4 GiB, oom_kill 0.
+**지금 (04:05):** GPU r3a **RL** it 25 (fail 0.10, gpu peak 13.3 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 1: ip10_0 끝 04:03, ip10_1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 13.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 17.9 GiB, oom_kill 0.
+
+## 라운드 22 (04:03~ UTC)
+- 상태 정상 (드라이버·side16_gp·종류 루프 살아 있음, oom_kill 0). 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- 후보 (c) 검산 루프 코드 확인: 1수 깊이 Woodbury 검산(모든 add/remove의 정확한 V−V′·최악 여유)은 이미 1~3단 입력 + logit prior에 있음 → PROPOSALS 2일차 메모 (c). 새것이 되려면 여러 수 초안 + 모드 재추출이어야 함.
+- 결정: (c)는 (a) r3a·r2a 판정 뒤로 미룸 — 한 번에 하나만 바꾸기 규칙, GPU 큐 ~20 h, CPU 4칸이 다 차서 smoke test도 못 돌림.
+- 다음 라운드: r3a RL `done:` (~05:15) → 드라이버의 r3a 10칸 평가 → 종류 2 끝 (~05:30) → `make_type_aware.py`로 E0+ 열 채우기 → r3 대비·E0+ 대비 판정.
 
 ## 라운드 21 (03:24~ UTC)
 - 상태 정상: day2 드라이버·side16_gp 살아 있음, oom_kill 0. side10_base.log의 `--skip_existing` argparse 오류는 이전 체인의 흔적이고, 지금 루프(pid 117899, 종류 0→1→2)는 정상 진행.

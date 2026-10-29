@@ -29,6 +29,7 @@
 - **(a) `--fc_bias` (r3a 10/29 03:10, 이어서 r2a):** 가장 가까운 선행: MatNet 2021 (두 집합 사이 행렬을 attention 편향으로), Manoharan 2026 (decap ESL·ESR·C 토큰). / 다른 점: 편향이 **공진 모드 k와 decap 종류 t 사이의 주파수 궁합** −|log f_k − log SRF_t|/τ_h이고 모드는 매 수 갱신되는 loaded 판의 피크 → 종류 선택을 규칙 없이 공진 상태에 연결.
 - (b)는 QUEUE 03:15 수정으로 삭제 (이미 MoTT add head [u, c, u⊙c]에 있음).
 - B-Park (`baselines_ml/park_am.py`)는 기준선이라 노벨티 아님.
+- **(c) 검산 루프 — 코드 확인 메모 (10/29 04:10, 아직 구현 안 함):** 1수 깊이의 "놓기 전 반공진 검산"은 이미 1~3단에 있다: 모든 (포트, 종류) add와 remove마다 작업 격자 전체에서 정확히 계산한 V−V′와 최악 여유 `mn`이 포트 특징 끝 2(T+1)채널로 들어가고, MoTT·LoopMoTT가 `prior = w_dv·dV − w_mn·mn`으로 logit에 더한다 (`decap_loop/modal_env.py`, `decap_loop/model.py` forward). 그래서 (c)를 1수 Woodbury 평가로 만들면 기존 입력과 같다. 새것이 되려면 **여러 수 초안**(상위 m개로 d수 놓은 뒤 피크 재추출 → 모드 토큰 교체)이어야 하고, 그것은 DACT/NeuRewriter식 개선 루프에 가깝다 (설계 문서 §7 H4도 "기여 아님"). 결정: (a) r3a·r2a 판정 전에는 (c)를 만들지 않음 — 한 번에 하나만 바꾸기, GPU 큐가 이미 ~20 h.
 
 ## 해보고 싶은 것 (오늘은 안 함)
 - 선생님 LS를 cutting-plane 안에서 실행 (`make_teacher.py`가 지금은 g+p용으로 인증된 격자에서 LS 1회 → LS 해의 정확 검사 통과율 0.00~0.81, 선생님이 대부분 g+p로 떨어짐; `agent/logs/make_teacher.log`). eval의 `local_search`처럼 격자를 키우며 재실행하면 "LS 선생님"이 실제로 LS가 된다. 오늘 0·1·2단은 지금 선생님으로 같은 조건이라 비교는 유효; 바꾸면 사다리 전체 재학습 필요.
