@@ -8,3 +8,5 @@ Round 30 was a status check only: no experiment has finished since round 29 a mi
 - **Type-aware greedy baseline:** the type-2 runs have covered 1 of 6 files, the same as last round. RESULTS.md was not regenerated.
 - **Decision:** no new runs. The reason is the same as in rounds 23–29: the 4-slot CPU limit is full, and the next real call (comparing r3a with the unbiased rung 3 and with the type-aware greedy baseline) needs the r3a 10-cell evaluation first.
 - **Saved:** I added round 30 to PROGRESS.md, then committed (`37bc360`) and pushed to `r2e main`.
+To https://github.com/jeehoo0507/R2E.git
+   37bc360..baed184  main -> main
