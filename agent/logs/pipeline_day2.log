@@ -86,3 +86,6 @@
 [11:36:39] END collect_results rc=0 | mem 13.8 GiB / 60.0 GiB, oom_kill 0
 [11:38:09] START e0plus16 eval_pcb16_0 type0 retry2 | mem 15.7 GiB / 60.0 GiB, oom_kill 0
 [11:38:09] $ .venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type  (log agent/logs/e0plus16.log)
+[13:25:16] END train bm_manoharan (CERTIFY_WORKERS=2) rc=0 | mem 28.8 GiB / 60.0 GiB, oom_kill 0
+[13:25:16] START train r0_coord_s1 (CERTIFY_WORKERS=2) | mem 28.8 GiB / 60.0 GiB, oom_kill 0
+[13:25:16] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r0_coord_s1 --arm '--feat coord' --day 2026-10-29 --pool runs/pool_v1 --seed 1 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-29/r0_coord_s1/rung_stdout.log)

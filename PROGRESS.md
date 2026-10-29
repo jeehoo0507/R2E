@@ -1,6 +1,14 @@
-# PROGRESS (갱신 2026-10-29 13:06 UTC, 라운드 55)
+# PROGRESS (갱신 2026-10-29 13:30 UTC, 라운드 56)
 
-**지금 (13:06):** GPU **bm_manoharan** RL (12:08~, it 225, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐 그대로. pod 34.6 GiB / 60, oom_kill 0.
+**지금 (13:30):** GPU **r0_coord_s1** (사다리 0단 seed 1, 13:25~ distill, 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + RL certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 29.5 GiB / 60, oom_kill 0.
+
+## 라운드 56 (13:20~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 29.5 GiB / 60, oom_kill 0.
+- **bm_manoharan 학습 끝** (13:25, `runs/2026-10-29/bm_manoharan_rl/log.txt`): RL 321 iter / 1.27 h, best it 300 score 8.458, replaced 10, gpu peak 12.9 GB, OOM 0. 다른 run과 같은 예산. it 300 val (16문제, 판정용 아님): pcb fail 1.00 · pkg fail 0.94 (count/g+p 1.50) · ip fail 1.00 → RL 뒤에도 greedy가 거의 0개 성공 (라운드 51의 빈칸 쏠림이 남음). 판정은 10칸 평가 (50문제) 결과로.
+- 드라이버가 GPU 큐 다음 항목 **r0_coord_s1** (QUEUE 03:10 3번 seed 재학습) 시작 (13:25, `runs/2026-10-29/r0_coord_s1/rung_stdout.log`).
+- 새 평가 결과 json 없음 → RESULTS 재생성 없음. 15:00 UTC 전 → QUEUE 08:40대로 새 코드·실험 없음. DAILY.md 01:50 UTC 작성 → 24시간 안 지남.
+- 결정: 아무것도 바꾸지 않음 (e0plus16 16칸 작업 멈추지 않음 — 라운드 50 결정; 큐 순서 그대로).
+- 다음 라운드: 15:00 UTC 뒤 첫 라운드에서 QUEUE 08:40 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로).
 
 ## 라운드 55 (13:05~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 34.6 GiB / 60 (45 미만), oom_kill 0.
