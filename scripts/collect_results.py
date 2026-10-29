@@ -235,11 +235,16 @@ def type_aware_table():
     """Single-type greedy+prune success per board kind and which type the type-aware greedy picked
     (QUEUE 10/29 03:15 item 4: a rule has to re-pick the type per board kind). The closing sentence is
     generated from the same numbers."""
-    one = defaultdict(dict)
+    by_set = defaultdict(dict)
     for f in glob.glob("runs/analysis/gp_one_type/*.json"):
         d = json.load(open(f))
-        tech, size = d["set"].split("_")[1][:-2], int(d["set"].split("_")[1][-2:])
-        one[(tech, size)].setdefault(int(d["method"].split("@type")[1]), []).append(np.asarray(d["ok"], bool))
+        by_set[d["set"]][int(d["method"].split("@type")[1])] = np.asarray(d["ok"], bool)
+    one = defaultdict(lambda: defaultdict(list))   # only pool files with all three types: same problems per type
+    for s, ts in sorted(by_set.items()):
+        if len(ts) == 3:
+            tech, size = s.split("_")[1][:-2], int(s.split("_")[1][-2:])
+            for t, o in ts.items():
+                one[(tech, size)][t].append(o)
     picks = defaultdict(list)
     for f in glob.glob(f"runs/**/eval/*__{TA}.json", recursive=True):
         d = json.load(open(f))
@@ -261,7 +266,8 @@ def type_aware_table():
     kinds = ", ".join(f"{k[0]} {k[1]} → 종류 {best[k]}" for k in keys)
     same = len(set(best.values())) == 1
     lines += ["", f"단일 종류 g+p로 가장 잘 되는 종류: {kinds}. " +
-              ("판 종류마다 같다." if same else "**판 종류마다 다르다** — 규칙 기준선은 판 종류마다 종류를 다시 골라야 하고 "
+              ("(판 종류 하나만 끝남 — 비교 문장은 둘 이상 끝난 뒤.)" if len(keys) < 2 else
+               "판 종류마다 같다." if same else "**판 종류마다 다르다** — 규칙 기준선은 판 종류마다 종류를 다시 골라야 하고 "
                "(종류 인식 greedy는 그래서 종류 수만큼 다시 돈다), 정책은 모델 하나가 판마다 고른다 (위 \"decap 종류 비율\" 표)."), ""]
     return lines
 
@@ -294,10 +300,13 @@ def boot_ci(fn, n, B=2000, seed=0):
     return (np.percentile(v, 2.5), np.percentile(v, 97.5)) if len(v) else (np.nan, np.nan)
 
 
-def ci_table(recs, ref=TA, title="종류 인식 greedy"):
+def ci_table(recs, ref=TA, title="종류 인식 greedy", only=None):
     """QUEUE 10/29 item 3: paired bootstrap 95% CI (instances resampled jointly for method and reference) of
-    the success-rate difference and of the mean count ratio on instances both solve."""
+    the success-rate difference and of the mean count ratio on instances both solve. only: restrict methods."""
     pr = paired(recs, ref)
+    if only is not None:
+        pr = {k: {m: v for m, v in ms.items() if m in only} for k, ms in pr.items()}
+        pr = {k: ms for k, ms in pr.items() if ms}
     if not pr:
         return []
     lines = [f"## {title} 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)", "",
@@ -316,6 +325,12 @@ def ci_table(recs, ref=TA, title="종류 인식 greedy"):
             rlo, rhi = boot_ci(ratio, n)
             lines.append(f"| {key[0]} {key[1]} | {m} | {n} | {d:+.2f} [{lo:+.2f}, {hi:+.2f}] | {fmt(rt, 3)} [{fmt(rlo, 3)}, {fmt(rhi, 3)}] |")
     return lines + [""]
+
+
+ABLATIONS = [  # QUEUE 10/29 03:15 item 3: one change vs the same rung without it (same budget, seed 0)
+    ("r3a_rl", "r3_loop_rl", "3단 + 주파수 궁합 편향 (dec_from_mode)"),
+    ("r2a_rl", "r2_mott_rl", "2단 + 주파수 궁합 편향 (dec_from_mode)"),
+]
 
 
 PRIOR = {  # prior-work re-implementations (QUEUE 10/29 03:30 C): how each differs from the paper
@@ -397,6 +412,8 @@ def main():
     lines += ladder_table(recs)
     lines += ci_table(recs)
     lines += ci_table(recs, ref="greedy+prune", title="greedy+prune")
+    for var, base, what in ABLATIONS:
+        lines += ci_table(recs, ref=base, title=f"{what}: `{var}` vs 같은 단 편향 없는 `{base}`", only={var})
     lines += eval_tables(recs)
     lines += type_table(recs)
     lines += gp_fail_table()

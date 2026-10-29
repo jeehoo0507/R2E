@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 04:01 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 04:23 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -10,15 +10,28 @@
 
 | 방법 | ip 10 | pcb 10 | pcb 16 | pkg 10 | pkg 16 |
 |---|---|---|---|---|---|
-| greedy+prune | 0.40 / 1.00 / – [50] | 0.90 / 1.00 / – [50] | – | 0.90 / 1.00 / – [50] | – |
+| greedy+prune | 0.40 / 1.00 / – [50] | 0.90 / 1.00 / 0.35 [50] | – | 0.90 / 1.00 / – [50] | – |
+| gp_type_aware | – | 0.72 / 5.00 / 1.00 [25] | – | – | – |
 | r0_coord_distill | – | – | 0.80 / – / – [25] | – | 0.80 / – / – [25] |
-| r0_coord_rl | 1.00 / 1.05 / – [50] | 0.96 / 0.80 / – [50] | – | 0.76 / 0.79 / – [50] | 0.72 / – / – [25] |
-| r1_modal_rl | 0.96 / 0.88 / – [50] | 0.98 / 0.75 / – [50] | – | 0.68 / 0.75 / – [50] | – |
-| r2_mott_rl | 1.00 / 0.74 / – [50] | 0.88 / 0.88 / – [50] | – | 0.72 / 0.88 / – [50] | – |
-| r3_loop_rl | 0.98 / 0.74 / – [50] | 0.84 / 0.84 / – [50] | – | 0.88 / 0.84 / – [50] | – |
+| r0_coord_rl | 1.00 / 1.05 / – [50] | 0.96 / 0.80 / 0.18 [50] | – | 0.76 / 0.79 / – [50] | 0.72 / – / – [25] |
+| r1_modal_rl | 0.96 / 0.88 / – [50] | 0.98 / 0.75 / 0.17 [50] | – | 0.68 / 0.75 / – [50] | – |
+| r2_mott_rl | 1.00 / 0.74 / – [50] | 0.88 / 0.88 / 0.20 [50] | – | 0.72 / 0.88 / – [50] | – |
+| r3_loop_rl | 0.98 / 0.74 / – [50] | 0.84 / 0.84 / 0.22 [50] | – | 0.88 / 0.84 / – [50] | – |
 | r3_loop_rl@R16 | – | – | – | 0.76 / 0.80 / – [25] | – |
-| r3_loop_rl@R2 | – | 0.92 / 0.93 / – [25] | – | 0.64 / 0.85 / – [25] | – |
-| r3_loop_rl@R4 | – | 0.96 / 0.84 / – [25] | – | 0.80 / 0.81 / – [25] | – |
+| r3_loop_rl@R2 | – | 0.92 / 0.93 / 0.19 [25] | – | 0.64 / 0.85 / – [25] | – |
+| r3_loop_rl@R4 | – | 0.96 / 0.84 / 0.20 [25] | – | 0.80 / 0.81 / – [25] | – |
+
+## 종류 인식 greedy 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)
+
+| 판 | 방법 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |
+|---|---|---|---|---|
+| pcb 10 | greedy+prune | 25 | +0.28 [+0.12, +0.44] | 0.347 [0.214, 0.505] |
+| pcb 10 | r0_coord_rl | 25 | +0.24 [+0.08, +0.40] | 0.178 [0.128, 0.237] |
+| pcb 10 | r1_modal_rl | 25 | +0.28 [+0.12, +0.44] | 0.165 [0.124, 0.215] |
+| pcb 10 | r2_mott_rl | 25 | +0.16 [-0.08, +0.40] | 0.196 [0.141, 0.258] |
+| pcb 10 | r3_loop_rl | 25 | +0.12 [-0.12, +0.36] | 0.219 [0.141, 0.310] |
+| pcb 10 | r3_loop_rl@R2 | 25 | +0.20 [+0.00, +0.40] | 0.190 [0.134, 0.260] |
+| pcb 10 | r3_loop_rl@R4 | 25 | +0.24 [+0.04, +0.44] | 0.201 [0.152, 0.255] |
 
 ## greedy+prune 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)
 
@@ -28,6 +41,7 @@
 | ip 10 | r1_modal_rl | 50 | +0.56 [+0.40, +0.70] | 0.878 [0.642, 1.168] |
 | ip 10 | r2_mott_rl | 50 | +0.60 [+0.46, +0.72] | 0.736 [0.578, 0.887] |
 | ip 10 | r3_loop_rl | 50 | +0.58 [+0.44, +0.70] | 0.736 [0.578, 0.887] |
+| pcb 10 | gp_type_aware | 25 | -0.28 [-0.44, -0.12] | 5.002 [3.786, 6.296] |
 | pcb 10 | r0_coord_rl | 50 | +0.06 [-0.04, +0.16] | 0.796 [0.699, 0.891] |
 | pcb 10 | r1_modal_rl | 50 | +0.08 [+0.02, +0.16] | 0.747 [0.668, 0.825] |
 | pcb 10 | r2_mott_rl | 50 | -0.02 [-0.12, +0.10] | 0.877 [0.772, 0.982] |
@@ -56,13 +70,14 @@
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 개수 / 종류 인식 greedy (둘 다 성공) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|---|
-| greedy+prune | 50 (0, 1) | 0.90 | 12.02 | 1.000 | – | 4.838 | `runs/2026-10-28/baselines/eval/eval_pcb10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_pcb10_1__greedy+prune.json` |
-| r0_coord_rl | 50 (0, 1) | 0.96 | 6.92 | 0.796 | – | 2.375 | `runs/2026-10-28/r0_coord_rl/eval/eval_pcb10_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_pcb10_1__r0_coord_rl.json` |
-| r1_modal_rl | 50 (0, 1) | 0.98 | 6.31 | 0.747 | – | 0.504 | `runs/2026-10-28/r1_modal_rl/eval/eval_pcb10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_pcb10_1__r1_modal_rl.json` |
-| r2_mott_rl | 50 (0, 1) | 0.88 | 6.77 | 0.877 | – | 0.683 | `runs/2026-10-28/r2_mott_rl/eval/eval_pcb10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_pcb10_1__r2_mott_rl.json` |
-| r3_loop_rl | 50 (0, 1) | 0.84 | 7.40 | 0.845 | – | 0.920 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl.json` |
-| r3_loop_rl@R2 | 25 (0) | 0.92 | 7.35 | 0.926 | – | 0.888 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R2.json` |
-| r3_loop_rl@R4 | 25 (0) | 0.96 | 7.62 | 0.839 | – | 1.012 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R4.json` |
+| greedy+prune | 50 (0, 1) | 0.90 | 12.02 | 1.000 | 0.347 | 4.838 | `runs/2026-10-28/baselines/eval/eval_pcb10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_pcb10_1__greedy+prune.json` |
+| gp_type_aware | 25 (0) | 0.72 | 48.39 | 5.002 | 1.000 | 24.807 | `runs/2026-10-29/baselines_e0plus/eval/eval_pcb10_0__gp_type_aware.json` |
+| r0_coord_rl | 50 (0, 1) | 0.96 | 6.92 | 0.796 | 0.178 | 2.375 | `runs/2026-10-28/r0_coord_rl/eval/eval_pcb10_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_pcb10_1__r0_coord_rl.json` |
+| r1_modal_rl | 50 (0, 1) | 0.98 | 6.31 | 0.747 | 0.165 | 0.504 | `runs/2026-10-28/r1_modal_rl/eval/eval_pcb10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_pcb10_1__r1_modal_rl.json` |
+| r2_mott_rl | 50 (0, 1) | 0.88 | 6.77 | 0.877 | 0.196 | 0.683 | `runs/2026-10-28/r2_mott_rl/eval/eval_pcb10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_pcb10_1__r2_mott_rl.json` |
+| r3_loop_rl | 50 (0, 1) | 0.84 | 7.40 | 0.845 | 0.219 | 0.920 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl.json` |
+| r3_loop_rl@R2 | 25 (0) | 0.92 | 7.35 | 0.926 | 0.190 | 0.888 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R2.json` |
+| r3_loop_rl@R4 | 25 (0) | 0.96 | 7.62 | 0.839 | 0.201 | 1.012 | `runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R4.json` |
 
 ### pcb 16×16
 
@@ -104,6 +119,8 @@
 | ip 10 | r3_loop_rl | 실패 | 1 | 13.0 | 0.92 | 0.00 | 0.08 |
 | pcb 10 | greedy+prune | 성공 | 45 | 12.0 | 0.40 | 0.13 | 0.47 |
 | pcb 10 | greedy+prune | 실패 | 5 | 55.2 | 0.76 | 0.05 | 0.19 |
+| pcb 10 | gp_type_aware | 성공 | 18 | 48.4 | 0.00 | 1.00 | 0.00 |
+| pcb 10 | gp_type_aware | 실패 | 7 | 41.0 | 0.00 | 0.76 | 0.24 |
 | pcb 10 | r0_coord_rl | 성공 | 48 | 6.9 | 0.08 | 0.21 | 0.70 |
 | pcb 10 | r0_coord_rl | 실패 | 2 | 45.0 | 0.00 | 0.23 | 0.77 |
 | pcb 10 | r1_modal_rl | 성공 | 49 | 6.3 | 0.10 | 0.21 | 0.69 |
@@ -157,15 +174,26 @@
 | 세트 | 허용 종류 (C, ESL, ESR) | 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공) | 개수 / r3_loop_rl (둘 다 성공) | greedy+prune 성공률 | r3_loop_rl 성공률 | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|---|---|---|
 | eval_ip10_0 | 0 (100 pF, 5 pH, 0.05 Ω) | 1.00 | 7.92 | 0.765 | 0.982 | 0.40 | 1.00 | 0.436 | `runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type0.json` |
+| eval_ip10_0 | 1 (20 pF, 2 pH, 0.1 Ω) | 0.12 | 24.67 | 7.444 | 7.444 | 0.40 | 1.00 | 6.432 | `runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type1.json` |
 | eval_ip10_1 | 0 (100 pF, 5 pH, 0.05 Ω) | 1.00 | 8.68 | 0.707 | 1.000 | 0.40 | 0.96 | 0.135 | `runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type0.json` |
+| eval_ip10_1 | 1 (20 pF, 2 pH, 0.1 Ω) | 0.24 | 33.67 | 5.351 | 9.224 | 0.40 | 0.96 | 4.317 | `runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type1.json` |
 | eval_pcb10_0 | 0 (10000 pF, 100 pH, 0.02 Ω) | 0.04 | 32.00 | 4.571 | 4.571 | 1.00 | 0.84 | 9.110 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type0.json` |
 | eval_pcb10_0 | 1 (1000 pF, 30 pH, 0.05 Ω) | 0.72 | 48.39 | 5.002 | 6.485 | 1.00 | 0.84 | 9.077 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type1.json` |
+| eval_pcb10_0 | 2 (100 pF, 10 pH, 0.1 Ω) | 0.00 | – | – | – | 1.00 | 0.84 | 6.620 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type2.json` |
 | eval_pcb10_1 | 0 (10000 pF, 100 pH, 0.02 Ω) | 0.00 | – | – | – | 0.80 | 0.84 | 10.252 | `runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type0.json` |
 | eval_pcb10_1 | 1 (1000 pF, 30 pH, 0.05 Ω) | 0.56 | 42.64 | 4.372 | 5.849 | 0.80 | 0.84 | 7.373 | `runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type1.json` |
 | eval_pkg10_0 | 0 (1000 pF, 40 pH, 0.03 Ω) | 0.76 | 16.00 | 2.297 | 2.793 | 0.92 | 0.88 | 3.414 | `runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type0.json` |
 | eval_pkg10_0 | 1 (220 pF, 15 pH, 0.05 Ω) | 0.40 | 8.70 | 1.262 | 1.629 | 0.92 | 0.88 | 1.911 | `runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type1.json` |
 | eval_pkg10_1 | 0 (1000 pF, 40 pH, 0.03 Ω) | 0.72 | 16.61 | 1.921 | 2.434 | 0.88 | 0.88 | 3.466 | `runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type0.json` |
 | eval_pkg10_1 | 1 (220 pF, 15 pH, 0.05 Ω) | 0.56 | 10.50 | 1.210 | 1.492 | 0.88 | 0.88 | 2.771 | `runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type1.json` |
+
+## 종류 인식 greedy: 판 종류마다 맞는 decap 종류 (`scripts/analyze_gp_one_type.py`, `scripts/make_type_aware.py`)
+
+| 판 | 문제 수 | 종류 0만: 성공률 | 종류 1만: 성공률 | 종류 2만: 성공률 | 종류 인식 greedy가 고른 종류 비율 (성공 문제, 0/1/2) |
+|---|---|---|---|---|---|
+| pcb 10 | 25 | 0.04 | 0.72 | 0.00 | 0.00 / 1.00 / 0.00 |
+
+단일 종류 g+p로 가장 잘 되는 종류: pcb 10 → 종류 1. (판 종류 하나만 끝남 — 비교 문장은 둘 이상 끝난 뒤.)
 
 ## 학습 기록 (train.py metrics.json)
 

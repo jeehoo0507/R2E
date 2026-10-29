@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 04:19 UTC, 라운드 27)
+# PROGRESS (갱신 2026-10-29 04:27 UTC, 라운드 28)
 
-**지금 (04:19):** GPU r3a **RL** it 100 (val score 1.678 new best, gpu peak 14.6 GB, grid capped 5, oom 0, 1254 s) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+**지금 (04:27):** GPU r3a **RL** it 100+ (val score 1.678, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (1/6 끝: pcb10_0) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 15.8 GiB, oom_kill 0.
+
+## 라운드 28 (04:21~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.8 GiB / 60, oom_kill 0.
+- **종류 2 g+p pcb10_0 끝 → 첫 E0+ 기록** (`runs/2026-10-29/baselines_e0plus/eval/eval_pcb10_0__gp_type_aware.json`, 25문제): 종류 0·1·2만 성공률 0.04 / 0.72 / 0.00 → E0+ 성공 0.72, 개수 48.4 (모두 종류 1). **g+p (0.90) 보다 성공률 낮고, 둘 다 성공한 문제 개수 비 E0+/g+p 5.00 [3.79, 6.30]** — pcb에서는 종류를 섞어야 하므로 "종류 하나 고정"은 강한 기준선이 아님. 정책 vs E0+ 개수 비 (pcb10_0, 25문제) 0.17~0.22는 이 약점 때문. RESULTS 재생성.
+- 결정: E0+ 정의 (QUEUE 03:15 4번)는 그대로 두고, g+p 대비·E0+ 대비를 둘 다 계속 보고 → "{g+p, E0+} 중 문제마다 최선"을 정식 기준으로 할지는 PROPOSALS (d')에 (사람 결정; 기준선을 바꾸는 일이라 에이전트가 정하지 않음).
+- `collect_results.py` 수정 2개 (CPU 거의 안 씀): (1) **같은 단 편향 없는 버전 대비 짝지은 bootstrap CI 표** 추가 (`ABLATIONS`: r3a_rl vs r3_loop_rl, r2a_rl vs r2_mott_rl; QUEUE 03:15 3번 판정 기준) — 기록이 생기면 자동 표시, r2_mott_rl vs r3_loop_rl로 표 모양 확인. (2) "판 종류마다 맞는 decap 종류" 표가 종류 0·1(50문제)과 종류 2(25문제)를 섞어 계산하던 것을 **세 종류가 모두 끝난 풀 파일만** 쓰게 고침, 판 종류가 하나뿐이면 "같다/다르다" 문장을 내지 않음.
+- 다음 라운드: 라운드 22와 같음 (r3a RL `done:` ~05:15 → r3a 10칸 평가 → 새 ablation 표·E0+ 대비로 판정).
 
 ## 라운드 27 (04:18~ UTC, 라운드 26 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 2 g+p + 16칸 g+p 1 worker RSS 9.1 GB), pod 16.5 GiB / 60, oom_kill 0.

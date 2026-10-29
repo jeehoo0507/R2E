@@ -9,3 +9,5 @@ error: Please commit or stash them.
 - **커밋:** PROGRESS.md를 갱신해 `a70d69f`로 커밋하고 `r2e main`에 push했습니다.
 
 다음 라운드 순서는 이렇습니다: r3a 학습 종료 확인 → 드라이버가 r3a 10칸 평가 → 종류 2 g+p 종료(05:30 무렵) → `make_type_aware.py`로 종류 인식 greedy 기준선 표 채우기 → r3 대비, 종류 인식 greedy 대비 판정 → RESULTS.md 재생성.
+To https://github.com/jeehoo0507/R2E.git
+   a70d69f..675f16e  main -> main
