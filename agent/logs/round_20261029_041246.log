@@ -17,3 +17,5 @@ Round 25 was a status check. No new experiments were started because all 4 CPU s
 - **Next round:** r3a RL should finish around 05:15, then its side-10 evaluation runs. After type 2 is done, `make_type_aware.py` builds the E0+ table. Then r3a gets judged against r3 (the same rung without the bias) and against E0+.
 
 PROGRESS.md is updated, committed as `483a8b3`, and pushed to `r2e main`.
+To https://github.com/jeehoo0507/R2E.git
+   483a8b3..dd368ed  main -> main

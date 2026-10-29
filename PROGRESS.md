@@ -1,6 +1,11 @@
-# PROGRESS (갱신 2026-10-29 04:14 UTC, 라운드 25)
+# PROGRESS (갱신 2026-10-29 04:16 UTC, 라운드 26)
 
-**지금 (04:13):** GPU r3a **RL** it 50 (fail 0.00, gpu peak 13.6 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+**지금 (04:16):** GPU r3a **RL** it 75 (fail 0.01, gpu peak 14.4 GB, grid capped 3, oom 0, 943 s) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+
+## 라운드 26 (04:15~ UTC, 라운드 25 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 2 g+p pcb10_0 + 16칸 g+p 1 worker RSS 9.2 GB), pod 15.1 GiB / 60, oom_kill 0. r3a RL it 75 (gpu peak 14.4 GB, r3 RL의 같은 시점 14.6 GB와 비슷). 종류 2 기록은 아직 0/6 → 새로 끝난 실험 없음, RESULTS 재생성 없음.
+- 결정: 새 실험·코드 변경 없음 (라운드 23~25와 같은 이유).
+- 다음 라운드: 라운드 22와 같음.
 
 ## 라운드 25 (04:12~ UTC, 라운드 24 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개, oom_kill 0.
