@@ -60,19 +60,19 @@ def draw(ax_b, ax_z, batch, rec, b):
     for s in ax_b.spines.values():
         s.set_visible(False)
     n_dec = int((occ >= 0).sum())
-    ax_b.set_title(f"{KIND.get(rec['tech'], rec['tech'])} {H}x{W}, {n_dec} decaps", fontsize=10, color=INK, loc="left")
+    ax_b.set_title(f"{KIND.get(rec['tech'], rec['tech'])} {H}x{W} #{b}, {rec['method']}: {n_dec} decaps", fontsize=10, color=INK, loc="left")
     # impedance
     ax_z.plot(f, bare, color=INK2, lw=1.2, ls="--", label="bare board")
     ax_z.plot(f, after, color=SERIES[0], lw=2, label="with decaps")
     ax_z.axhline(1.0, color=INK, lw=1, label="target Zt")
     ax_z.set_xscale("log"); ax_z.set_yscale("log")
     ax_z.set_xlabel("frequency (Hz)", color=INK2, fontsize=9)
-    ax_z.set_ylabel("max |Z_probe| / Zt", color=INK2, fontsize=9)
+    ax_z.set_ylabel("max |Z_probe| / Zt(f)", color=INK2, fontsize=9)   # Zt(f) is piecewise -> steps in the ratio
     ax_z.grid(True, which="major", color=GRID, lw=0.5)
     for s in ("top", "right"):
         ax_z.spines[s].set_visible(False)
     ax_z.tick_params(colors=INK2, labelsize=8)
-    ax_z.text(0.02, 0.95, f"certified worst |Z|/Zt = {after.max():.3f}", transform=ax_z.transAxes, va="top", fontsize=8, color=INK)
+    ax_z.text(0.02, 0.95, f"exact-check worst |Z|/Zt = {after.max():.3f}" + ("" if rec["ok"][b] else "  (fails)"), transform=ax_z.transAxes, va="top", fontsize=8, color=INK)
     return n_dec, after.max()
 
 
@@ -82,6 +82,7 @@ def main():
     ap.add_argument("--records", required=True, help="comma list of eval record JSONs (one per kind)")
     ap.add_argument("--pick", default="best", help="best | median | <index>")
     ap.add_argument("--out", default="reports/fig1_board.png")
+    ap.add_argument("--title", default="", help="override the suptitle (e.g. two methods on one instance)")
     a = ap.parse_args()
     recs = [json.load(open(r)) for r in a.records.split(",")]
     plt.rcParams["font.family"] = ["DejaVu Sans"]
@@ -100,10 +101,12 @@ def main():
             b = int(a.pick)
         n_dec, worst = draw(axes[i, 0], axes[i, 1], batch, rec, b)
         print(f"{rec['set']} instance {b}: {n_dec} decaps, certified worst {worst:.3f}, method {rec['method']}")
+        # decap library differs per kind -> type legend on every row (type index != same part across kinds)
+        axes[i, 0].legend(fontsize=7, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False)
         if i == 0:
-            axes[i, 0].legend(fontsize=7, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False)
             axes[i, 1].legend(fontsize=7, frameon=False, loc="lower left")
-    fig.suptitle(f"One policy ({recs[0]['method']}) on three board kinds: placement and impedance", fontsize=11, color=INK, x=0.02, ha="left")
+    title = a.title or f"One policy ({recs[0]['method']}) on three board kinds: placement and impedance"
+    fig.suptitle(title, fontsize=11, color=INK, x=0.02, ha="left")
     fig.tight_layout()
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     fig.savefig(a.out, dpi=200)

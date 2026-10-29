@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 02:00 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 02:05 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | greedy+prune | 0.40 / 1.00 [50] | 0.90 / 1.00 [50] | – | 0.90 / 1.00 [50] | – |
 | r0_coord_distill | – | – | 0.80 / – [25] | – | 0.80 / – [25] |
-| r1_modal_rl | – | 0.98 / 0.75 [50] | – | 0.68 / 0.75 [50] | – |
+| r1_modal_rl | 0.96 / 0.88 [50] | 0.98 / 0.75 [50] | – | 0.68 / 0.75 [50] | – |
 | r2_mott_rl | 1.00 / 0.74 [50] | 0.88 / 0.88 [50] | – | 0.72 / 0.88 [50] | – |
 | r3_loop_rl | 0.98 / 0.74 [50] | 0.84 / 0.84 [50] | – | 0.88 / 0.84 [50] | – |
 
@@ -19,6 +19,7 @@
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|
 | greedy+prune | 50 (0, 1) | 0.40 | 10.30 | 1.000 | 2.944 | `runs/2026-10-28/baselines/eval/eval_ip10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_ip10_1__greedy+prune.json` |
+| r1_modal_rl | 50 (0, 1) | 0.96 | 10.12 | 0.878 | 0.982 | `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_1__r1_modal_rl.json` |
 | r2_mott_rl | 50 (0, 1) | 1.00 | 8.54 | 0.736 | 0.524 | `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_1__r2_mott_rl.json` |
 | r3_loop_rl | 50 (0, 1) | 0.98 | 8.39 | 0.736 | 0.574 | `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl.json` |
 
@@ -58,6 +59,8 @@
 |---|---|---|---|---|---|---|---|
 | ip 10 | greedy+prune | 성공 | 20 | 10.3 | 0.46 | 0.05 | 0.50 |
 | ip 10 | greedy+prune | 실패 | 30 | 78.6 | 0.07 | 0.02 | 0.90 |
+| ip 10 | r1_modal_rl | 성공 | 48 | 10.1 | 0.98 | 0.02 | 0.00 |
+| ip 10 | r1_modal_rl | 실패 | 2 | 23.0 | 1.00 | 0.00 | 0.00 |
 | ip 10 | r2_mott_rl | 성공 | 50 | 8.5 | 0.97 | 0.00 | 0.03 |
 | ip 10 | r3_loop_rl | 성공 | 49 | 8.4 | 0.99 | 0.00 | 0.00 |
 | ip 10 | r3_loop_rl | 실패 | 1 | 13.0 | 0.92 | 0.00 | 0.08 |
