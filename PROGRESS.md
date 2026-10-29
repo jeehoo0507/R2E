@@ -1,6 +1,6 @@
-# PROGRESS (갱신 2026-10-29 09:35 UTC, 라운드 49)
+# PROGRESS (갱신 2026-10-29 10:45 UTC, 라운드 49)
 
-**지금 (09:35):** GPU **r2am** (arch c') distill (09:19~, 끝 ~11:25 예상) · CPU = 드라이버 CPU 줄 1 (**bp_park 10칸 평가** 09:30~ → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker + RL/distill certify 2. GPU 큐: r2am → **bm_manoharan (다시)** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.1 GiB / 60, oom_kill 0.
+**지금 (10:45):** GPU **r2am** (arch c') RL (끝 ~11:25 예상, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry 10:34~ → [r2am 10칸 평가] …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: r2am → **bm_manoharan (다시)** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 14.1 GiB / 60, oom_kill 0.
 
 ## 라운드 49 (09:14~ UTC)
 - **bp_park 학습 끝** (09:18, `runs/2026-10-29/bp_park_rl/log.txt`): RL 199 iter / 1.27 h, best it 100 score 3.219, replaced 0, gpu peak 16.6 GB, OOM 0 (distill 2210 iter / 0.77 h, 라운드 46). 다른 run과 같은 예산.
@@ -11,7 +11,12 @@
 - **r3@R2/4/16 10칸 평가 끝** (09:14, `runs/2026-10-28/r3_loop_rl/eval/*@R*.json`, 각 판 50문제; 학습은 루프 2~8회, 기본 평가 8회). 성공률 (ip / pcb / pkg): R2 1.00 / 0.90 / 0.74 · R4 1.00 / 0.88 / 0.88 · **R8 0.98 / 0.84 / 0.88** · R16 1.00 / 0.78 / 0.78; 개수÷g+p는 0.74 / 0.82~0.89 / 0.82~0.84로 거의 같음. → **평가 때 반복을 늘려도 좋아지지 않음** (학습 범위 밖 R16은 pcb·pkg가 낮은 쪽, 50문제라 차 ±0.1은 잡음 범위). "생각을 더 하면 낫다"는 주장은 이 결과로 못 함 — 그대로 보고.
 - 결정: **e0plus16 pcb16_0 종류 0 retry (09:15~, 12분째)를 멈추고 bp_park 10칸 평가를 먼저** (`kill_pat.py`). 이유: r3@R이 09:14에 끝나고 bp_park 학습은 09:18에 끝나서, 그 4분 사이 드라이버가 16칸 작업(~3~5 h)을 골라 선행 연구 판정(QUEUE 03:30)이 오후까지 막힐 상황 (라운드 43과 같은 문제). 버린 것: CPU 12분. 재시작한 드라이버는 bp_park 평가 (09:30~, ~25분) 다음에 같은 16칸 작업을 다시 돌림 (출력 없음 → 자동). CPU 수 4 그대로.
 - QUEUE 08:40 확인: 이번 변경은 실패한 기준선(QUEUE 03:30 B-Manoharan)을 돌게 하는 버그 고침과 드라이버 재시작 안전장치 — 새 아키텍처·실험 아님.
-- 다음 라운드: bp_park 10칸 평가 (~09:55 끝) → "선행 연구 재구현" 표 (bp_park vs E0+·r2a) 기록. r2am 끝 (~11:25) → bm_manoharan GPU 시작·OOM 확인 (이번엔 backward 통과해야 함).
+- **bp_park 10칸 평가 끝** (10:32, `runs/2026-10-29/bp_park_rl/eval/`, 각 판 50문제, 63분 — 해가 커서 cutting-plane이 느림, 1.8~9.0 s/문제) → RESULTS "선행 연구 재구현" 절 B-Park 표 (드라이버가 재생성). 성공률 / 개수÷g+p / 개수÷E0+ (둘 다 성공한 문제):
+  - ip 0.72 / 0.97 / 1.38 · pcb 0.46 / 4.86 / 1.13 · pkg 0.16 / 3.39 / 3.04.
+  - 같은 판의 우리 정책: r2a_rl 1.00 / 0.96 / 0.84 (성공률 ip / pcb / pkg), **좌표 입력 0단 r0_coord_rl도 1.00 / 0.96 / 0.76**. E0+ 대비 짝지은 CI (RESULTS): bp_park 성공률 차 ip −0.28 [−0.42, −0.16] · pcb −0.20 [−0.36, −0.02] · pkg −0.66 [−0.78, −0.52].
+  - → **선행 연구식 B-Park (재구현 기준)은 세 종류 모두 E0+·g+p·우리 사다리보다 성공률이 낮고 해가 큼.** 같은 좌표 입력인 r0_coord_rl과의 차는 구조(Kool식 포인터)와 학습(rollout 기준선, 모방 항 없음)에서 옴 — "좌표 입력이면 다 된다"가 아니라 "우리 학습 방법이면 좌표로도 꽤 된다"로 읽어야 함 (0단과 2·3단 차는 사다리 seed로 판정).
+  - 주의 (재구현 차이): RL이 199 iter뿐 (rollout 기준선 greedy 계산 때문에 25 iter당 ~580 s; r2a는 361 iter), best는 it 100. 같은 시간 예산이라 그대로 보고.
+- 다음 라운드: **r2am 끝 (~11:25)** → bm_manoharan GPU 시작·첫 backward 통과·OOM 확인. CPU 줄은 10:34부터 e0plus16 pcb16_0 종류 0 retry (16칸, ~2~5 h) → r2am 10칸 평가가 그 뒤에 막힘. 11:25에 그 작업이 1 h 넘게 남았으면 메모 규칙대로 멈추고 이름을 "retry2"로 바꿔 r2am 평가를 먼저 (지금 멈추면 r2am 끝까지 CPU 줄에 넣을 짧은 작업이 없어 똑같이 ~50분을 잃음 → 지금은 그대로 둠).
 
 ## 라운드 48 (08:58~ UTC, 라운드 47 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.7 GiB / 60, oom_kill 0. bp_park RL it 150 (count/ref 1.80, fail 0.16, grid capped 29, OOM 0; best 그대로 it 100 score 3.219). CPU 줄 = r3_loop_rl@R2 10칸 평가 (08:42~), side16_gp 16칸 g+p 1 worker, RL certify 2.

@@ -3,3 +3,4 @@
 6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/baselines/eval
 [ 11199s] eval_pkg16_1   greedy+prune                 ok 0.84 count 17.86 98.347s/inst rounds 4
 [ 17617s] eval_pcb16_0   greedy+prune                 ok 0.96 count 12.12 63.907s/inst rounds 3
+[ 25703s] eval_pcb16_1   greedy+prune                 ok 0.88 count 13.18 59.879s/inst rounds 4

@@ -59,3 +59,9 @@
 [09:28:32] ATTACH train r2am
 [09:30:02] START eval10 bp_park_rl | mem 14.1 GiB / 60.0 GiB, oom_kill 0
 [09:30:02] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy bp_park_rl=runs/2026-10-29/bp_park_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-29/bp_park_rl  (log runs/2026-10-29/bp_park_rl/eval.log)
+[10:32:45] END eval10 bp_park_rl rc=0 | mem 13.8 GiB / 60.0 GiB, oom_kill 0
+[10:32:45] START collect_results | mem 13.8 GiB / 60.0 GiB, oom_kill 0
+[10:32:45] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[10:32:56] END collect_results rc=0 | mem 14.1 GiB / 60.0 GiB, oom_kill 0
+[10:34:26] START e0plus16 eval_pcb16_0 type0 retry | mem 12.8 GiB / 60.0 GiB, oom_kill 0
+[10:34:26] $ .venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type  (log agent/logs/e0plus16.log)
