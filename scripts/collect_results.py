@@ -266,6 +266,58 @@ def type_aware_table():
     return lines
 
 
+def paired(recs, ref):
+    """{(tech, size): {method: (ok_m, ok_ref, cnt_m, cnt_ref)}} over the instances of the pool files both have."""
+    by = defaultdict(lambda: defaultdict(dict))
+    for r in recs:
+        by[(r["tech"], int(r["size"]))][r["method"]][r["set"]] = r
+    out = defaultdict(dict)
+    for key, ms in by.items():
+        if ref not in ms:
+            continue
+        for m, sets in ms.items():
+            common = sorted(set(sets) & set(ms[ref]))
+            if m == ref or not common:
+                continue
+            def cat(src, k):
+                return np.concatenate([np.asarray(src[s][k], float) for s in common])
+            out[key][m] = (cat(sets, "ok").astype(bool), cat(ms[ref], "ok").astype(bool),
+                           cat(sets, "count"), cat(ms[ref], "count"))
+    return out
+
+
+def boot_ci(fn, n, B=2000, seed=0):
+    """Percentile 95% CI of fn(idx) over B paired resamples of the n instances (fixed seed: reproducible tables)."""
+    rng = np.random.default_rng(seed)
+    v = [fn(rng.integers(0, n, n)) for _ in range(B)]
+    v = np.asarray([x for x in v if np.isfinite(x)])
+    return (np.percentile(v, 2.5), np.percentile(v, 97.5)) if len(v) else (np.nan, np.nan)
+
+
+def ci_table(recs, ref=TA, title="종류 인식 greedy"):
+    """QUEUE 10/29 item 3: paired bootstrap 95% CI (instances resampled jointly for method and reference) of
+    the success-rate difference and of the mean count ratio on instances both solve."""
+    pr = paired(recs, ref)
+    if not pr:
+        return []
+    lines = [f"## {title} 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)", "",
+             "| 판 | 방법 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |", "|---|---|---|---|---|"]
+    for key in sorted(pr):
+        for m in sorted(pr[key], key=order):
+            om, orf, cm, cr = pr[key][m]
+            n = len(om)
+            d = om.mean() - orf.mean()
+            lo, hi = boot_ci(lambda i: om[i].mean() - orf[i].mean(), n)
+
+            def ratio(i):
+                b = om[i] & orf[i]
+                return (cm[i][b] / np.maximum(cr[i][b], 1)).mean() if b.any() else np.nan
+            rt = ratio(np.arange(n))
+            rlo, rhi = boot_ci(ratio, n)
+            lines.append(f"| {key[0]} {key[1]} | {m} | {n} | {d:+.2f} [{lo:+.2f}, {hi:+.2f}] | {fmt(rt, 3)} [{fmt(rlo, 3)}, {fmt(rhi, 3)}] |")
+    return lines + [""]
+
+
 PRIOR = {  # prior-work re-implementations (QUEUE 10/29 03:30 C): how each differs from the paper
     "bp_park": ("B-Park: Park 2022 / DevFormer식 좌표 입력 attention-model 포인터 정책 (`baselines_ml/park_am.py`)", [
         "학습 예산: 원 논문은 RL만 — 여기서는 우리와 같은 distill 0.75 h + RL 1.25 h (같은 선생님 해, 같은 학습 풀).",
@@ -343,6 +395,8 @@ def main():
              "시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.", "",
              "## 평가 (정확 검사)", ""]
     lines += ladder_table(recs)
+    lines += ci_table(recs)
+    lines += ci_table(recs, ref="greedy+prune", title="greedy+prune")
     lines += eval_tables(recs)
     lines += type_table(recs)
     lines += gp_fail_table()
