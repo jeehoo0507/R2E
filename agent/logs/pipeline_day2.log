@@ -9,3 +9,16 @@
 [05:13:01] END train r3a (CERTIFY_WORKERS=2) rc=0 | mem 23.2 GiB / 60.0 GiB, oom_kill 0
 [05:13:01] START train r2a (CERTIFY_WORKERS=2) | mem 23.2 GiB / 60.0 GiB, oom_kill 0
 [05:13:01] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r2a --arm '--model mott --fc_bias' --day 2026-10-29 --pool runs/pool_v1 --seed 0 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-29/r2a/rung_stdout.log)
+[06:35:27] END e0plus16 eval_pcb16_0 type0 rc=-15 | mem 23.7 GiB / 60.0 GiB, oom_kill 0
+[06:35:27] e0plus16 eval_pcb16_0 type0 failed rc=-15, skipped until driver restart
+[06:35:27] START collect_results | mem 23.7 GiB / 60.0 GiB, oom_kill 0
+[06:35:27] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[06:35:31] END collect_results rc=0 | mem 12.9 GiB / 60.0 GiB, oom_kill 0
+[06:37:01] START eval10 r3a_rl | mem 24.6 GiB / 60.0 GiB, oom_kill 0
+[06:37:01] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3a_rl=runs/2026-10-29/r3a_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-29/r3a_rl  (log runs/2026-10-29/r3a_rl/eval.log)
+[06:51:12] END eval10 r3a_rl rc=0 | mem 13.1 GiB / 60.0 GiB, oom_kill 0
+[06:51:12] START collect_results | mem 13.1 GiB / 60.0 GiB, oom_kill 0
+[06:51:12] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[06:51:17] END collect_results rc=0 | mem 13.3 GiB / 60.0 GiB, oom_kill 0
+[06:52:47] START day1 eval10 r3_loop_distill | mem 13.2 GiB / 60.0 GiB, oom_kill 0
+[06:52:47] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_distill=runs/2026-10-28/r3_loop_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_distill  (log agent/logs/side_evals.log)

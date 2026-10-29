@@ -1,6 +1,16 @@
-# PROGRESS (갱신 2026-10-29 06:19 UTC, 라운드 42)
+# PROGRESS (갱신 2026-10-29 06:55 UTC, 라운드 43)
 
-**지금 (06:19):** GPU **r2a** RL it 50 (781 s, OOM 0, gpu peak 13.6 GB, 끝 ~07:20 예상) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, 68분째, 기록 아직 없음 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 30.0 GiB / 60, oom_kill 0, load 3.8.
+**지금 (06:55):** GPU **r2a** RL it 125 (OOM 0, gpu peak 15.6 GB, 끝 ~07:20 예상) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (day1 eval10 r3_loop_distill, 06:52~ → r2_mott_distill → **r2a 10칸 평가** (학습 끝나면 먼저) → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 13 GiB / 60, oom_kill 0.
+
+## 라운드 43 (06:33~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 26.2 GiB / 60, oom_kill 0. r2a RL it 100 val score 1.976 (new best), it 125.
+- 결정: **e0plus16 pcb16_0 종류 0 (05:09~, 85분째)을 멈추고 r3a 10칸 평가를 먼저 돌림** (`scripts/kill_pat.py`, rc −15). 이유: 16칸 g+p가 10칸보다 문제당 ~20배 느림 (pkg16_1 98 s/inst vs 10칸 3~5 s) → pcb 10칸 종류 0이 8~16분이었으니 16칸은 ~3~5 h 예상, r3a 판정(QUEUE 03:15 3번, 2일차 1순위)이 라운드 38부터 4라운드째 그 뒤에 막혀 있었음. r3a 평가는 17분. 버린 것: CPU 85분 (기록은 끝에만 저장되므로 부분 결과 없음).
+  - `agent/day2_queue.json`: 이름을 "e0plus16 eval_pcb16_0 type0 retry"로 바꿔 (드라이버 FAILED 목록 회피) 같은 명령으로 다시 돌게 하고, 짧은 "day1 eval10 r3_loop_distill"·"r2_mott_distill" (각 ~17분, 큐 맨 끝에 있던 것)을 그 앞으로 옮김 → r2a 학습 (~07:20 끝) 10칸 평가가 다시 16칸 작업 뒤에 몇 시간 막히지 않게 (드라이버는 작업 사이마다 끝난 학습 평가를 먼저 고름). CPU 수 4 그대로.
+- **r3a 10칸 평가 끝** (06:51, `runs/2026-10-29/r3a_rl/eval/`, 각 판 50문제) → RESULTS 재생성 (드라이버). 성공률 / 개수÷g+p / 개수÷E0+: ip 1.00 / 0.74 / 1.02 · pcb 0.92 / 0.86 / 0.20 · pkg 0.86 / 0.83 / 0.61.
+  - **r3a vs 편향 없는 r3 (짝지은 bootstrap 95% CI):** 성공률 차 ip +0.02 [+0.00, +0.06] · pcb +0.08 [−0.02, +0.20] · pkg −0.02 [−0.12, +0.08]; 개수 비 ip 1.003 [0.997, 1.013] · pcb 1.027 [0.964, 1.089] · pkg 1.040 [0.998, 1.084]. → **주파수 궁합 편향은 3단에서 유의한 차이 없음** (seed 1개; 성공률은 조금 높고 개수는 조금 많은 쪽, 모두 CI가 0·1 포함).
+  - **r3a vs E0+:** ip 성공률 차 +0.00, 개수 비 1.016 [0.998, 1.042] → **ip에서 E0+를 넘지 못함** (같은 개수). pcb 0.204 [0.163, 0.252] · pkg 0.608 [0.552, 0.667] (E0+가 종류를 섞지 못하는 판). 그대로 보고.
+  - 종류 비율 (성공 문제): ip 종류 0 1.00, pcb 0/1/2 = 0.08/0.19/0.73, pkg 0.14/0.18/0.68 — r3와 거의 같음 (정책 하나가 판마다 다른 종류를 고르는 것은 r3에서 이미 그랬음).
+- 다음 라운드: r2a 10칸 평가 (r2a RL 끝 ~07:20 → day1 distill 평가 뒤) → r2a vs r2_mott_rl ablation 판정 → 둘 다 무의미하면 (a)는 "효과 없음"으로 정리하고 다음 아키텍처 (c: 여러 수 초안 검산 루프, PROPOSALS 33줄) 설계를 시작할지 결정. bp_park 시작·OOM 확인.
 
 ## 라운드 42 (06:18~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 30.0 GiB / 60 (< 45), oom_kill 0. r2a RL it 50 (`runs/2026-10-29/r2a_rl/log.txt`, cert-bad 1, OOM 0).

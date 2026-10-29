@@ -1,3 +1,4 @@
 [01:36:06] wait for scripts/build_pools.py to exit | mem 38.9 GiB / 60.0 GiB, oom_kill 0
 [03:13:06] START --methods gp side 16 | mem 6.1 GiB / 60.0 GiB, oom_kill 0
 6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/baselines/eval
+[ 11199s] eval_pkg16_1   greedy+prune                 ok 0.84 count 17.86 98.347s/inst rounds 4
