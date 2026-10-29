@@ -18,6 +18,13 @@
 
 - **(d) 기준선 강화: "종류 하나만 쓰는 greedy+prune 중 최선"을 E0에 추가할지 (10/29 02:45).** ip 10칸에서 g+p는 성공 0.40인데, 같은 규칙을 100 pF 종류만 쓰게 하면 50/50 성공·개수가 3단 rl과 같음 (비 1.00~1.03, RESULTS.md "한 종류만" 표, `scripts/analyze_gp_one_type.py`). 지금의 "정책이 ip에서 g+p를 크게 이긴다"는 기준선 규칙의 약점에 기대고 있음. 선택지: (i) 지금 기준선 유지 + 고찰에 이 분석을 적기 (에이전트가 지금 하는 것), (ii) E0에 "종류별 g+p 3번 중 최선(성공 → 개수)"을 새 기준선으로 추가 (10·16칸, 정책 평가는 다시 안 해도 됨 — 같은 풀·같은 검사라 표만 늘어남; 16칸은 1회 수 시간 × 3종류 × 6풀). 평가 세트·검사는 안 바뀜.
 
+- **(e) 외부 데이터 검증 (QUEUE 10/29 03:30 B) — 포기 (10/29 03:40, ~15분 사용).** `github.com/ai4co/devformer` (v1.0.1) shallow clone → `/home/coder/ext_devformer/` (저장소 밖, 코드는 실행 안 함; `.npy`만 `allow_pickle=False`로 읽음, `scripts/ext_devformer_inspect.py`). 확인한 것:
+  1. 데이터 = **고정 Z 행렬 하나** `10x10_pkg_chip.npy` [201 주파수 × 100 × 100] complex (100 MHz~20 GHz 표, 대칭), 문제 100개 (`test.npz`)는 탐침 1개 + keep-out mask만 다름. **목표 임피던스 없음** (보상 = 정해진 K개로 Σ(|Z0|−|Z|)·1e9/f).
+  2. **공개 체크포인트가 저장소에 없음** (README의 `data/dpp/pretrained/CSE_2000_epoch-50.pt`는 Google Drive zip; 쓰려면 그 저장소 코드와 pickle `torch.load`를 실행해야 함).
+  3. decap = **한 종류, R+C만** (0.1436 Ω, 0.1 nF, ESL 0 → SRF 없음), 그리고 시뮬레이터가 `np.abs(decap)` (실수)를 decap 임피던스로 씀 → 우리 물리(복소 R+L+C)와 다름.
+  - 안 맞는 이유: (i) 우리 성공 판정은 `verify.py` 700점 정확 검사 (격자 Laplacian으로 임의 f에서 Y(f)를 다시 풂) — 201점 표 Z에서는 돌릴 수 없음 → 새 판정이 필요하고 그건 규칙 2 밖. (ii) 정책 입력 차원이 T=3 종류에 묶여 있음 (`sim.feat_dim`, techs.py "All kinds keep T = 3") → 종류 1개 판은 가짜 종류 채우기 필요. (iii) ESL 0이면 `--fc_bias`의 log SRF가 정의되지 않음. (iv) 목표 Zt를 우리가 정해야 함 (Manoharan 4.2절은 0.5 Ω).
+  - 사람이 원하면 필요한 것: 표 Z 어댑터 (bank를 201점 Z에서 직접) + 201점 판정 (보고서에 "DevFormer 판정 기준"으로 따로 표기) + Zt 선택 + 종류 패딩 규칙 + Drive 체크포인트 다운로드·실행 허가. 2일 이상 걸릴 것으로 보고, 마감(11/8 동결) 안에서 사다리·아키텍처 실험보다 뒤.
+
 ## 2일차 아키텍처 개선 — 노벨티 2줄 메모 (QUEUE 10/29 03:45, 판정은 사람)
 - **(a) `--fc_bias` (r3a 10/29 03:10, 이어서 r2a):** 가장 가까운 선행: MatNet 2021 (두 집합 사이 행렬을 attention 편향으로), Manoharan 2026 (decap ESL·ESR·C 토큰). / 다른 점: 편향이 **공진 모드 k와 decap 종류 t 사이의 주파수 궁합** −|log f_k − log SRF_t|/τ_h이고 모드는 매 수 갱신되는 loaded 판의 피크 → 종류 선택을 규칙 없이 공진 상태에 연결.
 - (b)는 QUEUE 03:15 수정으로 삭제 (이미 MoTT add head [u, c, u⊙c]에 있음).
