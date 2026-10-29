@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 12:52 UTC, 라운드 54)
+# PROGRESS (갱신 2026-10-29 13:06 UTC, 라운드 55)
 
-**지금 (12:52):** GPU **bm_manoharan** RL (12:08~, it 150, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐 그대로. pod 24.8 GiB / 60, oom_kill 0.
+**지금 (13:06):** GPU **bm_manoharan** RL (12:08~, it 225, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐 그대로. pod 34.6 GiB / 60, oom_kill 0.
+
+## 라운드 55 (13:05~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 34.6 GiB / 60 (45 미만), oom_kill 0.
+- bm_manoharan RL it 200 val도 세 종류 fail 1.00, it 225 샘플링 fail 1.00, λ 10.7 → 11.9로 계속 오름 (`runs/2026-10-29/bm_manoharan_rl/log.txt`). OOM 0, gpu peak 12.6 GB.
+- 라운드 54 뒤 새로 끝난 실험 없음 (runs 아래 새 json 없음) → RESULTS 재생성 없음. 15:00 UTC 전 → QUEUE 08:40대로 새 코드·실험 없음. DAILY.md는 01:50 UTC 작성 → 24시간 안 지남.
+- 결정: 아무것도 바꾸지 않음 (라운드 51·53 결정 유지).
+- 다음 라운드: bm_manoharan RL 끝 (~13:25)·OOM 확인; 15:00 UTC 뒤 첫 라운드에서 종료 절차.
 
 ## 라운드 54 (12:49~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 24.8 GiB / 60, oom_kill 0.
