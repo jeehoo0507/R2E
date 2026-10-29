@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 03:25 UTC, 라운드 20)
+# PROGRESS (갱신 2026-10-29 04:05 UTC, 라운드 21)
 
-**지금 (03:22):** GPU r3a distill (iter 325, ~1.7 s/iter, r3와 같음) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 pkg10_1 중) + side16_gp 16칸 g+p 1 worker (03:13 시작; **eval 풀 10·16칸 12개 모두 완성**, `eval_ip16_1` 14517 s, g+p ok 0.48 count 84.6). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.5 GiB, oom_kill 0.
+**지금 (04:00):** GPU r3a **RL** (03:57 시작, 풀 GPU 9.53 GB) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 끝, 종류 1 pcb·pkg 끝 — 성공 pcb 0.72/0.56, pkg 0.40/0.56, RESULTS "한 종류만" 표; 이어서 나머지 → 종류 2) + side16_gp 16칸 g+p 1 worker (RSS 9.7 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 16.4 GiB, oom_kill 0.
+
+## 라운드 21 (03:24~ UTC)
+- 상태 정상: day2 드라이버·side16_gp 살아 있음, oom_kill 0. side10_base.log의 `--skip_existing` argparse 오류는 이전 체인의 흔적이고, 지금 루프(pid 117899, 종류 0→1→2)는 정상 진행.
+- **r3a distill 끝** (03:56): 1477 iter / 0.77 h, best iter 800 (val score 1.858), gpu peak 12.1 GB, OOM 0 (`runs/2026-10-29/r3a_distill/log.txt`). 같은 예산의 r3 distill은 1500 iter, best iter 1400 score 1.743 — val 16문제라 잡음 큼, 판정은 10칸 eval 뒤 (보고서용 아님). r3a RL 03:57 시작 → 끝 ~05:15 예상, 그다음 드라이버가 r3a 10칸 평가 (CPU 줄 최우선).
+- **QUEUE B (외부 데이터) 포기, ~15분** → PROPOSALS (e). DevFormer 공개 데이터는 고정 Z 행렬 하나(201점 표, 100 포트, 문제 100개 = 탐침 + keep-out), decap 한 종류 R+C (ESL 0 → SRF 없음), 목표 임피던스 없음, 체크포인트는 저장소에 없음(Google Drive). 우리 판정 `verify.py` 700점 검사(격자 Laplacian으로 임의 f 재계산)를 표 Z에 적용할 수 없고, 정책 입력이 T=3 종류에 묶여 있음.
+- 결정: 외부 데이터 어댑터를 만들지 않음 — 새 판정 기준이 필요해 규칙 2 밖이고, QUEUE가 "형식이 안 맞으면 포기"를 허용. 필요한 것 목록은 PROPOSALS (e)에 (사람 결정).
+- 다음 라운드: r3a RL 진행·OOM·`done:` → r3a 10칸 평가 기록 → 종류별 g+p 1·2 끝 (~05:30) → E0+ 표 → r3 대비·E0+ 대비 판정 → RESULTS 재생성.
 
 ## 라운드 20 (02:59~ UTC) — QUEUE 2일차 지시 + 03:15 수정 반영
 - **지금 도는 것:** GPU `r3a` = 3단 loop + `--fc_bias` (QUEUE 03:15 3번: `dec_from_mode`에만 편향 −|log f_k − log SRF_t|/τ_h, τ head마다 학습, init 1 decade; 나머지·COMMON·seed·distill 0.75 h + RL 1.25 h는 r3와 같음), 03:10 시작 (`runs/2026-10-29/r3a_distill/log.txt`). 큐: r3a → r2a (2단 + 같은 편향) → bp_park. CPU: ip16_1 풀 (11.9 h째) + 10칸 종류 하나 g+p (종류 0→1→2, `agent/logs/side10_base.log`) + 학습 certify 2 = 4.
