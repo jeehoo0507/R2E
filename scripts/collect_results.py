@@ -155,6 +155,62 @@ def gp_fail_table():
     return lines + [""] if lines else []
 
 
+def swap_table():
+    """scripts/analyze_ip_swap.py output: greedy+prune failures re-checked with the recorded positions and
+    every placed decap set to one library type."""
+    lines = []
+    for f in sorted(glob.glob("runs/analysis/*swap*.json")):
+        d = json.load(open(f))
+        rows = d["rows"]
+        if not rows:
+            continue
+        pm = d["args"]["policy"].split(":")[1]
+        T = len(rows[0]["gp_at"])
+        if not lines:
+            lines = ["## g+p 실패 문제에서 위치는 그대로, 모든 decap을 한 종류로 바꾸면 (`scripts/analyze_ip_swap.py`, 정확 검사 격자 재계산)", "",
+                     "| 세트 | 위치 출처 | 문제 수 | 기록 그대로: 성공률 / 최악 Z/Zt 중앙값 | "
+                     + " | ".join(f"모두 종류 {t}: 성공률 / 최악 중앙값" for t in range(T)) + " | 출처 |",
+                     "|---|---|---|---|" + "---|" * T + "---|"]
+        for src, key, sel in (("greedy+prune", "gp", rows), (pm, "pol", [r for r in rows if r["pol_ok"]])):
+            if not sel:
+                continue
+            own = np.array([r[key] for r in sel])
+            at = np.array([r[key + "_at"] for r in sel])
+            lines.append(f"| {d['args']['sets']} | {src} | {len(sel)} | {np.mean(own <= 1.01):.2f} / {np.median(own):.2f} | "
+                         + " | ".join(f"{np.mean(at[:, t] <= 1.01):.2f} / {np.median(at[:, t]):.2f}" for t in range(T))
+                         + f" | `{f}` |")
+    return lines + [""] if lines else []
+
+
+def one_type_table(recs, ref="r3_loop_rl"):
+    """scripts/analyze_gp_one_type.py output: greedy+prune allowed only one decap type (analysis, not a
+    reported baseline), against the full greedy+prune and a policy record on the same pool file."""
+    files = sorted(glob.glob("runs/analysis/gp_one_type/*.json"))
+    if not files:
+        return []
+    ev = {(r["set"], r["method"]): r for r in recs}
+    lines = ["## greedy+prune을 한 종류만 쓰게 하면 (`scripts/analyze_gp_one_type.py`, 같은 규칙·cutting-plane·정확 검사; 분석용, 보고 기준선 아님)", "",
+             f"| 세트 | 허용 종류 (C, ESL, ESR) | 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공) | 개수 / {ref} (둘 다 성공) | "
+             "greedy+prune 성공률 | " + ref + " 성공률 | 문제당 시간 (s) | 출처 |", "|---|---|---|---|---|---|---|---|---|---|"]
+    for f in files:
+        d = json.load(open(f))
+        o, c = np.asarray(d["ok"], bool), np.asarray(d["count"], float)
+        cells = []
+        for m in ("greedy+prune", ref):
+            r = ev.get((d["set"], m))
+            if r is None:
+                cells.append(("–", "–"))
+                continue
+            ro, rc = np.asarray(r["ok"], bool), np.asarray(r["count"], float)
+            both = o & ro
+            cells.append((fmt((c[both] / np.maximum(rc[both], 1)).mean() if both.any() else None, 3), f"{ro.mean():.2f}"))
+        C, L, R = d["decap"]
+        lines.append(f"| {d['set']} | {d['method'].split('@type')[1]} ({C * 1e12:g} pF, {L * 1e12:g} pH, {R:g} Ω) | {o.mean():.2f} | "
+                     f"{fmt(c[o].mean() if o.any() else None)} | {cells[0][0]} | {cells[1][0]} | {cells[0][1]} | {cells[1][1]} | "
+                     f"{fmt(d['sec_per_inst'], 3)} | `{f}` |")
+    return lines + [""]
+
+
 def train_table():
     lines = []
     files = sorted(glob.glob("runs/**/metrics.json", recursive=True))
@@ -201,6 +257,8 @@ def main():
     lines += eval_tables(recs)
     lines += type_table(recs)
     lines += gp_fail_table()
+    lines += swap_table()
+    lines += one_type_table(recs)
     lines += train_table()
     lines += teacher_table()
     open(a.out, "w").write("\n".join(lines) + "\n")

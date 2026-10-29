@@ -29,3 +29,5 @@ error: Please commit or stash them.
 **다음 라운드:**
 - **16칸 평가 worker 수 결정:** r0 rl 16칸 첫 기록은 03:30 UTC 무렵 예상합니다(16칸 job 1개 ≈ 1.4 h 기준). 그 기록의 최대 메모리가 약 14 GB 아래면 2 worker로 올리고 드라이버를 재시작합니다. 결정 전까지는 1 worker를 유지합니다. 18분 시점 worker 메모리는 9.4 GB였습니다.
 - **10칸 rl 사다리 완성:** 0단 rl이 끝나면 RESULTS를 다시 생성해 4단을 채우고, 그림 3 10칸 초안을 그립니다.
+To https://github.com/jeehoo0507/R2E.git
+   62cbd82..62c436f  main -> main
