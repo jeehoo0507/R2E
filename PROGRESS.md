@@ -1,6 +1,13 @@
-# PROGRESS (갱신 2026-10-29 13:58 UTC, 라운드 58)
+# PROGRESS (갱신 2026-10-29 14:15 UTC, 라운드 59)
 
-**지금 (13:58):** GPU **r0_coord_s1** (사다리 0단 seed 1, 13:25~ distill it 1525, 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 2.3 h째, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 36.6 GiB / 60, oom_kill 0.
+**지금 (14:15):** GPU **r0_coord_s1 RL** (사다리 0단 seed 1, RL 14:12~, 1.25 h → 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 2.6 h째, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 23.4 GiB / 60, oom_kill 0.
+
+## 라운드 59 (14:13~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 23.4 GiB / 60, oom_kill 0.
+- **r0_coord_s1 distill 끝** (~14:12, `runs/2026-10-29/r0_coord_s1/driver.log`): 2215 iter / 0.77 h, best it 1800 score 2.122, gpu peak 12.1 GB, OOM 0 (다른 run과 같은 예산). RL 시작 (`runs/2026-10-29/r0_coord_s1_rl/log.txt`, init = distill best it 1800, seed 1, 1.25 h).
+- 라운드 58 뒤 새 평가 json 없음 (baselines/eval·bm_manoharan_rl 아래 새 파일 없음) → RESULTS 재생성 없음. 15:00 UTC 전 → QUEUE 08:40대로 새 코드·실험 없음. DAILY.md 01:50 UTC 작성 → 24시간 안 지남.
+- 결정: 아무것도 바꾸지 않음 (라운드 50·51 결정 유지, 큐 순서 그대로).
+- 다음 라운드: 15:00 UTC 뒤 첫 라운드에서 QUEUE 08:40 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로). 요약에 r0_coord_s1 RL 끝 ~15:30 → 그 뒤 GPU 큐 다음 항목, bm_manoharan 10칸 평가는 e0plus16 뒤라고 적을 것.
 
 ## 라운드 58 (13:57~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 36.6 GiB / 60 (45 미만; side16_gp worker rss 25.8 GB가 가장 큼), oom_kill 0, load 3.6.
