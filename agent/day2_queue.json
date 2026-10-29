@@ -2,7 +2,12 @@
  "_doc": "Read by scripts/pipeline_day2.py before every step. train: GPU, one at a time, in order. cpu: 1 worker, after the side-10 evals of finished trainings, in order; an entry runs while any 'done' path is missing.",
  "train": [
   {
-   "name": "a2_fc",
+   "name": "r3a",
+   "arm": "--model loop --fc_bias",
+   "seed": 0
+  },
+  {
+   "name": "r2a",
    "arm": "--model mott --fc_bias",
    "seed": 0
   },
@@ -77,6 +82,38 @@
    "log": "agent/logs/e0plus16.log"
   },
   {
+   "name": "eval16 eval_pcb16_0 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_0 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_0__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_0 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_0 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_0__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_0 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_0 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_0__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_0 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_0 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_0__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
+  },
+  {
    "name": "e0plus16 eval_pkg16_0 type0",
    "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type",
    "done": [
@@ -99,6 +136,38 @@
     "runs/analysis/gp_one_type/eval_pkg16_0__greedy+prune@type2.json"
    ],
    "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_0 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_0 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_0__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_0 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_0 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_0__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_0 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_0 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_0__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_0 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_0 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_0__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
   },
   {
    "name": "e0plus16 eval_ip16_0 type0",
@@ -125,6 +194,38 @@
    "log": "agent/logs/e0plus16.log"
   },
   {
+   "name": "eval16 eval_ip16_0 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_0 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_0__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_0 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_0 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_0__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_0 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_0 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_0__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_0 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_0 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_0__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
+  },
+  {
    "name": "e0plus16 eval_pcb16_1 type0",
    "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
    "done": [
@@ -147,6 +248,38 @@
     "runs/analysis/gp_one_type/eval_pcb16_1__greedy+prune@type2.json"
    ],
    "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_1 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_1 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_1__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_1 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_1 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_1__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_1 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_1 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_1__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pcb16_1 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pcb16_1 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_1__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
   },
   {
    "name": "e0plus16 eval_pkg16_1 type0",
@@ -173,6 +306,38 @@
    "log": "agent/logs/e0plus16.log"
   },
   {
+   "name": "eval16 eval_pkg16_1 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_1 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_1__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_1 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_1 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_1__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_1 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_1 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_1__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_pkg16_1 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_pkg16_1 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_1__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
+  },
+  {
    "name": "e0plus16 eval_ip16_1 type0",
    "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
    "done": [
@@ -195,6 +360,38 @@
     "runs/analysis/gp_one_type/eval_ip16_1__greedy+prune@type2.json"
    ],
    "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "eval16 eval_ip16_1 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_1 --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_1__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_1 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_1 --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_1__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_1 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_1 --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_1__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "eval16 eval_ip16_1 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets eval_ip16_1 --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_1__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
   },
   {
    "name": "day1 eval10 r3@R",
@@ -272,58 +469,6 @@
     "runs/2026-10-28/r0_coord_distill/eval/eval_ip10_1__r0_coord_distill.json"
    ],
    "log": "agent/logs/side_evals.log"
-  },
-  {
-   "name": "day1 eval16 r0_coord_rl",
-   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
-   "done": [
-    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_0__r0_coord_rl.json",
-    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_1__r0_coord_rl.json",
-    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_0__r0_coord_rl.json",
-    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_1__r0_coord_rl.json",
-    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_0__r0_coord_rl.json",
-    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_1__r0_coord_rl.json"
-   ],
-   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
-  },
-  {
-   "name": "day1 eval16 r1_modal_rl",
-   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
-   "done": [
-    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_0__r1_modal_rl.json",
-    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_1__r1_modal_rl.json",
-    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_0__r1_modal_rl.json",
-    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_1__r1_modal_rl.json",
-    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_0__r1_modal_rl.json",
-    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_1__r1_modal_rl.json"
-   ],
-   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
-  },
-  {
-   "name": "day1 eval16 r2_mott_rl",
-   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
-   "done": [
-    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_0__r2_mott_rl.json",
-    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_1__r2_mott_rl.json",
-    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_0__r2_mott_rl.json",
-    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_1__r2_mott_rl.json",
-    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_0__r2_mott_rl.json",
-    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_1__r2_mott_rl.json"
-   ],
-   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
-  },
-  {
-   "name": "day1 eval16 r3_loop_rl",
-   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
-   "done": [
-    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_0__r3_loop_rl.json",
-    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_1__r3_loop_rl.json",
-    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_0__r3_loop_rl.json",
-    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_1__r3_loop_rl.json",
-    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_0__r3_loop_rl.json",
-    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_1__r3_loop_rl.json"
-   ],
-   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
   }
  ]
 }

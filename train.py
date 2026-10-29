@@ -103,8 +103,8 @@ def parse():
     p.add_argument("--heads", type=int, default=8)
     p.add_argument("--loop_train", default="2-8", help="loop model: R ~ U{a..b} during training")
     p.add_argument("--loop_eval", type=int, default=8, help="loop model: R at validation")
-    p.add_argument("--fc_bias", action="store_true", help="mott/loop (day-2 arch a): mode<->decap cross-attention "
-                   "both ways with the frequency-match bias -w_h |log f_k - log SRF_t|")
+    p.add_argument("--fc_bias", action="store_true", help="mott/loop (day-2 arch a, QUEUE 10/29 03:15): add the "
+                   "frequency-match bias -|log f_k - log SRF_t| / tau_h (tau learned per head) to dec_from_mode")
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--imit", type=float, default=1.0, help="weight of imitating the best-known solution (0=off)")
     p.add_argument("--teacher", choices=["gp", "ls"], default="gp", help="(no pool) greedy+prune, or + local search")

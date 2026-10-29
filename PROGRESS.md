@@ -1,14 +1,14 @@
-# PROGRESS (갱신 2026-10-29 03:15 UTC, 라운드 20)
+# PROGRESS (갱신 2026-10-29 03:25 UTC, 라운드 20)
 
-## 라운드 20 (02:59~ UTC) — QUEUE 2일차 지시 반영 시작
-- **지금 도는 것:** GPU `a2_fc` (2단 MoTT + `--fc_bias`, 아키텍처 개선 a, distill 0.75 h → RL 1.25 h, 2단과 같은 COMMON·seed 0; 03:04 시작, distill ~2 s/iter, gpu peak 12.1 GB, `runs/2026-10-29/a2_fc_distill/log.txt`). CPU: ip16_1 풀 (11.8 h째) + 10칸 종류 하나 g+p 분석 (종류 0→1→2, `agent/logs/side10_base.log`) + 학습 certify 2 = 4.
-- **새 드라이버 `scripts/pipeline_day2.py`** (03:04~, `agent/logs/pipeline_day2.log`): `agent/day2_queue.json`을 매 단계 다시 읽음 → GPU 줄 학습 한 번에 하나 (CERTIFY_WORKERS=2), CPU 줄 1 worker: 끝난 학습의 10칸 평가 → "cpu" 항목 순서대로 (10칸 E0+ 종류별 g+p → 16칸 E0+ 종류별 (풀×종류 18개) → 1일차 남은 10칸 r3@R·distill 평가 → 16칸 rl 사다리 평가). `ensure_running.py`는 이제 day2 드라이버 + side16_gp (+ 16칸 풀이 없으면 build_pools 1 worker)를 띄움.
-- 결정: **1일차 드라이버·side_evals 멈춤** (03:02) — QUEUE 우선순위상 16칸 평가(4번)·사다리 부가 평가는 학습(2번·선행 기준선)보다 뒤인데, 학습에는 certify 2칸이 필요하고 한도는 4. 버린 진행분: r0 rl 16칸 job ~20분, r3 @R4 10칸 job ~수 분. 둘 다 day2 큐의 cpu 항목으로 다시 들어 있음 (같은 명령·같은 기록 파일).
-- 결정: 아키텍처 개선은 **2단(MoTT) 위에서** 먼저 — 3단과 10칸 성적이 비슷하고 같은 시간 예산에 iter가 더 많음. `--fc_bias`는 loop 모델에도 그대로 붙음.
-- **E0+ 종류 인식 greedy:** `scripts/make_type_aware.py` (종류별 g+p 기록에서 문제마다 성공 해 중 최소 개수, 시간은 종류 합) → 보통 eval 기록 `runs/2026-10-29/baselines_e0plus/eval/`, `collect_results.py`가 먼저 실행하고 모든 표에 "개수÷종류 인식 greedy" 열 추가. 10칸 종류 1·2 기록이 끝나면 자동으로 표에 들어감 (가짜 기록으로 /tmp에서 선택 규칙 확인).
-- **B-Park 구현** (`baselines_ml/park_am.py`, `train.py --model park_am --baseline rollout --imit 0`): 좌표 입력 + transformer 인코더 + 문맥(그래프 평균·놓인 칸 평균) glimpse + C·tanh 포인터 (채널마다 query → 우리 행동 공간), RL은 frozen copy greedy rollout 기준선 (새 best val마다 교체). CPU smoke (distill 4 + rl 6 iter, 체크포인트 재로딩) 통과. 큐에서 a2_fc 다음 (~05:10 시작 예상).
-- PROPOSALS: (a)(b) 노벨티 2줄 메모; (b)는 MoTT add head가 이미 (포트×종류) 쌍 점수라서 "종류 조건 포트↔모드 읽기"로 해석.
-- 다음: B-Manoharan (`baselines_ml/manoharan.py`: 고정 포트 순서 env + 종류/건너뛰기 선택, 순서대로 바꾼 선생님 궤적으로 distill) 구현 → 큐에 → (b) 구현 → a2_fc 10칸 평가 결과를 종류 인식 greedy와 비교.
+## 라운드 20 (02:59~ UTC) — QUEUE 2일차 지시 + 03:15 수정 반영
+- **지금 도는 것:** GPU `r3a` = 3단 loop + `--fc_bias` (QUEUE 03:15 3번: `dec_from_mode`에만 편향 −|log f_k − log SRF_t|/τ_h, τ head마다 학습, init 1 decade; 나머지·COMMON·seed·distill 0.75 h + RL 1.25 h는 r3와 같음), 03:10 시작 (`runs/2026-10-29/r3a_distill/log.txt`). 큐: r3a → r2a (2단 + 같은 편향) → bp_park. CPU: ip16_1 풀 (11.9 h째) + 10칸 종류 하나 g+p (종류 0→1→2, `agent/logs/side10_base.log`) + 학습 certify 2 = 4.
+- **새 드라이버 `scripts/pipeline_day2.py`** (`agent/logs/pipeline_day2.log`): `agent/day2_queue.json`을 매 단계 다시 읽음 → GPU 줄 학습 하나씩 (CERTIFY_WORKERS=2), CPU 줄 1 worker: 끝난 학습의 10칸 평가 → "cpu" 항목 순서 (E0+ 10칸 → 16칸을 풀 파일 하나씩: E0+ 종류 0·1·2 + rl 사다리 4단 → 1일차 남은 10칸 r3@R·distill). `ensure_running.py`는 day2 드라이버 + side16_gp (+ 16칸 풀 파일이 없으면 build_pools 1 worker).
+- 결정: **1일차 드라이버·side_evals 멈춤** (03:02) — 학습에 certify 2칸이 필요하고 한도는 4. 버린 진행분: r0 rl 16칸 job ~20분, r3 @R4 10칸 job 수 분 (같은 명령이 day2 큐에 있음).
+- 결정: **CERTIFY_WORKERS 2 유지** (QUEUE는 2 또는 1 허용) — 1로 하면 같은 시간 예산의 RL iter 수가 r3·r2와 달라져 "편향 하나만 바꾼" 비교가 흐려짐. 대신 16칸 평가는 풀 생성이 끝나 그 칸이 비면 (side16_gp: 16칸 g+p → modal_rule) 그리고 E0+ 10칸이 끝나면 (CPU 줄) 1 worker로 이어짐.
+- 결정: 03:04에 시작한 `a2_fc` (2단 + 편향 + 모드←decap 역방향 attention 추가 = 두 가지 변경)는 QUEUE 03:15 수정과 달라 6분 만에 멈춤 → `runs/2026-10-29/a2_fc*_killed_031014_spec_changed`. 역방향 코드는 지움.
+- **E0+ 종류 인식 greedy (정식):** `scripts/make_type_aware.py` (종류별 g+p 기록에서 문제마다 성공 해 중 최소 개수, 셋 다 실패면 실패, 시간은 종류 합) → 보통 eval 기록 `runs/2026-10-29/baselines_e0plus/eval/`. `collect_results.py`가 먼저 실행; 요약표·종류별 표에 "개수÷종류 인식 greedy" 열, 새 표 "판 종류마다 맞는 decap 종류" + 숫자에서 자동 생성되는 한 문장 (QUEUE 4번). 10칸 종류 1·2 기록이 끝나면 자동으로 채워짐 (/tmp 가짜 기록으로 선택 규칙·표 확인).
+- **B-Park 구현** (`baselines_ml/park_am.py`, `train.py --model park_am --baseline rollout --imit 0`): 좌표 입력 transformer 인코더 + 문맥 glimpse + C·tanh 포인터 (채널마다 query), RL = frozen copy greedy rollout 기준선. CPU smoke 통과. RESULTS "선행 연구 재구현" 절 + 원 논문과 다른 점 4줄 (기록이 생기면 표시). QUEUE대로 r3a 결과 뒤에 학습 (큐 3번째).
+- 다음: r3a distill/RL 진행 확인 → r3a 10칸 평가 (CPU 줄 최우선, ~05:30 이후) → r3 대비·종류 인식 greedy 대비 판정 → B-Manoharan 구현 (고정 포트 순서 env + 종류/건너뛰기, 순서대로 바꾼 선생님 궤적으로 distill).
 
 ## 라운드 19 (02:22~ UTC)
 - 상태 정상: 드라이버 살아 있음 (16칸 r0 rl 평가 1 worker, RSS ~10 GB, 첫 기록 아직), side_evals 0단 rl 10칸 4/6, ip16_1 풀 3.3 h째, pod mem 21 GiB / 60, oom_kill 0.

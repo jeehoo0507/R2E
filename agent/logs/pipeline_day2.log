@@ -1,3 +1,6 @@
 [03:04:39] driver day2 start | mem 11.2 GiB / 60.0 GiB, oom_kill 0
 [03:04:39] START train a2_fc (CERTIFY_WORKERS=2) | mem 11.2 GiB / 60.0 GiB, oom_kill 0
 [03:04:39] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name a2_fc --arm '--model mott --fc_bias' --day 2026-10-29 --pool runs/pool_v1 --seed 0 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-29/a2_fc/rung_stdout.log)
+[03:10:26] driver day2 start | mem 10.9 GiB / 60.0 GiB, oom_kill 0
+[03:10:26] START train r3a (CERTIFY_WORKERS=2) | mem 10.9 GiB / 60.0 GiB, oom_kill 0
+[03:10:26] $ /home/coder/R2E/.venv/bin/python scripts/run_rung.py --name r3a --arm '--model loop --fc_bias' --day 2026-10-29 --pool runs/pool_v1 --seed 0 --distill_hours 0.75 --rl_hours 1.25 --skip_eval  (log runs/2026-10-29/r3a/rung_stdout.log)

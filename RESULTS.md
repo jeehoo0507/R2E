@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 03:05 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 03:11 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -139,6 +139,7 @@
 | eval_pcb10_0 | 0 (10000 pF, 100 pH, 0.02 Ω) | 0.04 | 32.00 | 4.571 | 4.571 | 1.00 | 0.84 | 9.110 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type0.json` |
 | eval_pcb10_1 | 0 (10000 pF, 100 pH, 0.02 Ω) | 0.00 | – | – | – | 0.80 | 0.84 | 10.252 | `runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type0.json` |
 | eval_pkg10_0 | 0 (1000 pF, 40 pH, 0.03 Ω) | 0.76 | 16.00 | 2.297 | 2.793 | 0.92 | 0.88 | 3.414 | `runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type0.json` |
+| eval_pkg10_1 | 0 (1000 pF, 40 pH, 0.03 Ω) | 0.72 | 16.61 | 1.921 | 2.434 | 0.88 | 0.88 | 3.466 | `runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type0.json` |
 
 ## 학습 기록 (train.py metrics.json)
 

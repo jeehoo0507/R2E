@@ -231,6 +231,68 @@ def one_type_table(recs, ref="r3_loop_rl"):
     return lines + [""]
 
 
+def type_aware_table():
+    """Single-type greedy+prune success per board kind and which type the type-aware greedy picked
+    (QUEUE 10/29 03:15 item 4: a rule has to re-pick the type per board kind). The closing sentence is
+    generated from the same numbers."""
+    one = defaultdict(dict)
+    for f in glob.glob("runs/analysis/gp_one_type/*.json"):
+        d = json.load(open(f))
+        tech, size = d["set"].split("_")[1][:-2], int(d["set"].split("_")[1][-2:])
+        one[(tech, size)].setdefault(int(d["method"].split("@type")[1]), []).append(np.asarray(d["ok"], bool))
+    picks = defaultdict(list)
+    for f in glob.glob(f"runs/**/eval/*__{TA}.json", recursive=True):
+        d = json.load(open(f))
+        picks[(d["tech"], int(d["size"]))].append(np.asarray(d["type_picked"])[np.asarray(d["ok"], bool)])
+    keys = sorted(k for k in one if len(one[k]) == 3)
+    if not keys:
+        return []
+    lines = ["## 종류 인식 greedy: 판 종류마다 맞는 decap 종류 (`scripts/analyze_gp_one_type.py`, `scripts/make_type_aware.py`)", "",
+             "| 판 | 문제 수 | 종류 0만: 성공률 | 종류 1만: 성공률 | 종류 2만: 성공률 | 종류 인식 greedy가 고른 종류 비율 (성공 문제, 0/1/2) |",
+             "|---|---|---|---|---|---|"]
+    best = {}
+    for k in keys:
+        rates = [np.concatenate(one[k][t]).mean() for t in range(3)]
+        best[k] = int(np.argmax(rates))
+        p = np.concatenate(picks[k]) if picks.get(k) else np.zeros(0, int)
+        share = " / ".join(f"{s:.2f}" for s in np.bincount(p, minlength=3) / max(len(p), 1)) if len(p) else "–"
+        n = len(np.concatenate(one[k][0]))
+        lines.append(f"| {k[0]} {k[1]} | {n} | " + " | ".join(f"{r:.2f}" for r in rates) + f" | {share} |")
+    kinds = ", ".join(f"{k[0]} {k[1]} → 종류 {best[k]}" for k in keys)
+    same = len(set(best.values())) == 1
+    lines += ["", f"단일 종류 g+p로 가장 잘 되는 종류: {kinds}. " +
+              ("판 종류마다 같다." if same else "**판 종류마다 다르다** — 규칙 기준선은 판 종류마다 종류를 다시 골라야 하고 "
+               "(종류 인식 greedy는 그래서 종류 수만큼 다시 돈다), 정책은 모델 하나가 판마다 고른다 (위 \"decap 종류 비율\" 표)."), ""]
+    return lines
+
+
+PRIOR = {  # prior-work re-implementations (QUEUE 10/29 03:30 C): how each differs from the paper
+    "bp_park": ("B-Park: Park 2022 / DevFormer식 좌표 입력 attention-model 포인터 정책 (`baselines_ml/park_am.py`)", [
+        "학습 예산: 원 논문은 RL만 — 여기서는 우리와 같은 distill 0.75 h + RL 1.25 h (같은 선생님 해, 같은 학습 풀).",
+        "행동 공간: 원 논문은 포트 선택(종류 고정) — 여기서는 우리 행동 공간 (칸 × 종류 추가/제거 + 멈춤), 채널마다 포인터 query.",
+        "보상: 원 논문은 임피던스 점수 — 여기서는 우리 보상 (−개수/N_ref − λ·(실패+위반), λ 라그랑주), 정확 검사 실패 반영.",
+        "구조·학습: Kool식 encode-once 대신 매 수 다시 인코딩 (상태가 특징에 있음), BatchNorm 대신 LayerNorm, 기준선 교체는 "
+        "paired t-test 대신 val 최고 갱신 때, 기준선 rollout의 실패는 작업 격자 기준 (정확 검사 안 함), 모방 항·선생님 교체 없음 (`--imit 0`)."]),
+}
+
+
+def prior_table(recs):
+    by = merged(recs)
+    lines = []
+    for key, (title, notes) in PRIOR.items():
+        rows = [(k, m, r) for k in sorted(by) for m, r in by[k].items() if m.startswith(key)]
+        if not rows:
+            continue
+        if not lines:
+            lines = ["## 선행 연구 재구현 (재구현 기준, 같은 평가 풀·정확 검사)", ""]
+        lines += [f"### {title}", "", "| 판 | 방법 | 문제 수 | 성공률 | 개수÷greedy+prune | 개수÷종류 인식 greedy | 문제당 시간 (s) |",
+                  "|---|---|---|---|---|---|---|"]
+        for k, m, r in rows:
+            lines.append(f"| {k[0]} {k[1]} | {m} | {len(r['ok'])} | {r['ok'].mean():.2f} | {fmt(r['rel'])} | {fmt(r['rel_ta'])} | {fmt(r['sec'], 3)} |")
+        lines += [""] + [f"- {n}" for n in notes] + [""]
+    return lines
+
+
 def train_table():
     lines = []
     files = sorted(glob.glob("runs/**/metrics.json", recursive=True))
@@ -281,6 +343,8 @@ def main():
     lines += gp_fail_table()
     lines += swap_table()
     lines += one_type_table(recs)
+    lines += type_aware_table()
+    lines += prior_table(recs)
     lines += train_table()
     lines += teacher_table()
     open(a.out, "w").write("\n".join(lines) + "\n")

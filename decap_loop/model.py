@@ -129,29 +129,22 @@ class BiasedAttention(nn.Module):
 
 
 class MoTTBlock(nn.Module):
-    def __init__(self, d, heads, fc=False):
+    def __init__(self, d, heads):
         super().__init__()
         self.nm1, self.nm2, self.nm3, self.np1, self.nc = (nn.LayerNorm(d) for _ in range(5))
         self.mode_self = BiasedAttention(d, heads)
         self.mode_from_port = BiasedAttention(d, heads)
         self.port_from_mode = BiasedAttention(d, heads)
         self.dec_from_mode = BiasedAttention(d, heads)
-        # fc (day-2 arch a): modes also read the decap tokens, so the port update sees which decap types
-        # can address each mode; both directions carry the frequency-match bias (MoTT.fc_bias)
-        self.mode_from_dec = BiasedAttention(d, heads) if fc else None
-        if fc:
-            self.nm4 = nn.LayerNorm(d)
         self.mlp_m = nn.Sequential(nn.Linear(d, 2 * d), nn.GELU(), nn.Linear(2 * d, d))
         self.mlp_p = nn.Sequential(nn.Linear(d, 2 * d), nn.GELU(), nn.Linear(2 * d, d))
 
     def forward(self, m, u, c, bias, ev, mmask, pmask, fcb=None):
         """m modes [E,K,d], u ports [E,n,d], c decaps [E,T,d]; bias [E,h,n,K]; ev edge values [E,n,K,d];
-        fcb [E,h,T,K] frequency-match bias (None = rung-2 block)."""
+        fcb [E,h,T,K] frequency-match bias on dec_from_mode (QUEUE 10/29 03:15, arch a; None = rung-2 block)."""
         x = self.nm1(m)
         m = m + self.mode_self(x, x, kmask=mmask)
         m = m + self.mode_from_port(self.nm2(m), self.np1(u), bias=bias.transpose(-1, -2), kmask=pmask)
-        if self.mode_from_dec is not None:
-            m = m + self.mode_from_dec(self.nm4(m), self.nc(c), bias=fcb.transpose(-1, -2))
         m = m + self.mlp_m(self.nm3(m))
         u = u + self.port_from_mode(self.np1(u), self.nm1(m), bias=bias, kmask=mmask, vadd=ev)
         u = u + self.mlp_p(self.np1(u))
@@ -175,9 +168,10 @@ class MoTT(nn.Module):
         self.embed_c = nn.Sequential(nn.Linear(self.dc, d), nn.GELU(), nn.Linear(d, d))
         self.edge_bias = nn.Sequential(nn.Linear(self.de, d), nn.GELU(), nn.Linear(d, heads))
         self.edge_val = nn.Sequential(nn.Linear(self.de, d), nn.GELU(), nn.Linear(d, d))
-        self.blocks = nn.ModuleList([MoTTBlock(d, heads, fc) for _ in range(layers)])
-        # fc: per-head weight of the frequency-match bias -|log10 f_k - log10 SRF_t| (decades), learned
-        self.fc_w = nn.Parameter(torch.full((heads,), 2.0)) if fc else None
+        self.blocks = nn.ModuleList([MoTTBlock(d, heads) for _ in range(layers)])
+        # fc (arch a): dec_from_mode gets the bias -|log10 f_k - log10 SRF_t| / tau_h, tau_h learned per head
+        # (parametrised as log tau, init tau = 1 decade)
+        self.fc_logtau = nn.Parameter(torch.zeros(heads)) if fc else None
         self.add_head = nn.Sequential(nn.Linear(3 * d, d), nn.GELU(), nn.Linear(d, 1))
         self.rm_head = nn.Sequential(nn.Linear(d, d), nn.GELU(), nn.Linear(d, 1))
         self.stop_head = nn.Sequential(nn.Linear(2 * d, d), nn.GELU(), nn.Linear(d, 1))
@@ -187,12 +181,12 @@ class MoTT(nn.Module):
         self.grad_ckpt = False
 
     def fc_bias(self, mode, dec):
-        """[E,h,T,K] frequency match of decap type t and mode k: -w_h |log10(f_k/f_c) - log10(SRF_t/f_c)|
+        """[E,h,T,K] frequency match of decap type t and mode k: -|log10(f_k/f_c) - log10(SRF_t/f_c)| / tau_h
         (mode feature 0 and decap feature 0 of sim.features_mott). None without fc."""
-        if self.fc_w is None:
+        if self.fc_logtau is None:
             return None
         dist = (mode[:, None, :, 0] - dec[:, :, None, 0]).abs()                 # [E,T,K]
-        return -self.fc_w[None, :, None, None] * dist[:, None]
+        return -dist[:, None] / self.fc_logtau.exp()[None, :, None, None]
 
     def forward(self, x, valid, H, W):
         E, n, _ = x.shape
