@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 06:04 UTC, 라운드 41)
+# PROGRESS (갱신 2026-10-29 06:19 UTC, 라운드 42)
 
-**지금 (06:04):** GPU **r2a** RL 시작 (~06:00, distill 끝: 1603 iter / 0.77 h, best it 1500 score 1.843, OOM 0, gpu peak 12.1 GB; RL init = distill best.pt) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, 53분째, 기록 아직 없음 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 26.1 GiB / 60, oom_kill 0, load 3.3.
+**지금 (06:19):** GPU **r2a** RL it 50 (781 s, OOM 0, gpu peak 13.6 GB, 끝 ~07:20 예상) · CPU = r2a RL (certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0, 05:09~, 68분째, 기록 아직 없음 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker (03:13~). GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 30.0 GiB / 60, oom_kill 0, load 3.8.
+
+## 라운드 42 (06:18~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 30.0 GiB / 60 (< 45), oom_kill 0. r2a RL it 50 (`runs/2026-10-29/r2a_rl/log.txt`, cert-bad 1, OOM 0).
+- 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸 꽉 참 (라운드 40·41과 같은 이유).
+- 다음 라운드: 라운드 38과 같음 (r3a 10칸 평가 기록 → ablation 표 r3a vs r3 + E0+ 대비 판정 → RESULTS 재생성; r2a RL val·OOM 확인).
 
 ## 라운드 41 (06:02~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 26.1 GiB / 60, oom_kill 0.

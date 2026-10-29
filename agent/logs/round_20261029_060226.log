@@ -9,3 +9,5 @@ This was a status-check round: no evaluation finished, so RESULTS.md wasn't rege
 - **Records:** PROGRESS.md has a round 41 entry and was committed and pushed to `r2e main` (08a3f2a). DAILY.md was written at 01:50 today, so it isn't due yet.
 
 Next round: once r3a's 10-cell results land, compare r3a against r3 and against E0+ on count and success rate, then regenerate RESULTS.md.
+To https://github.com/jeehoo0507/R2E.git
+   08a3f2a..e6a1afd  main -> main
