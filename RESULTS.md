@@ -1,8 +1,20 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-28 23:23 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 00:49 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
 ## 평가 (정확 검사)
+
+### 요약: 정확 검사 성공률 / 개수÷greedy+prune (둘 다 성공)
+
+| 방법 | pkg 10 |
+|---|---|
+| greedy+prune | 0.88 / 1.00 |
+
+### pkg 10×10 (문제 25개)
+
+| 방법 | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 짝지음) | 문제당 시간 (s) | 출처 |
+|---|---|---|---|---|---|
+| greedy+prune | 0.88 | 8.86 | 1.000 | 4.581 | `runs/2026-10-28/baselines/eval/eval_pkg10_1__greedy+prune.json` |
 
 ## 학습 기록 (train.py metrics.json)
 
@@ -15,6 +27,7 @@
 | runs/2026-10-28/r2_mott_distill | mott / mott | distill | 1595 | 0.77 | val_pcb10_0: 1.08/0.75, val_pkg10_0: 1.07/0.56, val_ip10_0: 0.69/0.12 | `runs/2026-10-28/r2_mott_distill/metrics.json` |
 | runs/2026-10-28/r2_mott_rl | mott / mott | rl | 354 | 1.27 | val_pcb10_0: 0.88/0.44, val_pkg10_0: 1.00/0.62, val_ip10_0: 0.69/0.19 | `runs/2026-10-28/r2_mott_rl/metrics.json` |
 | runs/2026-10-28/r3_loop_distill | mott / loop | distill | 1500 | 0.77 | val_pcb10_0: 1.05/0.62, val_pkg10_0: 1.00/0.75, val_ip10_0: 0.69/0.19 | `runs/2026-10-28/r3_loop_distill/metrics.json` |
+| runs/2026-10-28/r3_loop_rl | mott / loop | rl | 352 | 1.27 | val_pcb10_0: 0.99/0.81, val_pkg10_0: 1.00/0.50, val_ip10_0: 0.69/0.19 | `runs/2026-10-28/r3_loop_rl/metrics.json` |
 | runs/smoke_chunk0 | coord / grid | rl | 4 | 0.01 | val_ip10_0: 0.75/0.81 | `runs/smoke_chunk0/metrics.json` |
 | runs/smoke_chunk2 | coord / grid | rl | 4 | 0.01 | val_ip10_0: 0.46/0.88 | `runs/smoke_chunk2/metrics.json` |
 | runs/smoke_rl_grid_cap | coord / grid | rl | 6 | 0.01 | val_ip10_0: 0.75/0.81 | `runs/smoke_rl_grid_cap/metrics.json` |

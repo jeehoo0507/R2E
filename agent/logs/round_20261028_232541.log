@@ -20,3 +20,4 @@ error: Please commit or stash them.
 2. 드라이버 로그에 `early evals while pools build`가 시작됐는지 확인합니다. 새 순서가 처음 실제로 도는 지점입니다.
 3. 첫 평가 결과를 RESULTS.md에 반영합니다.
 4. 10/29 05:30 무렵 첫 DAILY.md를 씁니다.
+fatal: unable to access 'https://github.com/jeehoo0507/R2E.git/': Could not resolve host: github.com

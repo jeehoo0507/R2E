@@ -1,0 +1,3 @@
+[00:40:46] START --methods gp | mem 24.7 GiB / 60.0 GiB, oom_kill 0
+6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/baselines/eval
+[   513s] eval_pkg10_1   greedy+prune                 ok 0.88 count 8.86 4.581s/inst rounds 4

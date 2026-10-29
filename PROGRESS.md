@@ -1,4 +1,14 @@
-# PROGRESS (갱신 2026-10-28 23:30 UTC, 라운드 15)
+# PROGRESS (갱신 2026-10-29 00:50 UTC, 라운드 16)
+
+## 라운드 16 (23:30~00:50 UTC)
+- 상태 정상: 드라이버 살아 있음, pod mem 13.4 → 26.3 GiB / 60, oom_kill 0.
+- **r3 (3단 loop) RL 끝** (00:19): 352 iter / 1.27 h, best iter 100 (val score 1.679), cuda_oom_skipped 0, chunk 2, gpu peak 17.1 GB, 선생님 교체 296, λ 1.42, grid capped 151 step (`runs/2026-10-28/r3_loop_rl/metrics.json`). 최종 val (보고서용 아님): pcb 0.99/fail 0.81, pkg 1.00/0.50, ip 0.69/0.19 → best는 iter 100. **사다리 0~3단 학습 모두 끝** (모두 distill 0.75 h + RL 1.25 h, 같은 인자).
+- RL best val score (낮을수록 좋음, val 16문제라 잡음 큼, 보고서용 아님): 0단 1.999 → 1단 1.737 → 2단 1.691 → 3단 1.679.
+- eval 풀: `eval_ip16_0` 9187 s, `eval_ip10_1` 305 s 완성. 남은 것 `eval_ip16_1` 하나 (worker 1개).
+- 드라이버 early evals 시작 (00:20): r0 distill부터 이미 만든 풀 11개, 2 workers. 16칸 정책 평가 1개가 30분 넘게 걸림 (00:49에 아직 기록 0) → 드라이버 순서(정책마다 16칸 먼저)로는 10칸 사다리 표가 오래 비어 있음.
+- **4번째 CPU 칸 사용** (`scripts/side_evals.py`, 00:40~, `agent/logs/side_evals.log`): 10칸 eval 6개에 greedy+prune → 0~3단 rl → 3단 @R2/4/16 → 0~3단 distill 순서, 1 worker. 같은 `eval_policy.py`·같은 기록 파일이라 드라이버는 이미 있는 기록을 건너뜀. 첫 기록: `eval_pkg10_1` greedy+prune 513 s (ok 0.88).
+- 결정: 4번째 칸은 평가에만 씀 (풀 1 + 드라이버 평가 2 + side 1 = 4, QUEUE 한도 그대로; 20칸 풀 생성이 시작되면 side는 멈춤). 실험 조건은 안 바꿈. GPU는 비어 있지만 학습에 필요한 CPU 검사 칸(2개)이 없어 새 학습은 안 띄움. 정책 평가는 CPU 1스레드 그대로 (그림 2 시간 비교 조건 "같은 계산기").
+- 다음 라운드: 첫 16칸 정책 평가 시간 → 남은 평가 시간 계산 → 10칸 사다리 기록이 쌓이면 RESULTS.md → 05:30 무렵 첫 DAILY.md.
 
 ## 라운드 15 (23:25 UTC~, 라운드 14 직후라 짧음)
 - 상태 정상: 드라이버 살아 있음, pod mem 11.7 GiB / 60, oom_kill 0. GPU 18.6 GB (r3 RL).

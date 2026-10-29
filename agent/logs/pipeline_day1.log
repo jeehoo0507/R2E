@@ -79,3 +79,10 @@
 [23:27:45] END teacher rc=0 | mem 12.1 GiB / 60.0 GiB, oom_kill 0
 [23:27:45] ATTACH build eval pools side 10,16 (pid 13040 still running)
 [23:27:45] ATTACH train r3_loop (CERTIFY_WORKERS=2) (pid 76992 still running)
+[00:19:45] END train r3_loop (CERTIFY_WORKERS=2) (attached) | mem 7.2 GiB / 60.0 GiB, oom_kill 0
+[00:19:45] r0_coord: rl stage finished, skip training
+[00:19:45] r1_modal: rl stage finished, skip training
+[00:19:45] r2_mott: rl stage finished, skip training
+[00:20:45] early evals while pools build: eval_ip10_0,eval_ip10_1,eval_ip16_0,eval_pcb10_0,eval_pcb10_1,eval_pcb16_0,eval_pcb16_1,eval_pkg10_0,eval_pkg10_1,eval_pkg16_0,eval_pkg16_1
+[00:20:45] START eval r0_coord_distill (built pools) | mem 8.0 GiB / 60.0 GiB, oom_kill 0
+[00:20:45] $ /home/coder/R2E/.venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_ip10_0,eval_ip10_1,eval_ip16_0,eval_pcb10_0,eval_pcb10_1,eval_pcb16_0,eval_pcb16_1,eval_pkg10_0,eval_pkg10_1,eval_pkg16_0,eval_pkg16_1' --policy r0_coord_distill=runs/2026-10-28/r0_coord_distill/best.pt --workers 2 --out runs/2026-10-28/r0_coord_distill  (log runs/2026-10-28/r0_coord_distill/eval.log)
