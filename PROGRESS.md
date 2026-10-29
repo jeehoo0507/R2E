@@ -1,6 +1,11 @@
-# PROGRESS (갱신 2026-10-29 12:00 UTC, 라운드 51)
+# PROGRESS (갱신 2026-10-29 12:15 UTC, 라운드 52)
 
-**지금 (12:00):** GPU **bm_manoharan** distill it 1125 (→ ~12:08 RL 시작, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 22.8 GiB / 60, oom_kill 0.
+**지금 (12:15):** GPU **bm_manoharan** RL (12:08~, 끝 ~13:25, OOM 0) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 29.7 GiB / 60, oom_kill 0.
+
+## 라운드 52 (12:14~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 29.7 GiB / 60, oom_kill 0, load 3.5~3.8 (CPU 4칸: e0plus16 1 + side16_gp 1 + bm RL certify 2). bm_manoharan distill → RL 넘어감 (`runs/2026-10-29/bm_manoharan_rl/log.txt`, 6분째, 아직 첫 val 없음).
+- 새로 끝난 실험 없음 → RESULTS 재생성 없음. 15:00 UTC 전이라 QUEUE 08:40대로 새 코드·실험 없음.
+- 다음 라운드: bm_manoharan RL val (fail 1.00에서 내려오는지)·OOM; 15:00 UTC 뒤 첫 라운드에서 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로).
 
 ## 라운드 51 (11:56~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 22.8 GiB / 60, oom_kill 0. 15:00 전이라 QUEUE 08:40대로 새 코드·실험 없음.
