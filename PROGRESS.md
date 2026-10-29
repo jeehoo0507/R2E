@@ -1,6 +1,14 @@
-# PROGRESS (갱신 2026-10-29 07:40 UTC, 라운드 44)
+# PROGRESS (갱신 2026-10-29 08:00 UTC, 라운드 45)
 
-**지금 (07:40):** GPU **bp_park** distill (07:15~, gpu peak 12.1 GB, OOM 0; RL 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r2_mott_distill 07:30~ → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + bp_park RL 때 certify 2. GPU 큐: bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → **r2a seed 1·2 (새로 추가)**. pod 26 GiB / 60, oom_kill 0.
+**지금 (08:00):** GPU **bp_park** distill it 1550 (07:15~, gpu peak 12.1 GB, OOM 0; RL 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (day1 eval10 r1_modal_distill 07:56~ → r0_coord_distill → r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → **r2am (새로 추가, arch c')** → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 17.7 GiB / 60, oom_kill 0.
+
+## 라운드 45 (07:47~ UTC)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 17.7 GiB / 60, oom_kill 0. bp_park distill it 1550 val (16문제, 보고서용 아님): pcb 3.74/fail 0.62 · pkg 1.43/0.69 · ip 0.74/0.25.
+- **day1 eval10 r2_mott_distill 끝** (07:52, `runs/2026-10-28/r2_mott_distill/eval/`, 각 판 50문제) → RESULTS 재생성. 성공률 / 개수÷g+p / 개수÷E0+: ip 0.92 / 0.74 / 1.02 · pcb 0.78 / 0.94 / 0.23 · pkg 0.70 / 0.97 / 0.69. → 2단도 RL이 성공률을 올림 (ip 0.92→1.00, pcb 0.78→0.88, pkg 0.70→0.72) 그리고 개수÷g+p를 줄임 (pcb 0.94→0.88, pkg 0.97→0.88).
+- 결정: **드라이버 CPU 줄 순서를 바꿈** — 짧은 day1 10칸 평가 3개 (r1_modal_distill·r0_coord_distill·r3@R, 각 ~22~25분 / r3@R ~70분, 같은 명령·같은 기록 경로)를 "e0plus16 pcb16_0 종류 0 retry" 앞으로 (`agent/day2_queue.json`). 이유: 그대로면 16칸 작업(~3~5 h)이 07:52에 시작해 bp_park 10칸 평가(RL 끝 ~09:20)를 2 h 넘게 막음 (라운드 43과 같은 문제); 앞으로 옮긴 작업들이 ~10:00까지 줄을 채우고, 그 사이 끝난 bp_park 평가는 작업 사이에서 먼저 골라짐 (최대 지연 ~40분). 아무것도 멈추지 않음, CPU 수 4 그대로. 드라이버가 r1_modal_distill을 고른 것 확인.
+- **arch (c') `--mode_head` 구현 + GPU 큐에 r2am 추가** (bm_manoharan 뒤, 사다리 seed 앞): add logit에 Σ_k α_ik·φ(m_k, c_t) (포트가 겨누는 모드 × 그 모드에 맞는 종류), 마지막 층 0 초기화 → 학습 전 정책 = 부모 r2a. 부모 r2a 대비 이것 하나만 바꿈, 같은 예산 (`decap_loop/model.py` `mode_add`, `train.py --mode_head`, 기본 꺼짐 → 기존 run·평가 영향 없음). `scripts/test_mode_head.py` (CPU) 통과: 초기 greedy 해 = 부모, 새 헤드에 기울기 흐름 (mott·loop). RESULTS ablation 표에 r2am_rl vs r2a_rl 행 예약 (`collect_results.py`). 노벨티 2줄·(c) 다수 수 초안 설계는 PROPOSALS.
+  - 결정: (c) 다수 수 초안 루프는 미룸 — 수마다 m·d번 Woodbury + 피크 재추출 (CPU)이라 같은 2 h 예산에서 RL iter가 크게 줄어 비교가 불공정해짐. 같은 방향("모드를 거쳐 종류를 고른다")의 싼 변형 (c')를 먼저. 큐 위치: QUEUE 03:10 순서 (2. 아키텍처 → 3. 시드)를 따라 시드 앞; 선행 연구 기준선(QUEUE 03:30) 순서는 그대로.
+- 다음 라운드: bp_park distill→RL 전환·OOM 확인 (~08:00), day1 distill 평가 기록 (r1·r0 → RESULTS). bp_park 끝(~09:20) → 10칸 평가 → "선행 연구 재구현" 표.
 
 ## 라운드 44 (07:09~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.1 GiB / 60, oom_kill 0.

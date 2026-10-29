@@ -24,3 +24,5 @@ Round 44 is finished, committed and pushed (`d79cf39`). The frequency-match bias
 - **GPU:** the Park-style baseline (bp_park) started at 07:15 with no out-of-memory errors. It should finish around 09:20, and its 10×10 evaluation then fills the prior-work section of `RESULTS.md`. The Manoharan-style baseline (bm_manoharan) trains next.
 - **CPU:** the day-1 evaluation of r2 after distillation only, then the 16×16 E0+ runs, plus the separate 16×16 greedy+prune job.
 - Pod memory is 26 GiB of 60, with no OOM kills.
+To https://github.com/jeehoo0507/R2E.git
+   d79cf39..8e906a7  main -> main

@@ -66,3 +66,11 @@ done
 [  1384s] eval_ip10_1    r3_loop_distill              ok 0.80 count 6.75 1.499s/inst rounds 4
 done
 6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/r2_mott_distill/eval
+[   240s] eval_pkg10_1   r2_mott_distill              ok 0.64 count 8.25 2.027s/inst rounds 4
+[   502s] eval_pcb10_0   r2_mott_distill              ok 0.72 count 7.17 1.245s/inst rounds 4
+[   710s] eval_pkg10_0   r2_mott_distill              ok 0.76 count 6.47 0.990s/inst rounds 4
+[  1038s] eval_pcb10_1   r2_mott_distill              ok 0.84 count 7.57 2.528s/inst rounds 4
+[  1197s] eval_ip10_0    r2_mott_distill              ok 0.92 count 7.91 0.707s/inst rounds 4
+[  1325s] eval_ip10_1    r2_mott_distill              ok 0.92 count 8.04 0.466s/inst rounds 4
+done
+6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/r1_modal_distill/eval

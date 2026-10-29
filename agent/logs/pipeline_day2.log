@@ -37,3 +37,9 @@
 [07:28:52] END collect_results rc=0 | mem 13.9 GiB / 60.0 GiB, oom_kill 0
 [07:30:22] START day1 eval10 r2_mott_distill | mem 26.2 GiB / 60.0 GiB, oom_kill 0
 [07:30:22] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r2_mott_distill=runs/2026-10-28/r2_mott_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_distill  (log agent/logs/side_evals.log)
+[07:52:28] END day1 eval10 r2_mott_distill rc=0 | mem 14.2 GiB / 60.0 GiB, oom_kill 0
+[07:52:28] START collect_results | mem 14.2 GiB / 60.0 GiB, oom_kill 0
+[07:52:28] $ /home/coder/R2E/.venv/bin/python scripts/collect_results.py  (log agent/logs/collect_results.log)
+[07:52:35] END collect_results rc=0 | mem 15.4 GiB / 60.0 GiB, oom_kill 0
+[07:54:05] START day1 eval10 r1_modal_distill | mem 13.9 GiB / 60.0 GiB, oom_kill 0
+[07:54:05] $ .venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r1_modal_distill=runs/2026-10-28/r1_modal_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_distill  (log agent/logs/side_evals.log)

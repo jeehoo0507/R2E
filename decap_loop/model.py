@@ -159,7 +159,7 @@ class MoTT(nn.Module):
     residual, so the untrained policy already behaves like a one-step greedy and learning only
     has to correct it (the proxy experiment showed a free MLP loses the transfer of the physics score)."""
 
-    def __init__(self, n_types, k_modes, dims, d=64, layers=3, heads=4, fc=False):
+    def __init__(self, n_types, k_modes, dims, d=64, layers=3, heads=4, fc=False, mode_head=False):
         super().__init__()
         self.T, self.K = n_types, k_modes
         self.dn, self.dm, self.de, self.dc = dims
@@ -173,6 +173,15 @@ class MoTT(nn.Module):
         # (parametrised as log tau, init tau = 1 decade)
         self.fc_logtau = nn.Parameter(torch.zeros(heads)) if fc else None
         self.add_head = nn.Sequential(nn.Linear(3 * d, d), nn.GELU(), nn.Linear(d, 1))
+        # mode_head (arch c', PROPOSALS 10/29 08:00): add logit routed through the modes,
+        # sum_k alpha_ik * phi(m_k, c_t); alpha = port i's attention over modes, phi = suitability of type t
+        # for mode k. Last layer zero-init so the untrained policy equals the parent (r2a).
+        if mode_head:
+            self.mh_q, self.mh_k = nn.Linear(d, d), nn.Linear(d, d)
+            self.mh_phi = nn.Sequential(nn.Linear(3 * d, d), nn.GELU(), nn.Linear(d, 1))
+            nn.init.zeros_(self.mh_phi[-1].weight)
+            nn.init.zeros_(self.mh_phi[-1].bias)
+        self.mode_head = mode_head
         self.rm_head = nn.Sequential(nn.Linear(d, d), nn.GELU(), nn.Linear(d, 1))
         self.stop_head = nn.Sequential(nn.Linear(2 * d, d), nn.GELU(), nn.Linear(d, 1))
         T = n_types
@@ -187,6 +196,19 @@ class MoTT(nn.Module):
             return None
         dist = (mode[:, None, :, 0] - dec[:, :, None, 0]).abs()                 # [E,T,K]
         return -dist[:, None] / self.fc_logtau.exp()[None, :, None, None]
+
+    def mode_add(self, u, m, c, bias, mmask):
+        """[E,n,T] mode-routed add logit (0 without mode_head). bias [E,h,n,K] is the port-mode edge bias."""
+        if not self.mode_head:
+            return 0.0
+        s = torch.einsum("end,ekd->enk", self.mh_q(u), self.mh_k(m)) / u.shape[-1] ** 0.5 + bias.mean(1)
+        alpha = torch.softmax(s.masked_fill(~mmask[:, None, :], -1e4), -1)            # [E,n,K]
+        E, K, d = m.shape
+        T = c.shape[1]
+        mm = m[:, :, None, :].expand(E, K, T, d)
+        cc = c[:, None, :, :].expand(E, K, T, d)
+        phi = self.mh_phi(torch.cat([mm, cc, mm * cc], -1))[..., 0]                   # [E,K,T]
+        return alpha @ phi
 
     def forward(self, x, valid, H, W):
         E, n, _ = x.shape
@@ -207,6 +229,7 @@ class MoTT(nn.Module):
         uu = u[:, :, None, :].expand(E, n, T, u.shape[-1])
         cc = c[:, None, :, :].expand(E, n, T, c.shape[-1])
         add = self.add_head(torch.cat([uu, cc, uu * cc], -1))[..., 0]          # [E,n,T]
+        add = add + self.mode_add(u, m, c, bias, mmask)
         rm = self.rm_head(u)                                                    # [E,n,1]
         nb = 4 + T + 3
         dV, mn = node[..., nb:nb + T + 1], node[..., nb + T + 1:nb + 2 * (T + 1)]

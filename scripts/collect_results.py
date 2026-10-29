@@ -330,6 +330,7 @@ def ci_table(recs, ref=TA, title="종류 인식 greedy", only=None):
 ABLATIONS = [  # QUEUE 10/29 03:15 item 3: one change vs the same rung without it (same budget, seed 0)
     ("r3a_rl", "r3_loop_rl", "3단 + 주파수 궁합 편향 (dec_from_mode)"),
     ("r2a_rl", "r2_mott_rl", "2단 + 주파수 궁합 편향 (dec_from_mode)"),
+    ("r2am_rl", "r2a_rl", "r2a + 모드 경유 add 점수 (--mode_head)"),
 ]
 
 

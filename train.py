@@ -106,6 +106,8 @@ def parse():
     p.add_argument("--loop_eval", type=int, default=8, help="loop model: R at validation")
     p.add_argument("--fc_bias", action="store_true", help="mott/loop (day-2 arch a, QUEUE 10/29 03:15): add the "
                    "frequency-match bias -|log f_k - log SRF_t| / tau_h (tau learned per head) to dec_from_mode")
+    p.add_argument("--mode_head", action="store_true", help="mott/loop (day-2 arch c', PROPOSALS 10/29 08:00): add "
+                   "a mode-routed add logit sum_k alpha_ik phi(m_k, c_t), zero-init")
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--imit", type=float, default=1.0, help="weight of imitating the best-known solution (0=off)")
     p.add_argument("--teacher", choices=["gp", "ls"], default="gp", help="(no pool) greedy+prune, or + local search")
@@ -126,12 +128,13 @@ def parse():
 def make_policy(cfg, a):
     if a.get("model") == "mott":
         return MoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], layers=a["layers"], heads=a["heads"],
-                    fc=a.get("fc_bias", False))
+                    fc=a.get("fc_bias", False), mode_head=a.get("mode_head", False))
     if a.get("model") == "loop":
         from decap_loop.loop_model import LoopMoTT
         lo, hi = rng_range(a.get("loop_train", "2-8"))
         return LoopMoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], heads=a["heads"],
-                        r_train=(lo, hi), r_eval=a.get("loop_eval", 8), fc=a.get("fc_bias", False))
+                        r_train=(lo, hi), r_eval=a.get("loop_eval", 8), fc=a.get("fc_bias", False),
+                        mode_head=a.get("mode_head", False))
     if a.get("model") == "manoharan":
         from baselines_ml.manoharan import ManoharanNet
         return ManoharanNet(cfg.n_types, cfg.n_feat_freq, d=a["d"], heads=a["heads"])

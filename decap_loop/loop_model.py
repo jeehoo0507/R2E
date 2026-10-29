@@ -13,8 +13,8 @@ from .model import MoTT
 
 
 class LoopMoTT(MoTT):
-    def __init__(self, n_types, k_modes, dims, d=64, heads=4, r_train=(2, 8), r_eval=8, fc=False):
-        super().__init__(n_types, k_modes, dims, d=d, layers=1, heads=heads, fc=fc)
+    def __init__(self, n_types, k_modes, dims, d=64, heads=4, r_train=(2, 8), r_eval=8, fc=False, mode_head=False):
+        super().__init__(n_types, k_modes, dims, d=d, layers=1, heads=heads, fc=fc, mode_head=mode_head)
         self.r_train = (int(r_train[0]), int(r_train[1]))
         self.R_cur = self.r_train[1]
         self.R_eval = int(r_eval)
@@ -49,6 +49,7 @@ class LoopMoTT(MoTT):
         uu = u[:, :, None, :].expand(E, n, T, u.shape[-1])
         cc = c[:, None, :, :].expand(E, n, T, c.shape[-1])
         add = self.add_head(torch.cat([uu, cc, uu * cc], -1))[..., 0]
+        add = add + self.mode_add(u, m, c, bias, mmask)
         rm = self.rm_head(u)
         nb = 4 + T + 3
         dV, mn = node[..., nb:nb + T + 1], node[..., nb + T + 1:nb + 2 * (T + 1)]
