@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 08:45 UTC, 라운드 47)
+# PROGRESS (갱신 2026-10-29 09:00 UTC, 라운드 48)
 
-**지금 (08:45):** GPU **bp_park** RL it 100 (08:01~, gpu peak 13.6 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 13.4 GiB / 60, oom_kill 0.
+**지금 (09:00):** GPU **bp_park** RL it 150 (08:01~, 3339 s, gpu peak 15.9 GB, OOM 0; 끝 ~09:20 예상) · CPU = 드라이버 CPU 줄 1 (r3@R2/4/16 → [bp_park 10칸 평가] → e0plus16 pcb16_0 종류 0 retry …) + side16_gp 16칸 g+p 1 worker (03:13~) + RL certify 2. GPU 큐: bp_park → bm_manoharan → r2am (arch c') → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 13.4 GiB / 60, oom_kill 0.
+
+## 라운드 48 (08:58~ UTC, 라운드 47 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 15.7 GiB / 60, oom_kill 0. bp_park RL it 150 (count/ref 1.80, fail 0.16, grid capped 29, OOM 0; best 그대로 it 100 score 3.219). CPU 줄 = r3_loop_rl@R2 10칸 평가 (08:42~), side16_gp 16칸 g+p 1 worker, RL certify 2.
+- 새로 끝난 실험 없음 → RESULTS 재생성 없음. QUEUE 08:40: 15:00 UTC 전이라 하던 일 그대로, 새 코드 없음.
+- 결정: 새 실험·코드 변경 없음 — CPU 4칸 꽉 참, 다음 판정(선행 연구 재구현 표)은 bp_park 10칸 평가가 있어야 가능.
+- 다음 라운드: 라운드 47과 같음 (bp_park 끝 ~09:20 → 드라이버가 r3@R 작업 사이에 10칸 평가 → "선행 연구 재구현" 표; bm_manoharan 시작·OOM 확인).
 
 ## 라운드 47 (08:30~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 14.3 GiB / 60, oom_kill 0. bp_park RL it 100 val (16문제, 보고서용 아님): pcb 3.10/fail 0.88 · pkg 1.67/0.94 · ip 0.65/0.31, new best score 3.219 (`runs/2026-10-29/bp_park_rl/log.txt`).
