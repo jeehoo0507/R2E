@@ -1,13 +1,40 @@
-# PROGRESS (갱신 2026-10-29 14:15 UTC, 라운드 59)
+# PROGRESS (갱신 2026-10-29 14:25 UTC, 라운드 59 — 루프 종료)
 
-**지금 (14:15):** GPU **r0_coord_s1 RL** (사다리 0단 seed 1, RL 14:12~, 1.25 h → 끝 ~15:30) · CPU = 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 retry2 11:38~, 2.6 h째, 끝 시각 모름) + side16_gp 16칸 g+p 1 worker + certify 2. bm_manoharan 10칸 평가는 CPU 줄에서 e0plus16 다음 (라운드 50 결정대로 멈추지 않음). pod 23.4 GiB / 60, oom_kill 0.
+## 루프 종료 요약 (2026-10-29 14:25 UTC, QUEUE 08:40 + 14:20)
+에이전트 루프는 이 라운드로 끝남 (`agent/STOP`). **드라이버 (`scripts/pipeline_day2.py`, GPU·CPU 큐)·side16_gp·지금 도는 학습/평가는 멈추지 않음.** 결과는 `scripts/report_watch.py`가 30분마다 RESULTS.md + 새 eval json을 commit·push ("results: auto (lo_*)", 로그 `agent/logs/report_watch.log`). 파드가 재시작되면 `.venv/bin/python scripts/ensure_running.py` 한 번이면 드라이버·side16_gp·report_watch가 다시 뜨고 학습은 resume.pt에서 이어짐.
+
+**확정된 결과** (10×10, 판마다 50문제, 정확 검사; 숫자는 `RESULTS.md` 자동 표, seed 0):
+- 사다리 0~3단 distill·rl (`runs/2026-10-28/r{0_coord,1_modal,2_mott,3_loop}_{distill,rl}/eval/`): 모든 rl 단이 ip 성공 0.96~1.00, 개수÷g+p ip 0.74~1.05. 모드 토큰이 있는 2·3단만 ip 개수가 E0+ 수준 (÷E0+ 1.01~1.02); 0·1단은 1.23~1.45. pcb·pkg는 단 사이 차가 CI 안 (seed 1개).
+- 증류 → RL (RESULTS "증류 → RL" 표): 0·1단은 RL이 개수를 크게 줄이고 pkg 성공률을 떨어뜨림; 2·3단은 개수 그대로 성공률 올림.
+- 종류 인식 greedy E0+ (`runs/2026-10-29/baselines_e0plus/eval/`): ip 1.00, pcb 0.66, pkg 0.82. 우리 최선 r2a_rl (`runs/2026-10-29/r2a_rl/eval/`) vs E0+: ip 성공 같음, 개수 비 1.03 (못 넘음) · pcb 성공 +0.30, 개수 0.20 · pkg 성공 같은 수준, 개수 0.58.
+- 비학습 모달 규칙 modal_rule (`runs/2026-10-28/baselines/eval/*modal_rule*`): pcb 1.00 / pkg 0.88 / ip 0.94. r2a_rl은 pcb·pkg에서 규칙과 CI 안 같음, ip에서만 개수 0.72 [0.66, 0.78]. → "학습이 규칙보다 낫다"는 지금 ip 10칸 개수에서만 말할 수 있음.
+- 아키텍처 변경 (같은 예산, RESULTS ablation 표): r2a (2단 + 주파수 궁합 편향) vs r2_mott_rl — 성공률 pcb +0.08 [+0.02, +0.16], pkg +0.12 [+0.02, +0.24] (CI 0 밖, seed 1개), 개수 같음 (비 0.99~1.01); r3a vs r3_loop_rl — 모든 CI가 0·1 포함; r2am (`--mode_head`) vs r2a — 모든 CI가 0·1 포함, 효과 없음. 최종 후보 = r2a (seed 1·2는 GPU 큐에 있음).
+- r3 루프 반복 수 R2/4/8/16 (`runs/2026-10-28/r3_loop_rl/eval/*@R*`): 평가 때 반복을 늘려도 좋아지지 않음.
+- 선행 연구 재구현: B-Park (`runs/2026-10-29/bp_park_rl/eval/`) ip 0.72 / pcb 0.46 / pkg 0.16 — 모두 E0+·우리 사다리보다 낮음. B-Manoharan 학습 끝 (`runs/2026-10-29/bm_manoharan_rl/`, val greedy 거의 0개 성공 — 라운드 51 진단: 빈칸 클래스 쏠림), **10칸 평가는 아직 없음**.
+
+**진행 중 / 예상 일정** (UTC):
+- GPU: r0_coord_s1 RL (14:12~, 끝 ~15:30) → **한 종류 빼고 학습 9개** `lo_{ip,pcb,pkg}_r{0,1,2}` (rung당 ~2 h → ~10/30 09:30 끝) → seed 항목 r1_modal_s1 … r2a_s2 (10개, ~20 h 더).
+- CPU 줄 (1 worker): e0plus16 pcb16_0 종류 0 retry2 (11:38~, 끝 시각 모름) → 끝난 학습의 10칸 평가 (bm_manoharan, r0_coord_s1, lo_* 순, rung당 ~12~60분) → 남은 16칸 E0+·사다리 평가 → 10칸 local search.
+- side16_gp: 16칸 g+p (pcb16·pkg16 일부 끝, 나머지 진행).
+- report_watch: 9개 lo_* 평가가 모두 끝나 push하면 스스로 끝남 (최대 72 h).
+
+**아직 판정 안 된 것**: (1) **처음 보는 판 종류로의 범용화** — RESULTS "한 종류 빼고 학습" 절 (뺀 종류의 eval 50문제, (a) 1단 vs 0단, (b) 2단 vs 0단, (c) 뺀 학습 vs 전체 학습 CI), lo_* 평가 뒤 자동 생성. (2) B-Manoharan 10칸 표. (3) 사다리·r2a seed 1·2 → seed 3개 CI. (4) 16칸 표 (그림 2). (5) 20칸 평가 판은 아직 안 만듦.
 
 ## 라운드 59 (14:13~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 23.4 GiB / 60, oom_kill 0.
 - **r0_coord_s1 distill 끝** (~14:12, `runs/2026-10-29/r0_coord_s1/driver.log`): 2215 iter / 0.77 h, best it 1800 score 2.122, gpu peak 12.1 GB, OOM 0 (다른 run과 같은 예산). RL 시작 (`runs/2026-10-29/r0_coord_s1_rl/log.txt`, init = distill best it 1800, seed 1, 1.25 h).
-- 라운드 58 뒤 새 평가 json 없음 (baselines/eval·bm_manoharan_rl 아래 새 파일 없음) → RESULTS 재생성 없음. 15:00 UTC 전 → QUEUE 08:40대로 새 코드·실험 없음. DAILY.md 01:50 UTC 작성 → 24시간 안 지남.
-- 결정: 아무것도 바꾸지 않음 (라운드 50·51 결정 유지, 큐 순서 그대로).
-- 다음 라운드: 15:00 UTC 뒤 첫 라운드에서 QUEUE 08:40 종료 절차 (루프 종료 요약 + RESULTS 재생성 + `agent/STOP`, 드라이버·큐 그대로). 요약에 r0_coord_s1 RL 끝 ~15:30 → 그 뒤 GPU 큐 다음 항목, bm_manoharan 10칸 평가는 e0plus16 뒤라고 적을 것.
+- **QUEUE 14:20 (한 종류 빼고 학습) 처리** (push 전 pull에서 받음):
+  1. 큐: `agent/day2_queue.json` `train`에 lo_ip_r0 … lo_pkg_r2 9개를 지시 순서대로 **r0_coord_s1 바로 뒤**에 넣음. 결정: 리스트 맨 앞 대신 r0_coord_s1 뒤 — 그 앞 항목은 모두 끝나서 도는 순서는 같고, 드라이버만 재시작될 때 r0_coord_s1이 살아 있는데 lo_ip_r0을 GPU에 같이 띄우는 일 (train.py 2개 겹침)을 막음. arm = 사다리 arm 그대로 (`--feat coord` / `--feat modal` / `--model mott`; day1 `r*_rl/config.json`과 r0_coord_s1 config 대조: seed·init·out 말고 다른 것 없음) + `--pool_glob`·`--val_pools`. COMMON (`run_rung.py`)에 풀·val 옵션 없음 → 덮어쓰기 없음.
+  2. 확인 (CPU만): glob이 고르는 학습 풀 (`runs/pool_v1`, 전체 27 = 종류마다 9):
+     - lo_ip `train_pcb*.pkl,train_pkg*.pkl` → 18 (pcb 9, pkg 9, **ip 0**): train_pcb{8,10,12}_{0,1,2}, train_pkg{8,10,12}_{0,1,2}
+     - lo_pcb `train_pkg*.pkl,train_ip*.pkl` → 18 (pkg 9, ip 9, **pcb 0**)
+     - lo_pkg `train_pcb*.pkl,train_ip*.pkl` → 18 (pcb 9, ip 9, **pkg 0**)
+     - `train.py`: `--pool_glob`은 쉼표로 나눠 glob 합집합 (246줄), `--val_pools`는 쉼표 목록을 모두 읽음 (253줄), best 점수는 val 수와 무관한 평균 (473줄) → val 2개 OK. 9개 arm을 `train.parse()`로 파싱해 feat/model/pool_glob/val_pools 확인 (r2의 feat=phys는 `main()` 208줄에서 mott로 바뀜 — day1 r2_mott와 같음). 선생님 파일은 풀 이름별이라 그대로.
+  3. 평가: 드라이버 `eval_jobs`가 끝난 rung마다 `eval_*10_*` 6파일 전부 (뺀 종류 포함) — 코드 변경 없음.
+  4. `scripts/collect_results.py`에 `leave_out_table` 절 "한 종류 빼고 학습 (처음 보는 기술 종류)": 뺀 종류마다 lo_*_r0/r1/r2_rl · r0_coord_rl · r1_modal_rl · r2_mott_rl · gp_type_aware · modal_rule의 성공률/개수/÷E0+, CI (a) r1 vs r0 (b) r2 vs r0 (c) lo vs 전체 학습; 없으면 "–". lo 결과가 하나도 없으면 절을 숨김. 가짜 레코드 (r0/r1 ip 기록 이름만 바꿈)로 표 모양 확인.
+  5. `scripts/report_watch.py` (bg.py로 띄움, pid 221167, `agent/logs/report_watch.log`): 새/바뀐 `runs/**/eval/*.json` (runs/는 gitignore라 `git add -f`) → collect_results → 그 파일+RESULTS.md만 commit → `pull --rebase --autostash` → push. 첫 사이클 14:17: 기존 eval json 114개 + RESULTS.md commit `77dfc1b`, push 됨. `ensure_running.py` JOBS에도 넣음 (파드 재시작 대비).
+- QUEUE 14:20의 "새 모델·새 학습 코드 금지" 지킴: train.py·모델 변경 없음 (결과 표·감시 스크립트·큐만).
+- 결정: 종료 절차 (QUEUE 14:20 6번)를 15:00 전인 이 라운드에서 함 — 14:20 지시가 08:40보다 우선이고 "1~5번 다음에 종료 절차"를 순서로 줌, 16:30 기한 안.
 
 ## 라운드 58 (13:57~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 36.6 GiB / 60 (45 미만; side16_gp worker rss 25.8 GB가 가장 큼), oom_kill 0, load 3.6.
