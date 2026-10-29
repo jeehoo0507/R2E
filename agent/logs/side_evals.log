@@ -1,3 +1,12 @@
 [00:40:46] START --methods gp | mem 24.7 GiB / 60.0 GiB, oom_kill 0
 6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/baselines/eval
 [   513s] eval_pkg10_1   greedy+prune                 ok 0.88 count 8.86 4.581s/inst rounds 4
+[   900s] eval_pcb10_0   greedy+prune                 ok 1.00 count 13.84 4.812s/inst rounds 2
+[  1301s] eval_pkg10_0   greedy+prune                 ok 0.92 count 7.30 2.991s/inst rounds 4
+[  1983s] eval_pcb10_1   greedy+prune                 ok 0.80 count 9.75 4.863s/inst rounds 4
+[  2095s] eval_ip10_0    greedy+prune                 ok 0.40 count 11.60 3.669s/inst rounds 0
+[  2168s] eval_ip10_1    greedy+prune                 ok 0.40 count 9.00 2.219s/inst rounds 0
+done
+[01:16:54] END rc=0 | mem 35.2 GiB / 60.0 GiB, oom_kill 0
+[01:16:54] START --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt | mem 35.2 GiB / 60.0 GiB, oom_kill 0
+6 sets x 1 methods = 6 jobs, 1 workers -> runs/2026-10-28/r3_loop_rl/eval

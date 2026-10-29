@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 00:49 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 01:20 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -6,9 +6,21 @@
 
 ### 요약: 정확 검사 성공률 / 개수÷greedy+prune (둘 다 성공)
 
-| 방법 | pkg 10 |
-|---|---|
-| greedy+prune | 0.88 / 1.00 |
+| 방법 | ip 10 | pcb 10 | pkg 10 |
+|---|---|---|---|
+| greedy+prune | 0.40 / 1.00 | 0.80 / 1.00 | 0.88 / 1.00 |
+
+### ip 10×10 (문제 25개)
+
+| 방법 | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 짝지음) | 문제당 시간 (s) | 출처 |
+|---|---|---|---|---|---|
+| greedy+prune | 0.40 | 9.00 | 1.000 | 2.219 | `runs/2026-10-28/baselines/eval/eval_ip10_1__greedy+prune.json` |
+
+### pcb 10×10 (문제 25개)
+
+| 방법 | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 짝지음) | 문제당 시간 (s) | 출처 |
+|---|---|---|---|---|---|
+| greedy+prune | 0.80 | 9.75 | 1.000 | 4.863 | `runs/2026-10-28/baselines/eval/eval_pcb10_1__greedy+prune.json` |
 
 ### pkg 10×10 (문제 25개)
 
