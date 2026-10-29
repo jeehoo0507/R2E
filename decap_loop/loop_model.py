@@ -13,8 +13,8 @@ from .model import MoTT
 
 
 class LoopMoTT(MoTT):
-    def __init__(self, n_types, k_modes, dims, d=64, heads=4, r_train=(2, 8), r_eval=8):
-        super().__init__(n_types, k_modes, dims, d=d, layers=1, heads=heads)
+    def __init__(self, n_types, k_modes, dims, d=64, heads=4, r_train=(2, 8), r_eval=8, fc=False):
+        super().__init__(n_types, k_modes, dims, d=d, layers=1, heads=heads, fc=fc)
         self.r_train = (int(r_train[0]), int(r_train[1]))
         self.R_cur = self.r_train[1]
         self.R_eval = int(r_eval)
@@ -40,11 +40,12 @@ class LoopMoTT(MoTT):
         u0, m0, c0 = self.embed_u(node), self.embed_m(mode), self.embed_c(dec)
         bias = self.edge_bias(edge).permute(0, 3, 1, 2)
         ev = self.edge_val(edge)
+        fcb = self.fc_bias(mode, dec)
         blk = self.blocks[0]
         R = self.R_cur if self.training else self.R_eval
         m, u, c = torch.zeros_like(m0), torch.zeros_like(u0), torch.zeros_like(c0)
         for _ in range(R):
-            m, u, c = blk(m + m0, u + u0, c + c0, bias, ev, mmask, valid)
+            m, u, c = blk(m + m0, u + u0, c + c0, bias, ev, mmask, valid, fcb)
         uu = u[:, :, None, :].expand(E, n, T, u.shape[-1])
         cc = c[:, None, :, :].expand(E, n, T, c.shape[-1])
         add = self.add_head(torch.cat([uu, cc, uu * cc], -1))[..., 0]

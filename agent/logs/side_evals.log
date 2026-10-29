@@ -51,3 +51,9 @@ done
 [02:33:28] START --policy r3_loop_rl@R2=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R4=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R16=runs/2026-10-28/r3_loop_rl/best.pt | mem 19.6 GiB / 60.0 GiB, oom_kill 0
 6 sets x 3 methods = 18 jobs, 1 workers -> runs/2026-10-28/r3_loop_rl/eval
 [   261s] eval_pkg10_1   r3_loop_rl@R2                ok 0.64 count 6.44 2.483s/inst rounds 4
+[   756s] eval_pkg10_1   r3_loop_rl@R4                ok 0.80 count 7.00 3.821s/inst rounds 4
+[  1286s] eval_pkg10_1   r3_loop_rl@R16               ok 0.76 count 6.37 4.059s/inst rounds 4
+[  1465s] eval_pcb10_0   r3_loop_rl@R2                ok 0.92 count 7.35 0.888s/inst rounds 4
+[  1640s] eval_pcb10_0   r3_loop_rl@R4                ok 0.96 count 7.62 1.012s/inst rounds 4
+/usr/lib/python3.14/multiprocessing/resource_tracker.py:396: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown: {'/mp-k4n98bq2', '/mp-pd3y1b_5', '/mp-z6wsrqi_', '/mp-9otc28ux', '/mp-vvigbhj6', '/mp-jeyt1_d5'}
+  warnings.warn(

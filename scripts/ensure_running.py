@@ -10,9 +10,17 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = ".venv/bin/python"
-JOBS = [  # (pattern in cmdline, log, command); the driver builds the eval pools itself (QUEUE memory rule)
-    ("scripts/pipeline_day1.py", "agent/logs/pipeline_day1.log", f"{PY} scripts/pipeline_day1.py"),
+JOBS = [  # (pattern in cmdline, log, command)
+    # 10/29 03:10 QUEUE day 2: the day-2 driver replaces pipeline_day1.py (its remaining side-16 rung evals are
+    # "cpu" entries of agent/day2_queue.json). The last side-16 eval pool, then side-16 greedy+prune, keep their
+    # own slot: side16_gp.py waits for build_pools.py, which only runs if a pool file is missing.
+    ("scripts/pipeline_day2.py", "agent/logs/pipeline_day2.log", f"{PY} scripts/pipeline_day2.py"),
+    ("scripts/side16_gp.py", "agent/logs/side16_gp.log", f"{PY} scripts/side16_gp.py"),
 ]
+POOL16 = [f"runs/pool_v1/eval_{k}16_{i}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)]
+GP16 = [f"runs/2026-10-28/baselines/eval/eval_{k}16_{i}__{m}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)
+        for m in ("greedy+prune", "modal_rule")]
+BUILD16 = f"{PY} scripts/build_pools.py --out runs/pool_v1 --workers 1 --only eval --eval_sizes 16"
 
 
 def running(pat):
@@ -29,8 +37,18 @@ def running(pat):
     return None
 
 
+def have(paths):
+    return all(os.path.exists(os.path.join(ROOT, p)) for p in paths)
+
+
 def main():
+    if not have(POOL16) and not running("scripts/build_pools.py"):
+        out = subprocess.check_output([sys.executable, "scripts/bg.py", "agent/logs/build_pools_v1_r3.log", BUILD16],
+                                      cwd=ROOT, text=True).strip()
+        print(f"started build_pools side 16 (pid {out})")
     for pat, log, cmd in JOBS:
+        if pat == "scripts/side16_gp.py" and have(GP16):
+            continue
         pid = running(pat)
         if pid:
             print(f"alive   {pat} (pid {pid})")

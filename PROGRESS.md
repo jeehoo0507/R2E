@@ -1,10 +1,23 @@
-# PROGRESS (갱신 2026-10-29 02:45 UTC, 라운드 19)
+# PROGRESS (갱신 2026-10-29 03:15 UTC, 라운드 20)
+
+## 라운드 20 (02:59~ UTC) — QUEUE 2일차 지시 반영 시작
+- **지금 도는 것:** GPU `a2_fc` (2단 MoTT + `--fc_bias`, 아키텍처 개선 a, distill 0.75 h → RL 1.25 h, 2단과 같은 COMMON·seed 0; 03:04 시작, distill ~2 s/iter, gpu peak 12.1 GB, `runs/2026-10-29/a2_fc_distill/log.txt`). CPU: ip16_1 풀 (11.8 h째) + 10칸 종류 하나 g+p 분석 (종류 0→1→2, `agent/logs/side10_base.log`) + 학습 certify 2 = 4.
+- **새 드라이버 `scripts/pipeline_day2.py`** (03:04~, `agent/logs/pipeline_day2.log`): `agent/day2_queue.json`을 매 단계 다시 읽음 → GPU 줄 학습 한 번에 하나 (CERTIFY_WORKERS=2), CPU 줄 1 worker: 끝난 학습의 10칸 평가 → "cpu" 항목 순서대로 (10칸 E0+ 종류별 g+p → 16칸 E0+ 종류별 (풀×종류 18개) → 1일차 남은 10칸 r3@R·distill 평가 → 16칸 rl 사다리 평가). `ensure_running.py`는 이제 day2 드라이버 + side16_gp (+ 16칸 풀이 없으면 build_pools 1 worker)를 띄움.
+- 결정: **1일차 드라이버·side_evals 멈춤** (03:02) — QUEUE 우선순위상 16칸 평가(4번)·사다리 부가 평가는 학습(2번·선행 기준선)보다 뒤인데, 학습에는 certify 2칸이 필요하고 한도는 4. 버린 진행분: r0 rl 16칸 job ~20분, r3 @R4 10칸 job ~수 분. 둘 다 day2 큐의 cpu 항목으로 다시 들어 있음 (같은 명령·같은 기록 파일).
+- 결정: 아키텍처 개선은 **2단(MoTT) 위에서** 먼저 — 3단과 10칸 성적이 비슷하고 같은 시간 예산에 iter가 더 많음. `--fc_bias`는 loop 모델에도 그대로 붙음.
+- **E0+ 종류 인식 greedy:** `scripts/make_type_aware.py` (종류별 g+p 기록에서 문제마다 성공 해 중 최소 개수, 시간은 종류 합) → 보통 eval 기록 `runs/2026-10-29/baselines_e0plus/eval/`, `collect_results.py`가 먼저 실행하고 모든 표에 "개수÷종류 인식 greedy" 열 추가. 10칸 종류 1·2 기록이 끝나면 자동으로 표에 들어감 (가짜 기록으로 /tmp에서 선택 규칙 확인).
+- **B-Park 구현** (`baselines_ml/park_am.py`, `train.py --model park_am --baseline rollout --imit 0`): 좌표 입력 + transformer 인코더 + 문맥(그래프 평균·놓인 칸 평균) glimpse + C·tanh 포인터 (채널마다 query → 우리 행동 공간), RL은 frozen copy greedy rollout 기준선 (새 best val마다 교체). CPU smoke (distill 4 + rl 6 iter, 체크포인트 재로딩) 통과. 큐에서 a2_fc 다음 (~05:10 시작 예상).
+- PROPOSALS: (a)(b) 노벨티 2줄 메모; (b)는 MoTT add head가 이미 (포트×종류) 쌍 점수라서 "종류 조건 포트↔모드 읽기"로 해석.
+- 다음: B-Manoharan (`baselines_ml/manoharan.py`: 고정 포트 순서 env + 종류/건너뛰기 선택, 순서대로 바꾼 선생님 궤적으로 distill) 구현 → 큐에 → (b) 구현 → a2_fc 10칸 평가 결과를 종류 인식 greedy와 비교.
 
 ## 라운드 19 (02:22~ UTC)
 - 상태 정상: 드라이버 살아 있음 (16칸 r0 rl 평가 1 worker, RSS ~10 GB, 첫 기록 아직), side_evals 0단 rl 10칸 4/6, ip16_1 풀 3.3 h째, pod mem 21 GiB / 60, oom_kill 0.
 - **ip g+p 실패 원인 확인 (기록된 occ, 학습 없음)** — `scripts/analyze_ip_swap.py` → `runs/analysis/ip_swap.json`: g+p 실패 30문제에서 **위치는 그대로 두고 모든 decap을 종류 0 (100 pF)으로 바꾸면 30/30 통과** (최악 중앙값 0.42 Zt), 종류 1·2로 바꾸면 0/30 (1.66, 4.57). 3단 rl 해(29개)도 모두 종류 1로 바꾸면 0/29, 종류 2로 0/29. → 실패는 위치가 아니라 **종류 선택** 때문. g+p 기록은 cutting-plane 0 round → g+p가 자기 작업 격자에서도 불가능으로 끝남 (격자 문제 아님).
 - **g+p를 종류 0만 쓰게 하면** (`scripts/analyze_gp_one_type.py`, 같은 탐욕 규칙에 `only` 제한, 같은 cutting-plane·정확 검사; 분석용) ip10 50/50 성공, 개수 7.92 / 8.68 — **3단 rl과 같은 문제에서 개수 비 rl/종류0 = 1.03, 1.00**, 시간 0.44 / 0.14 s/문제. 즉 ip에서 "정책이 g+p보다 성공률이 높다"(0.98 vs 0.40)는 **g+p 기준선의 종류 선택 규칙(지금 최악점을 가장 많이 낮추는 소자)이 약해서**이고, 종류만 고정한 단순 규칙이 정책과 같은 수준. 보고서 주장 범위에 직접 영향 → 그림 2·3 해석에 반드시 적을 것.
 - 결정: 이 단일 종류 g+p는 **분석용으로만** 기록 (`runs/analysis/`, RESULTS 별도 표) — 보고 기준선을 바꾸는 것(예: "종류별 g+p 중 최선"을 E0에 추가)은 사람 결정 → PROPOSALS (d). 지금은 pcb·pkg 10칸에도 종류 0·1·2 각각 돌려 ip만의 현상인지 확인 중 (`agent/logs/side10_base.log`, 1 process; pcb10_0 종류 0만으로 0.04 성공). 이어서 같은 칸에서 10칸 modal_rule·LS 기준선 평가 (드라이버 E0 순서에 있던 것, 같은 명령·같은 기록 파일).
+- **10칸 rl 사다리 4단 모두 끝** (각 50문제, 성공률 / 개수÷g+p): ip 0단 1.00/1.05 · 1단 0.96/0.88 · 2단 1.00/0.74 · 3단 0.98/0.74; pcb 0.96/0.80 · 0.98/0.75 · 0.88/0.88 · 0.84/0.84; pkg 0.76/0.79 · 0.68/0.75 · 0.72/0.88 · 0.88/0.84. 성공률에 단조 추세 없음; ip 개수만 0→2단에서 줄어듦 (1.05 → 0.74). 0단도 ip 1.00 → ip의 높은 성공률은 사다리 구조와 무관 (위 종류 선택 분석과 맞음). side_evals는 3단 @R2/4/16 10칸 진행 중.
+- **16칸 첫 rl 기록** (r0 rl `eval_pkg16_1`, 2202 s / 25문제, 성공 0.72, 개수 7.94, 18.97 s/문제): **`peak_rss_mb` 23087 — chunk 5로도 ~22 GB 그대로**. 정점은 정책 rollout이 아니라 job 안 다른 곳 (16칸 F 390 격자의 25문제 bank/격자 추가 쪽으로 추정, 확인 안 함; certify는 문제마다 256 MB 조각이라 아님). ps로는 대부분 ~10 GB, 정점은 잠깐.
+- 결정: **W16 = 1 유지** — 23 GB × 2 + 풀/side 칸이면 45 GiB 한도를 넘을 수 있음 (QUEUE). 16칸 rl job ~37~95 min → rl 4단 × 6풀 ~1일 (계획용).
 - 결정: 4번째 CPU 칸은 위 분석·10칸 기준선에 씀 (풀 1 + 드라이버 1 + side_evals 1 + 이것 1 = 4). 처음에 10칸 LS를 띄웠다가 분석 스크립트가 5번째가 되지 않도록 2분 만에 멈추고 한 줄(같은 칸)로 합침.
 
 ## 라운드 18 (02:03~ UTC)

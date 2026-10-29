@@ -1,0 +1,329 @@
+{
+ "_doc": "Read by scripts/pipeline_day2.py before every step. train: GPU, one at a time, in order. cpu: 1 worker, after the side-10 evals of finished trainings, in order; an entry runs while any 'done' path is missing.",
+ "train": [
+  {
+   "name": "a2_fc",
+   "arm": "--model mott --fc_bias",
+   "seed": 0
+  },
+  {
+   "name": "bp_park",
+   "arm": "--model park_am --baseline rollout --imit 0",
+   "seed": 0
+  }
+ ],
+ "cpu": [
+  {
+   "name": "e0plus10 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb10_0,eval_pcb10_1,eval_pkg10_0,eval_pkg10_1,eval_ip10_0,eval_ip10_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type0.json",
+    "runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type0.json",
+    "runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type0.json",
+    "runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type0.json",
+    "runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type0.json",
+    "runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/side10_base.log"
+  },
+  {
+   "name": "e0plus10 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb10_0,eval_pcb10_1,eval_pkg10_0,eval_pkg10_1,eval_ip10_0,eval_ip10_1 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type1.json",
+    "runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type1.json",
+    "runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type1.json",
+    "runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type1.json",
+    "runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type1.json",
+    "runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/side10_base.log"
+  },
+  {
+   "name": "e0plus10 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb10_0,eval_pcb10_1,eval_pkg10_0,eval_pkg10_1,eval_ip10_0,eval_ip10_1 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type2.json",
+    "runs/analysis/gp_one_type/eval_pcb10_1__greedy+prune@type2.json",
+    "runs/analysis/gp_one_type/eval_pkg10_0__greedy+prune@type2.json",
+    "runs/analysis/gp_one_type/eval_pkg10_1__greedy+prune@type2.json",
+    "runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type2.json",
+    "runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/side10_base.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_0 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_0__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_0 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_0__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_0 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_0 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_0__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_0 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_0__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_0 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_0 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_0__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_0 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_0 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_0__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_0 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_0 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_0__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_0 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_0 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_0__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_0 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_0 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_0__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_1 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_1__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_1 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_1 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_1__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pcb16_1 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pcb16_1 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pcb16_1__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_1 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_1__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_1 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_1 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_1__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_pkg16_1 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_pkg16_1 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_pkg16_1__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_1 type0",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_1 --type 0 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_1__greedy+prune@type0.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_1 type1",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_1 --type 1 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_1__greedy+prune@type1.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "e0plus16 eval_ip16_1 type2",
+   "cmd": ".venv/bin/python scripts/analyze_gp_one_type.py --sets eval_ip16_1 --type 2 --skip_existing --out runs/analysis/gp_one_type",
+   "done": [
+    "runs/analysis/gp_one_type/eval_ip16_1__greedy+prune@type2.json"
+   ],
+   "log": "agent/logs/e0plus16.log"
+  },
+  {
+   "name": "day1 eval10 r3@R",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_rl@R2=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R4=runs/2026-10-28/r3_loop_rl/best.pt r3_loop_rl@R16=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_0__r3_loop_rl@R16.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb10_1__r3_loop_rl@R16.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_0__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_0__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_0__r3_loop_rl@R16.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_1__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_1__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg10_1__r3_loop_rl@R16.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl@R16.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl@R2.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl@R4.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl@R16.json"
+   ],
+   "log": "agent/logs/side_evals.log"
+  },
+  {
+   "name": "day1 eval10 r3_loop_distill",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r3_loop_distill=runs/2026-10-28/r3_loop_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_distill",
+   "done": [
+    "runs/2026-10-28/r3_loop_distill/eval/eval_pcb10_0__r3_loop_distill.json",
+    "runs/2026-10-28/r3_loop_distill/eval/eval_pcb10_1__r3_loop_distill.json",
+    "runs/2026-10-28/r3_loop_distill/eval/eval_pkg10_0__r3_loop_distill.json",
+    "runs/2026-10-28/r3_loop_distill/eval/eval_pkg10_1__r3_loop_distill.json",
+    "runs/2026-10-28/r3_loop_distill/eval/eval_ip10_0__r3_loop_distill.json",
+    "runs/2026-10-28/r3_loop_distill/eval/eval_ip10_1__r3_loop_distill.json"
+   ],
+   "log": "agent/logs/side_evals.log"
+  },
+  {
+   "name": "day1 eval10 r2_mott_distill",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r2_mott_distill=runs/2026-10-28/r2_mott_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_distill",
+   "done": [
+    "runs/2026-10-28/r2_mott_distill/eval/eval_pcb10_0__r2_mott_distill.json",
+    "runs/2026-10-28/r2_mott_distill/eval/eval_pcb10_1__r2_mott_distill.json",
+    "runs/2026-10-28/r2_mott_distill/eval/eval_pkg10_0__r2_mott_distill.json",
+    "runs/2026-10-28/r2_mott_distill/eval/eval_pkg10_1__r2_mott_distill.json",
+    "runs/2026-10-28/r2_mott_distill/eval/eval_ip10_0__r2_mott_distill.json",
+    "runs/2026-10-28/r2_mott_distill/eval/eval_ip10_1__r2_mott_distill.json"
+   ],
+   "log": "agent/logs/side_evals.log"
+  },
+  {
+   "name": "day1 eval10 r1_modal_distill",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r1_modal_distill=runs/2026-10-28/r1_modal_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_distill",
+   "done": [
+    "runs/2026-10-28/r1_modal_distill/eval/eval_pcb10_0__r1_modal_distill.json",
+    "runs/2026-10-28/r1_modal_distill/eval/eval_pcb10_1__r1_modal_distill.json",
+    "runs/2026-10-28/r1_modal_distill/eval/eval_pkg10_0__r1_modal_distill.json",
+    "runs/2026-10-28/r1_modal_distill/eval/eval_pkg10_1__r1_modal_distill.json",
+    "runs/2026-10-28/r1_modal_distill/eval/eval_ip10_0__r1_modal_distill.json",
+    "runs/2026-10-28/r1_modal_distill/eval/eval_ip10_1__r1_modal_distill.json"
+   ],
+   "log": "agent/logs/side_evals.log"
+  },
+  {
+   "name": "day1 eval10 r0_coord_distill",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_*10_*' --policy r0_coord_distill=runs/2026-10-28/r0_coord_distill/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_distill",
+   "done": [
+    "runs/2026-10-28/r0_coord_distill/eval/eval_pcb10_0__r0_coord_distill.json",
+    "runs/2026-10-28/r0_coord_distill/eval/eval_pcb10_1__r0_coord_distill.json",
+    "runs/2026-10-28/r0_coord_distill/eval/eval_pkg10_0__r0_coord_distill.json",
+    "runs/2026-10-28/r0_coord_distill/eval/eval_pkg10_1__r0_coord_distill.json",
+    "runs/2026-10-28/r0_coord_distill/eval/eval_ip10_0__r0_coord_distill.json",
+    "runs/2026-10-28/r0_coord_distill/eval/eval_ip10_1__r0_coord_distill.json"
+   ],
+   "log": "agent/logs/side_evals.log"
+  },
+  {
+   "name": "day1 eval16 r0_coord_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r0_coord_rl=runs/2026-10-28/r0_coord_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r0_coord_rl",
+   "done": [
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_0__r0_coord_rl.json",
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pcb16_1__r0_coord_rl.json",
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_0__r0_coord_rl.json",
+    "runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_1__r0_coord_rl.json",
+    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_0__r0_coord_rl.json",
+    "runs/2026-10-28/r0_coord_rl/eval/eval_ip16_1__r0_coord_rl.json"
+   ],
+   "log": "runs/2026-10-28/r0_coord_rl/eval.log"
+  },
+  {
+   "name": "day1 eval16 r1_modal_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r1_modal_rl=runs/2026-10-28/r1_modal_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r1_modal_rl",
+   "done": [
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_0__r1_modal_rl.json",
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pcb16_1__r1_modal_rl.json",
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_0__r1_modal_rl.json",
+    "runs/2026-10-28/r1_modal_rl/eval/eval_pkg16_1__r1_modal_rl.json",
+    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_0__r1_modal_rl.json",
+    "runs/2026-10-28/r1_modal_rl/eval/eval_ip16_1__r1_modal_rl.json"
+   ],
+   "log": "runs/2026-10-28/r1_modal_rl/eval.log"
+  },
+  {
+   "name": "day1 eval16 r2_mott_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r2_mott_rl=runs/2026-10-28/r2_mott_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r2_mott_rl",
+   "done": [
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_0__r2_mott_rl.json",
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pcb16_1__r2_mott_rl.json",
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_0__r2_mott_rl.json",
+    "runs/2026-10-28/r2_mott_rl/eval/eval_pkg16_1__r2_mott_rl.json",
+    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_0__r2_mott_rl.json",
+    "runs/2026-10-28/r2_mott_rl/eval/eval_ip16_1__r2_mott_rl.json"
+   ],
+   "log": "runs/2026-10-28/r2_mott_rl/eval.log"
+  },
+  {
+   "name": "day1 eval16 r3_loop_rl",
+   "cmd": ".venv/bin/python scripts/eval_policy.py --pool runs/pool_v1 --sets 'eval_pcb16_0,eval_pcb16_1,eval_pkg16_0,eval_pkg16_1,eval_ip16_0,eval_ip16_1' --policy r3_loop_rl=runs/2026-10-28/r3_loop_rl/best.pt --workers 1 --inst_chunk 5 --out runs/2026-10-28/r3_loop_rl",
+   "done": [
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_0__r3_loop_rl.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pcb16_1__r3_loop_rl.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_0__r3_loop_rl.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_pkg16_1__r3_loop_rl.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_0__r3_loop_rl.json",
+    "runs/2026-10-28/r3_loop_rl/eval/eval_ip16_1__r3_loop_rl.json"
+   ],
+   "log": "runs/2026-10-28/r3_loop_rl/eval.log"
+  }
+ ]
+}

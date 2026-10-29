@@ -84,7 +84,11 @@ def parse():
     p.add_argument("--difficulty", default="0.02-0.2", help="(no pool) target level u (0 = hardest)")
     p.add_argument("--max_steps", type=int, default=64)
     p.add_argument("--feat", choices=["phys", "coord", "mott", "modal", "modal_only"], default="phys")
-    p.add_argument("--model", choices=["grid", "mott", "loop"], default="grid", help="mott/loop imply --feat mott")
+    p.add_argument("--model", choices=["grid", "mott", "loop", "park_am"], default="grid",
+                   help="mott/loop imply --feat mott; park_am (prior-work baseline B-Park, baselines_ml/park_am.py) --feat coord")
+    p.add_argument("--baseline", choices=["group", "rollout"], default="group", help="rl advantage: group = normalised "
+                   "within the M samples of an instance (POMO, ours); rollout = R - R(greedy rollout of a frozen copy, "
+                   "replaced at every new best validation) (Kool 2019 / Park 2022, B-Park)")
     p.add_argument("--pool", default="", help="directory of certified pools (scripts/build_pools.py)")
     p.add_argument("--pool_glob", default="train_*.pkl", help="comma-separated globs of training pool files")
     p.add_argument("--val_pools", default="val_pcb10_0,val_pkg10_0,val_ip10_0")
@@ -99,6 +103,8 @@ def parse():
     p.add_argument("--heads", type=int, default=8)
     p.add_argument("--loop_train", default="2-8", help="loop model: R ~ U{a..b} during training")
     p.add_argument("--loop_eval", type=int, default=8, help="loop model: R at validation")
+    p.add_argument("--fc_bias", action="store_true", help="mott/loop (day-2 arch a): mode<->decap cross-attention "
+                   "both ways with the frequency-match bias -w_h |log f_k - log SRF_t|")
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--imit", type=float, default=1.0, help="weight of imitating the best-known solution (0=off)")
     p.add_argument("--teacher", choices=["gp", "ls"], default="gp", help="(no pool) greedy+prune, or + local search")
@@ -118,12 +124,16 @@ def parse():
 
 def make_policy(cfg, a):
     if a.get("model") == "mott":
-        return MoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], layers=a["layers"], heads=a["heads"])
+        return MoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], layers=a["layers"], heads=a["heads"],
+                    fc=a.get("fc_bias", False))
     if a.get("model") == "loop":
         from decap_loop.loop_model import LoopMoTT
         lo, hi = rng_range(a.get("loop_train", "2-8"))
         return LoopMoTT(cfg.n_types, K_MODES, mott_dims(cfg.n_types), d=a["d"], heads=a["heads"],
-                        r_train=(lo, hi), r_eval=a.get("loop_eval", 8))
+                        r_train=(lo, hi), r_eval=a.get("loop_eval", 8), fc=a.get("fc_bias", False))
+    if a.get("model") == "park_am":
+        from baselines_ml.park_am import ParkAM
+        return ParkAM(feat_dim_any(cfg, a["feat"]), cfg.n_types, d=a["d"], layers=a["layers"], heads=a["heads"])
     return GridPolicy(feat_dim_any(cfg, a["feat"]), cfg.n_types, d=a["d"], layers=a["layers"],
                       heads=a["heads"], glob=a["glob"], prior=a.get("prior", False))
 
@@ -190,6 +200,8 @@ def main():
     args = parse()
     if args.model in ("mott", "loop"):
         args.feat = "mott"
+    elif args.model == "park_am":
+        args.feat = "coord"
     pin_threads()
     os.makedirs(args.out, exist_ok=True)
     log = Tee(os.path.join(args.out, "log.txt"))
@@ -209,6 +221,12 @@ def main():
         log(f"init from {args.init} (iter {ck0.get('iter')})")
     policy.grad_ckpt = args.grad_ckpt
     opt = torch.optim.AdamW(policy.parameters(), lr=args.lr, weight_decay=1e-5)
+    base_policy = None
+    if args.stage != "distill" and args.baseline == "rollout":
+        import copy
+        base_policy = copy.deepcopy(policy).eval()
+        for q in base_policy.parameters():
+            q.requires_grad_(False)
     log(f"params: {sum(p.numel() for p in policy.parameters())/1e6:.2f}M  device: {dev}  stage: {args.stage}  feat: {args.feat}  model: {args.model}")
     meta = dict(args=vars(args), cfg=asdict(cfg), git=git_hash(), cmd=" ".join(sys.argv))
     json.dump(meta, open(os.path.join(args.out, "config.json"), "w"), indent=2)
@@ -253,7 +271,8 @@ def main():
                   rng=rng.bit_generator.state, torch_rng=torch.get_rng_state(),
                   cuda_rng=torch.cuda.get_rng_state_all() if dev.type == "cuda" else None,
                   teachers=[{k: (v.cpu() if torch.is_tensor(v) else v) for k, v in t.items()} for t in teachers],
-                  pool_freqs=[pb.freqs for pb in pool])
+                  pool_freqs=[pb.freqs for pb in pool],
+                  base=base_policy.state_dict() if base_policy is not None else None)
         torch.save(st, resume_path + ".tmp")
         os.replace(resume_path + ".tmp", resume_path)
 
@@ -274,6 +293,8 @@ def main():
         for pb, fr in zip(pool, st["pool_freqs"]):   # grid points the exact checks added before the restart
             if fr.shape[1] > pb.freqs.shape[1]:
                 pb.add_freqs([list(fr[b, pb.freqs.shape[1]:]) for b in range(pb.B)])
+        if base_policy is not None and st.get("base") is not None:
+            base_policy.load_state_dict(st["base"])
         t0 = time.time() - st["elapsed"]
         log(f"resumed from {resume_path}: iter {start_it}, {st['elapsed']/3600:.2f} h used, lam {lam:.2f}, "
             f"best iter {best_iter}, replaced {n_replaced}")
@@ -353,7 +374,17 @@ def main():
                                 for b, fs in enumerate(add):
                                     adds[b] += fs
                     R = -cnt / n_ref[cb][:, None] - lam * (fail.float() + out["V"].float().view(nb, args.M))
-                    adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+                    if base_policy is None:
+                        adv = ((R - R.mean(1, keepdim=True)) / (R.std(1, keepdim=True) + 1e-6)).view(-1)
+                    else:   # greedy rollout of the frozen copy; its failure is the working-grid one (not certified)
+                        with torch.no_grad():
+                            if hasattr(base_policy, "R_eval"):
+                                base_policy.set_eval_R(args.loop_eval)
+                            benv = make_env(batch, ibc, cfg, args.feat, max_steps=args.max_steps, allow_prune=not args.no_prune)
+                            bo = rollout(base_policy, benv, greedy=True, amp=amp)
+                            Rb = -bo["count"].float() / n_ref[cb] - lam * ((~bo["feasible"]).float() + bo["V"].float())
+                            benv = bo = None
+                        adv = (R - Rb[:, None]).view(-1)
                     loss += backward_logp(policy, out["traj"], adv, H, W, amp, scale=1.0 / E)
                     if args.imit > 0:  # imitate the best-known solution of each instance
                         key = cnt + fail * 1e6
@@ -430,6 +461,8 @@ def main():
             if score < best_val:
                 best_val, best_iter = score, it
                 torch.save(ck, os.path.join(args.out, "best.pt"))
+                if base_policy is not None:      # rollout baseline: replaced when the policy improves
+                    base_policy.load_state_dict(policy.state_dict())
                 log(f"  new best (score {score:.3f}) at iter {it}")
         if args.ckpt_min and time.time() - t_ck > args.ckpt_min * 60:
             save_resume(it)

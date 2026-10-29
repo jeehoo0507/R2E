@@ -19,6 +19,7 @@ from collections import OrderedDict, defaultdict
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def load_evals():
@@ -31,6 +32,13 @@ def load_evals():
         except Exception as e:  # noqa: BLE001
             print("skip", f, e, file=sys.stderr)
     return recs
+
+
+TA = "gp_type_aware"   # E0+ type-aware greedy (scripts/make_type_aware.py), the day-2 reference
+
+
+def order(k):
+    return (k != "greedy+prune", k != TA, k != "local_search", k)
 
 
 def fmt(x, nd=2):
@@ -47,8 +55,9 @@ def merged(recs):
     out = defaultdict(dict)
     for key, ms in by.items():
         gp = ms.get("greedy+prune", {})
+        ta = ms.get(TA, {})
         for m, sets in ms.items():
-            ok, cnt, ratio, sec, files = [], [], [], [], []
+            ok, cnt, ratio, sec, files, rta, ta_ok = [], [], [], [], [], [], []
             for s in sorted(sets):
                 r = sets[s]
                 o = np.asarray(r["ok"], bool)
@@ -61,9 +70,17 @@ def merged(recs):
                     g = gp[s]
                     both = o & np.asarray(g["ok"], bool)
                     ratio.append(c[both] / np.maximum(np.asarray(g["count"], float)[both], 1))
+                if s in ta:
+                    g = ta[s]
+                    both = o & np.asarray(g["ok"], bool)
+                    rta.append(c[both] / np.maximum(np.asarray(g["count"], float)[both], 1))
+                    ta_ok.append(np.asarray(g["ok"], bool))
             ok, cnt = np.concatenate(ok), np.concatenate(cnt)
             ratio = np.concatenate(ratio) if ratio else np.zeros(0)
+            rta = np.concatenate(rta) if rta else np.zeros(0)
             out[key][m] = dict(ok=ok, cnt=cnt, rel=float(ratio.mean()) if ratio.size else None,
+                               rel_ta=float(rta.mean()) if rta.size else None,
+                               ta_ok=float(np.concatenate(ta_ok).mean()) if ta_ok else None,
                                sec=sum(t * n for t, n in sec) / sum(n for _, n in sec), sets=sorted(sets), files=files)
     return out
 
@@ -77,14 +94,15 @@ def eval_tables(recs):
     for (tech, size) in sorted(by):
         ms = by[(tech, size)]
         lines += [f"### {tech} {size}×{size}", "",
-                  "| 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |",
-                  "|---|---|---|---|---|---|---|"]
-        for m in sorted(ms, key=lambda k: (k != "greedy+prune", k != "local_search", k)):
+                  "| 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | "
+                  "개수 / 종류 인식 greedy (둘 다 성공) | 문제당 시간 (s) | 출처 |",
+                  "|---|---|---|---|---|---|---|---|"]
+        for m in sorted(ms, key=order):
             r = ms[m]
             ok, cnt = r["ok"], r["cnt"]
             sets = ", ".join(s.rsplit("_", 1)[1] for s in r["sets"])
             lines.append(f"| {m} | {len(ok)} ({sets}) | {ok.mean():.2f} | {fmt(cnt[ok].mean() if ok.any() else None)} | "
-                         f"{fmt(r['rel'], 3)} | {fmt(r['sec'], 3)} | " + ", ".join(f"`{f}`" for f in r["files"]) + " |")
+                         f"{fmt(r['rel'], 3)} | {fmt(r['rel_ta'], 3)} | {fmt(r['sec'], 3)} | " + ", ".join(f"`{f}`" for f in r["files"]) + " |")
         lines.append("")
     return lines
 
@@ -95,14 +113,16 @@ def ladder_table(recs):
     keys = sorted(by)
     if not keys:
         return []
-    methods = sorted({m for k in keys for m in by[k]}, key=lambda k: (k != "greedy+prune", k != "local_search", k))
+    methods = sorted({m for k in keys for m in by[k]}, key=order)
     head = "| 방법 | " + " | ".join(f"{t} {s}" for t, s in keys) + " |"
-    lines = ["### 요약: 정확 검사 성공률 / 개수÷greedy+prune (둘 다 성공) [문제 수]", "", head, "|---|" + "---|" * len(keys)]
+    lines = ["### 요약: 정확 검사 성공률 / 개수÷greedy+prune / 개수÷종류 인식 greedy (각각 둘 다 성공한 문제) [문제 수]", "",
+             f"종류 인식 greedy (`{TA}`) = 종류 하나만 쓰는 greedy+prune을 종류마다 돌려 문제마다 성공한 해 중 가장 적은 것 "
+             "(`scripts/make_type_aware.py`). 10/29부터 모든 비교의 기준선.", "", head, "|---|" + "---|" * len(keys)]
     for m in methods:
         cells = []
         for k in keys:
             r = by[k].get(m)
-            cells.append("–" if r is None else f"{r['ok'].mean():.2f} / {fmt(r['rel'])} [{len(r['ok'])}]")
+            cells.append("–" if r is None else f"{r['ok'].mean():.2f} / {fmt(r['rel'])} / {fmt(r['rel_ta'])} [{len(r['ok'])}]")
         lines.append(f"| {m} | " + " | ".join(cells) + " |")
     return lines + [""]
 
@@ -248,6 +268,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="RESULTS.md")
     a = ap.parse_args()
+    import make_type_aware
+    make_type_aware.main()
     recs = load_evals()
     lines = [f"# RESULTS (자동 생성: `scripts/collect_results.py`, {time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())})", "",
              "성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. "
