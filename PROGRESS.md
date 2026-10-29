@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:12 UTC, 라운드 24)
+# PROGRESS (갱신 2026-10-29 04:14 UTC, 라운드 25)
 
-**지금 (04:11):** GPU r3a **RL** it 50 (fail 0.00, gpu peak 13.6 GB, oom 0, GPU 17.0 GB 사용) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 6파일·종류 1 5파일 끝, ip10_1 종류 1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 9.4 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+**지금 (04:13):** GPU r3a **RL** it 50 (fail 0.00, gpu peak 13.6 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0·1 6파일 모두 끝, **종류 2** 04:10 시작) + side16_gp 16칸 g+p 1 worker (RSS 9.8 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+
+## 라운드 25 (04:12~ UTC, 라운드 24 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개, oom_kill 0.
+- **10칸 종류 1만 쓰는 g+p 6파일 끝** (`runs/analysis/gp_one_type/*@type1.json`, 각 25문제; 성공률 / 성공 문제 평균 개수): ip10_0 0.12 / 24.7 · ip10_1 0.24 / 33.7 · pcb10_0 0.72 / 48.4 · pcb10_1 0.56 / 42.6 · pkg10_0 0.40 / 8.7 · pkg10_1 0.56 / 10.5. (종류 0: ip 1.00, pcb 0.04·0.00, pkg 0.76·…) → 판 종류마다 맞는 decap 종류가 다르다는 QUEUE 4번 대비가 종류 1에서도 보임. E0+ 표는 종류 2 끝(~05:30) 뒤 `make_type_aware.py`로.
+- 결정: 새 실험·코드 변경 없음 (CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤). RESULTS 재생성은 E0+가 완성되는 종류 2 뒤에 한 번에 (지금 종류 1은 분석 기록이라 요약표 행이 바뀌지 않음).
+- 다음 라운드: 라운드 22와 같음.
 
 ## 라운드 24 (04:10~ UTC, 라운드 23 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 g+p ip10_1 종류 1 + 16칸 g+p 1 worker RSS 9.2 GB), pod 14.5 GiB / 60, oom_kill 0. r3a RL it 50 (603 s, OOM 0). 새로 끝난 실험 없음 → RESULTS 재생성 없음.
