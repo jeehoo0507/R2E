@@ -1,6 +1,12 @@
-# PROGRESS (갱신 2026-10-29 04:58 UTC, 라운드 37)
+# PROGRESS (갱신 2026-10-29 05:20 UTC, 라운드 38)
 
-**지금 (04:58):** GPU r3a **RL** it 275 (3514 s, oom 0, gpu peak 17.2 GB) · CPU 4 = 학습 certify 2 + 10칸 종류 2 g+p (5/6 끝, 남은 것 ip10_1) + side16_gp 16칸 g+p 1 worker. GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 16.3 GiB, oom_kill 0.
+**지금 (05:20):** GPU **r2a** distill (05:13 시작, 2단 + `--fc_bias`) · CPU = r2a 학습 (RL부터 certify 2) + 드라이버 CPU 줄 1 (e0plus16 pcb16_0 종류 0 → 다음은 **r3a 10칸 평가**) + side16_gp 16칸 g+p 1 worker. GPU 큐: r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 24.2 GiB, oom_kill 0.
+
+## 라운드 38 (05:13~ UTC)
+- **r3a 학습 끝** (05:13): RL 346 iter / 1.27 h, best iter 100 (val score 1.678), replaced 307, gpu peak 17.5 GB, OOM 0 (`runs/2026-10-29/r3a_rl/log.txt`). distill + RL 모두 r3와 같은 예산. 드라이버가 r2a를 바로 시작.
+- **E0+ 10칸 6/6 끝** (ip10_1 종류 2, 05:07) → `make_type_aware.py` + `collect_results.py`, RESULTS 재생성. 세 종류 모두 50문제: E0+ 성공 / 개수÷g+p — ip 1.00 / 0.736 · pcb 0.66 / 4.83 · pkg 0.82 / 1.59. 정책 vs E0+ (ip 50): 개수 비 0단 1.449 [1.314, 1.595] · 1단 1.228 [1.140, 1.335] · 2단 1.017 [0.995, 1.046] · 3단 1.013 [0.998, 1.038], 성공률 차 0.00 ~ −0.04 → ip에서 2·3단은 E0+와 같은 개수(넘지는 못함), 0·1단은 더 씀. pcb·pkg는 E0+가 종류를 섞지 못해 약함 (정책 개수 비 0.18~0.22 / 0.53~0.59).
+- 결정: **1일차 side10 체인 (pid 117899, `eval_policy --methods modal_rule,ls` 10칸)을 멈추고 드라이버 큐 맨 끝으로 옮김** (`agent/day2_queue.json` "day1 base10 modal_rule"·"day1 base10 ls", 같은 명령·같은 기록 경로, 이미 있는 기록은 건너뜀). 이유: 종류 2 g+p가 끝나며 이 체인이 modal_rule·LS로 넘어갔는데, 드라이버 `EXTERNAL` 패턴이 이 명령과 맞지 않아 CPU 줄도 e0plus16을 시작 → r2a RL이 certify 2개를 띄우면 CPU 5개로 QUEUE 한도 4 초과. LS 10칸은 몇 시간짜리라 남겨 두면 r3a 10칸 평가(QUEUE 다음 판정)가 밀림. 버린 진행분: modal_rule ip10 1파일 진행 중 수 분 (pkg10_1 modal_rule 기록은 05:14에 저장됨, 재사용).
+- 다음 라운드: r3a 10칸 평가 기록 (e0plus16 pcb16_0 종류 0 뒤) → ablation 표 (r3a vs r3) + E0+ 대비 판정 → RESULTS 재생성. r2a distill→RL 진행·OOM 확인.
 
 ## 라운드 37 (04:57~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 16.3 GiB / 60, oom_kill 0. r3a RL it 275 (`runs/2026-10-29/r3a_rl/log.txt`).

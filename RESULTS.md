@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 04:57 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 05:15 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -10,13 +10,14 @@
 
 | 방법 | ip 10 | pcb 10 | pcb 16 | pkg 10 | pkg 16 |
 |---|---|---|---|---|---|
-| greedy+prune | 0.40 / 1.00 / 2.13 [50] | 0.90 / 1.00 / 0.34 [50] | – | 0.90 / 1.00 / 0.75 [50] | – |
-| gp_type_aware | 1.00 / 0.77 / 1.00 [25] | 0.66 / 4.83 / 1.00 [50] | – | 0.82 / 1.59 / 1.00 [50] | – |
+| greedy+prune | 0.40 / 1.00 / 2.03 [50] | 0.90 / 1.00 / 0.34 [50] | – | 0.90 / 1.00 / 0.75 [50] | – |
+| gp_type_aware | 1.00 / 0.74 / 1.00 [50] | 0.66 / 4.83 / 1.00 [50] | – | 0.82 / 1.59 / 1.00 [50] | – |
+| modal_rule | – | – | – | 0.92 / 0.83 / 0.65 [25] | – |
 | r0_coord_distill | – | – | 0.80 / – / – [25] | – | 0.80 / – / – [25] |
-| r0_coord_rl | 1.00 / 1.05 / 1.44 [50] | 0.96 / 0.80 / 0.20 [50] | – | 0.76 / 0.79 / 0.58 [50] | 0.72 / – / – [25] |
-| r1_modal_rl | 0.96 / 0.88 / 1.21 [50] | 0.98 / 0.75 / 0.18 [50] | – | 0.68 / 0.75 / 0.53 [50] | – |
+| r0_coord_rl | 1.00 / 1.05 / 1.45 [50] | 0.96 / 0.80 / 0.20 [50] | – | 0.76 / 0.79 / 0.58 [50] | 0.72 / – / – [25] |
+| r1_modal_rl | 0.96 / 0.88 / 1.23 [50] | 0.98 / 0.75 / 0.18 [50] | – | 0.68 / 0.75 / 0.53 [50] | – |
 | r2_mott_rl | 1.00 / 0.74 / 1.02 [50] | 0.88 / 0.88 / 0.21 [50] | – | 0.72 / 0.88 / 0.59 [50] | – |
-| r3_loop_rl | 0.98 / 0.74 / 1.03 [50] | 0.84 / 0.84 / 0.22 [50] | – | 0.88 / 0.84 / 0.59 [50] | – |
+| r3_loop_rl | 0.98 / 0.74 / 1.01 [50] | 0.84 / 0.84 / 0.22 [50] | – | 0.88 / 0.84 / 0.59 [50] | – |
 | r3_loop_rl@R16 | – | – | – | 0.76 / 0.80 / 0.61 [25] | – |
 | r3_loop_rl@R2 | – | 0.92 / 0.93 / 0.19 [25] | – | 0.64 / 0.85 / 0.65 [25] | – |
 | r3_loop_rl@R4 | – | 0.96 / 0.84 / 0.20 [25] | – | 0.80 / 0.81 / 0.64 [25] | – |
@@ -25,11 +26,11 @@
 
 | 판 | 방법 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |
 |---|---|---|---|---|
-| ip 10 | greedy+prune | 25 | -0.60 [-0.80, -0.40] | 2.130 [1.000, 3.381] |
-| ip 10 | r0_coord_rl | 25 | +0.00 [+0.00, +0.00] | 1.437 [1.260, 1.628] |
-| ip 10 | r1_modal_rl | 25 | +0.00 [+0.00, +0.00] | 1.206 [1.112, 1.304] |
-| ip 10 | r2_mott_rl | 25 | +0.00 [+0.00, +0.00] | 1.019 [0.979, 1.064] |
-| ip 10 | r3_loop_rl | 25 | +0.00 [+0.00, +0.00] | 1.026 [0.997, 1.072] |
+| ip 10 | greedy+prune | 50 | -0.60 [-0.72, -0.46] | 2.034 [1.363, 2.797] |
+| ip 10 | r0_coord_rl | 50 | +0.00 [+0.00, +0.00] | 1.449 [1.314, 1.595] |
+| ip 10 | r1_modal_rl | 50 | -0.04 [-0.10, +0.00] | 1.228 [1.140, 1.335] |
+| ip 10 | r2_mott_rl | 50 | +0.00 [+0.00, +0.00] | 1.017 [0.995, 1.046] |
+| ip 10 | r3_loop_rl | 50 | -0.02 [-0.06, +0.00] | 1.013 [0.998, 1.038] |
 | pcb 10 | greedy+prune | 50 | +0.24 [+0.08, +0.40] | 0.341 [0.247, 0.449] |
 | pcb 10 | r0_coord_rl | 50 | +0.30 [+0.18, +0.42] | 0.196 [0.156, 0.242] |
 | pcb 10 | r1_modal_rl | 50 | +0.32 [+0.18, +0.46] | 0.176 [0.144, 0.216] |
@@ -38,6 +39,7 @@
 | pcb 10 | r3_loop_rl@R2 | 25 | +0.20 [+0.00, +0.40] | 0.190 [0.134, 0.260] |
 | pcb 10 | r3_loop_rl@R4 | 25 | +0.24 [+0.04, +0.44] | 0.201 [0.152, 0.255] |
 | pkg 10 | greedy+prune | 50 | +0.08 [-0.04, +0.20] | 0.745 [0.661, 0.834] |
+| pkg 10 | modal_rule | 25 | +0.12 [-0.04, +0.28] | 0.653 [0.567, 0.744] |
 | pkg 10 | r0_coord_rl | 50 | -0.06 [-0.22, +0.10] | 0.583 [0.506, 0.664] |
 | pkg 10 | r1_modal_rl | 50 | -0.14 [-0.30, +0.04] | 0.533 [0.472, 0.600] |
 | pkg 10 | r2_mott_rl | 50 | -0.10 [-0.24, +0.06] | 0.587 [0.509, 0.671] |
@@ -50,7 +52,7 @@
 
 | 판 | 방법 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |
 |---|---|---|---|---|
-| ip 10 | gp_type_aware | 25 | +0.60 [+0.40, +0.80] | 0.765 [0.526, 1.000] |
+| ip 10 | gp_type_aware | 50 | +0.60 [+0.46, +0.72] | 0.736 [0.578, 0.887] |
 | ip 10 | r0_coord_rl | 50 | +0.60 [+0.46, +0.72] | 1.049 [0.807, 1.310] |
 | ip 10 | r1_modal_rl | 50 | +0.56 [+0.40, +0.70] | 0.878 [0.642, 1.168] |
 | ip 10 | r2_mott_rl | 50 | +0.60 [+0.46, +0.72] | 0.736 [0.578, 0.887] |
@@ -63,6 +65,7 @@
 | pcb 10 | r3_loop_rl@R2 | 25 | -0.08 [-0.20, +0.00] | 0.926 [0.755, 1.105] |
 | pcb 10 | r3_loop_rl@R4 | 25 | -0.04 [-0.12, +0.00] | 0.839 [0.708, 0.972] |
 | pkg 10 | gp_type_aware | 50 | -0.08 [-0.20, +0.04] | 1.586 [1.372, 1.836] |
+| pkg 10 | modal_rule | 25 | +0.04 [-0.08, +0.16] | 0.832 [0.777, 0.893] |
 | pkg 10 | r0_coord_rl | 50 | -0.14 [-0.28, +0.00] | 0.788 [0.723, 0.859] |
 | pkg 10 | r1_modal_rl | 50 | -0.22 [-0.38, -0.06] | 0.753 [0.700, 0.805] |
 | pkg 10 | r2_mott_rl | 50 | -0.18 [-0.34, -0.02] | 0.877 [0.813, 0.945] |
@@ -75,12 +78,12 @@
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 개수 / 종류 인식 greedy (둘 다 성공) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|---|
-| greedy+prune | 50 (0, 1) | 0.40 | 10.30 | 1.000 | 2.130 | 2.944 | `runs/2026-10-28/baselines/eval/eval_ip10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_ip10_1__greedy+prune.json` |
-| gp_type_aware | 25 (0) | 1.00 | 7.92 | 0.765 | 1.000 | 13.581 | `runs/2026-10-29/baselines_e0plus/eval/eval_ip10_0__gp_type_aware.json` |
-| r0_coord_rl | 50 (0, 1) | 1.00 | 11.94 | 1.049 | 1.437 | 1.127 | `runs/2026-10-28/r0_coord_rl/eval/eval_ip10_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_ip10_1__r0_coord_rl.json` |
-| r1_modal_rl | 50 (0, 1) | 0.96 | 10.12 | 0.878 | 1.206 | 0.982 | `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_1__r1_modal_rl.json` |
-| r2_mott_rl | 50 (0, 1) | 1.00 | 8.54 | 0.736 | 1.019 | 0.524 | `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_1__r2_mott_rl.json` |
-| r3_loop_rl | 50 (0, 1) | 0.98 | 8.39 | 0.736 | 1.026 | 0.574 | `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl.json` |
+| greedy+prune | 50 (0, 1) | 0.40 | 10.30 | 1.000 | 2.034 | 2.944 | `runs/2026-10-28/baselines/eval/eval_ip10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_ip10_1__greedy+prune.json` |
+| gp_type_aware | 50 (0, 1) | 1.00 | 8.30 | 0.736 | 1.000 | 11.703 | `runs/2026-10-29/baselines_e0plus/eval/eval_ip10_0__gp_type_aware.json`, `runs/2026-10-29/baselines_e0plus/eval/eval_ip10_1__gp_type_aware.json` |
+| r0_coord_rl | 50 (0, 1) | 1.00 | 11.94 | 1.049 | 1.449 | 1.127 | `runs/2026-10-28/r0_coord_rl/eval/eval_ip10_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_ip10_1__r0_coord_rl.json` |
+| r1_modal_rl | 50 (0, 1) | 0.96 | 10.12 | 0.878 | 1.228 | 0.982 | `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_ip10_1__r1_modal_rl.json` |
+| r2_mott_rl | 50 (0, 1) | 1.00 | 8.54 | 0.736 | 1.017 | 0.524 | `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_ip10_1__r2_mott_rl.json` |
+| r3_loop_rl | 50 (0, 1) | 0.98 | 8.39 | 0.736 | 1.013 | 0.574 | `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_0__r3_loop_rl.json`, `runs/2026-10-28/r3_loop_rl/eval/eval_ip10_1__r3_loop_rl.json` |
 
 ### pcb 10×10
 
@@ -107,6 +110,7 @@
 |---|---|---|---|---|---|---|---|
 | greedy+prune | 50 (0, 1) | 0.90 | 8.07 | 1.000 | 0.745 | 3.786 | `runs/2026-10-28/baselines/eval/eval_pkg10_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_pkg10_1__greedy+prune.json` |
 | gp_type_aware | 50 (0, 1) | 0.82 | 12.44 | 1.586 | 1.000 | 9.172 | `runs/2026-10-29/baselines_e0plus/eval/eval_pkg10_0__gp_type_aware.json`, `runs/2026-10-29/baselines_e0plus/eval/eval_pkg10_1__gp_type_aware.json` |
+| modal_rule | 25 (1) | 0.92 | 6.96 | 0.832 | 0.653 | 3.732 | `runs/2026-10-28/baselines/eval/eval_pkg10_1__modal_rule.json` |
 | r0_coord_rl | 50 (0, 1) | 0.76 | 5.82 | 0.788 | 0.583 | 2.622 | `runs/2026-10-28/r0_coord_rl/eval/eval_pkg10_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_pkg10_1__r0_coord_rl.json` |
 | r1_modal_rl | 50 (0, 1) | 0.68 | 5.44 | 0.753 | 0.533 | 1.866 | `runs/2026-10-28/r1_modal_rl/eval/eval_pkg10_0__r1_modal_rl.json`, `runs/2026-10-28/r1_modal_rl/eval/eval_pkg10_1__r1_modal_rl.json` |
 | r2_mott_rl | 50 (0, 1) | 0.72 | 6.22 | 0.877 | 0.587 | 1.594 | `runs/2026-10-28/r2_mott_rl/eval/eval_pkg10_0__r2_mott_rl.json`, `runs/2026-10-28/r2_mott_rl/eval/eval_pkg10_1__r2_mott_rl.json` |
@@ -128,7 +132,7 @@
 |---|---|---|---|---|---|---|---|
 | ip 10 | greedy+prune | 성공 | 20 | 10.3 | 0.46 | 0.05 | 0.50 |
 | ip 10 | greedy+prune | 실패 | 30 | 78.6 | 0.07 | 0.02 | 0.90 |
-| ip 10 | gp_type_aware | 성공 | 25 | 7.9 | 1.00 | 0.00 | 0.00 |
+| ip 10 | gp_type_aware | 성공 | 50 | 8.3 | 1.00 | 0.00 | 0.00 |
 | ip 10 | r0_coord_rl | 성공 | 50 | 11.9 | 0.98 | 0.02 | 0.00 |
 | ip 10 | r1_modal_rl | 성공 | 48 | 10.1 | 0.98 | 0.02 | 0.00 |
 | ip 10 | r1_modal_rl | 실패 | 2 | 23.0 | 1.00 | 0.00 | 0.00 |
@@ -157,6 +161,8 @@
 | pkg 10 | greedy+prune | 실패 | 5 | 49.2 | 0.09 | 0.04 | 0.87 |
 | pkg 10 | gp_type_aware | 성공 | 41 | 12.4 | 0.55 | 0.43 | 0.02 |
 | pkg 10 | gp_type_aware | 실패 | 9 | 33.8 | 0.85 | 0.11 | 0.04 |
+| pkg 10 | modal_rule | 성공 | 23 | 7.0 | 0.16 | 0.14 | 0.70 |
+| pkg 10 | modal_rule | 실패 | 2 | 46.5 | 0.90 | 0.09 | 0.01 |
 | pkg 10 | r0_coord_rl | 성공 | 38 | 5.8 | 0.18 | 0.23 | 0.59 |
 | pkg 10 | r0_coord_rl | 실패 | 12 | 25.1 | 0.77 | 0.08 | 0.16 |
 | pkg 10 | r1_modal_rl | 성공 | 34 | 5.4 | 0.17 | 0.25 | 0.58 |
@@ -198,6 +204,7 @@
 | eval_ip10_0 | 2 (5 pF, 1 pH, 0.2 Ω) | 0.00 | – | – | – | 0.40 | 1.00 | 6.712 | `runs/analysis/gp_one_type/eval_ip10_0__greedy+prune@type2.json` |
 | eval_ip10_1 | 0 (100 pF, 5 pH, 0.05 Ω) | 1.00 | 8.68 | 0.707 | 1.000 | 0.40 | 0.96 | 0.135 | `runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type0.json` |
 | eval_ip10_1 | 1 (20 pF, 2 pH, 0.1 Ω) | 0.24 | 33.67 | 5.351 | 9.224 | 0.40 | 0.96 | 4.317 | `runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type1.json` |
+| eval_ip10_1 | 2 (5 pF, 1 pH, 0.2 Ω) | 0.00 | – | – | – | 0.40 | 0.96 | 5.372 | `runs/analysis/gp_one_type/eval_ip10_1__greedy+prune@type2.json` |
 | eval_pcb10_0 | 0 (10000 pF, 100 pH, 0.02 Ω) | 0.04 | 32.00 | 4.571 | 4.571 | 1.00 | 0.84 | 9.110 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type0.json` |
 | eval_pcb10_0 | 1 (1000 pF, 30 pH, 0.05 Ω) | 0.72 | 48.39 | 5.002 | 6.485 | 1.00 | 0.84 | 9.077 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type1.json` |
 | eval_pcb10_0 | 2 (100 pF, 10 pH, 0.1 Ω) | 0.00 | – | – | – | 1.00 | 0.84 | 6.620 | `runs/analysis/gp_one_type/eval_pcb10_0__greedy+prune@type2.json` |
@@ -215,7 +222,7 @@
 
 | 판 | 문제 수 | 종류 0만: 성공률 | 종류 1만: 성공률 | 종류 2만: 성공률 | 종류 인식 greedy가 고른 종류 비율 (성공 문제, 0/1/2) |
 |---|---|---|---|---|---|
-| ip 10 | 25 | 1.00 | 0.12 | 0.00 | 1.00 / 0.00 / 0.00 |
+| ip 10 | 50 | 1.00 | 0.18 | 0.00 | 1.00 / 0.00 / 0.00 |
 | pcb 10 | 50 | 0.02 | 0.64 | 0.04 | 0.00 / 0.94 / 0.06 |
 | pkg 10 | 50 | 0.74 | 0.48 | 0.04 | 0.41 / 0.54 / 0.05 |
 
@@ -234,6 +241,7 @@
 | runs/2026-10-28/r3_loop_distill | mott / loop | distill | 1500 | 0.77 | val_pcb10_0: 1.05/0.62, val_pkg10_0: 1.00/0.75, val_ip10_0: 0.69/0.19 | `runs/2026-10-28/r3_loop_distill/metrics.json` |
 | runs/2026-10-28/r3_loop_rl | mott / loop | rl | 352 | 1.27 | val_pcb10_0: 0.99/0.81, val_pkg10_0: 1.00/0.50, val_ip10_0: 0.69/0.19 | `runs/2026-10-28/r3_loop_rl/metrics.json` |
 | runs/2026-10-29/r3a_distill | mott / loop | distill | 1477 | 0.77 | val_pcb10_0: 1.14/0.69, val_pkg10_0: 1.07/0.69, val_ip10_0: 0.69/0.25 | `runs/2026-10-29/r3a_distill/metrics.json` |
+| runs/2026-10-29/r3a_rl | mott / loop | rl | 346 | 1.27 | val_pcb10_0: 0.99/0.81, val_pkg10_0: 0.97/0.56, val_ip10_0: 0.69/0.12 | `runs/2026-10-29/r3a_rl/metrics.json` |
 | runs/smoke_chunk0 | coord / grid | rl | 4 | 0.01 | val_ip10_0: 0.75/0.81 | `runs/smoke_chunk0/metrics.json` |
 | runs/smoke_chunk2 | coord / grid | rl | 4 | 0.01 | val_ip10_0: 0.46/0.88 | `runs/smoke_chunk2/metrics.json` |
 | runs/smoke_rl_grid_cap | coord / grid | rl | 6 | 0.01 | val_ip10_0: 0.75/0.81 | `runs/smoke_rl_grid_cap/metrics.json` |
