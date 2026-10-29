@@ -37,66 +37,72 @@ def fmt(x, nd=2):
     return "–" if x is None or (isinstance(x, float) and not np.isfinite(x)) else f"{x:.{nd}f}"
 
 
-def eval_tables(recs):
-    """One table per (tech, size): rows = methods. Columns: success (exact), count on jointly solved,
-    count / greedy+prune (paired, on instances both solve), sec per instance."""
-    by_set = defaultdict(dict)
+def merged(recs):
+    """{(tech, size): {method: merged record}}. A (tech, size) has several pool files (eval_pcb10_0, _1, ...);
+    each method's files are concatenated, and the count ratio to greedy+prune is paired only within the same
+    pool file (same problems), never across files. The latest record per (file, method) wins."""
+    by = defaultdict(lambda: defaultdict(dict))
     for r in recs:
-        key = (r["tech"], int(r["size"]))
-        by_set[key][r["method"]] = r
+        by[(r["tech"], int(r["size"]))][r["method"]][r["set"]] = r
+    out = defaultdict(dict)
+    for key, ms in by.items():
+        gp = ms.get("greedy+prune", {})
+        for m, sets in ms.items():
+            ok, cnt, ratio, sec, files = [], [], [], [], []
+            for s in sorted(sets):
+                r = sets[s]
+                o = np.asarray(r["ok"], bool)
+                c = np.asarray(r["count"], float)
+                ok.append(o)
+                cnt.append(c)
+                sec.append((r.get("sec_per_inst", float("nan")), len(o)))
+                files.append(r["_file"])
+                if s in gp:
+                    g = gp[s]
+                    both = o & np.asarray(g["ok"], bool)
+                    ratio.append(c[both] / np.maximum(np.asarray(g["count"], float)[both], 1))
+            ok, cnt = np.concatenate(ok), np.concatenate(cnt)
+            ratio = np.concatenate(ratio) if ratio else np.zeros(0)
+            out[key][m] = dict(ok=ok, cnt=cnt, rel=float(ratio.mean()) if ratio.size else None,
+                               sec=sum(t * n for t, n in sec) / sum(n for _, n in sec), sets=sorted(sets), files=files)
+    return out
+
+
+def eval_tables(recs):
+    """One table per (tech, size): rows = methods. Columns: problems evaluated (all pool files of that size),
+    success (exact), count on solved, count / greedy+prune (paired within a file, on instances both solve),
+    sec per instance."""
+    by = merged(recs)
     lines = []
-    for (tech, size) in sorted(by_set, key=lambda k: (k[0], k[1])):
-        ms = by_set[(tech, size)]
-        gp = ms.get("greedy+prune")
-        n = next(iter(ms.values()))["n"]
-        lines += [f"### {tech} {size}×{size} (문제 {n}개)", "",
-                  "| 방법 | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 짝지음) | 문제당 시간 (s) | 출처 |",
-                  "|---|---|---|---|---|---|"]
+    for (tech, size) in sorted(by):
+        ms = by[(tech, size)]
+        lines += [f"### {tech} {size}×{size}", "",
+                  "| 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 문제당 시간 (s) | 출처 |",
+                  "|---|---|---|---|---|---|---|"]
         for m in sorted(ms, key=lambda k: (k != "greedy+prune", k != "local_search", k)):
             r = ms[m]
-            ok = np.asarray(r["ok"], bool)
-            cnt = np.asarray(r["count"], float)
-            rel = None
-            if gp is not None:
-                gok = np.asarray(gp["ok"], bool)
-                gcnt = np.asarray(gp["count"], float)
-                both = ok & gok
-                rel = float(np.mean(cnt[both] / np.maximum(gcnt[both], 1))) if both.any() else None
-            lines.append(f"| {m} | {ok.mean():.2f} | {fmt(cnt[ok].mean() if ok.any() else None)} | {fmt(rel, 3)} | "
-                         f"{fmt(r.get('sec_per_inst'), 3)} | `{r['_file']}` |")
+            ok, cnt = r["ok"], r["cnt"]
+            sets = ", ".join(s.rsplit("_", 1)[1] for s in r["sets"])
+            lines.append(f"| {m} | {len(ok)} ({sets}) | {ok.mean():.2f} | {fmt(cnt[ok].mean() if ok.any() else None)} | "
+                         f"{fmt(r['rel'], 3)} | {fmt(r['sec'], 3)} | " + ", ".join(f"`{f}`" for f in r["files"]) + " |")
         lines.append("")
     return lines
 
 
 def ladder_table(recs):
-    """Success / count ratio per method across kinds and sizes (one row per method)."""
-    by_method = defaultdict(dict)
-    gp = {}
-    for r in recs:
-        key = (r["tech"], int(r["size"]))
-        by_method[r["method"]][key] = r
-        if r["method"] == "greedy+prune":
-            gp[key] = r
-    keys = sorted({k for m in by_method.values() for k in m}, key=lambda k: (k[0], k[1]))
+    """Success / count ratio per method across kinds and sizes (one row per method; all pool files merged)."""
+    by = merged(recs)
+    keys = sorted(by)
     if not keys:
         return []
+    methods = sorted({m for k in keys for m in by[k]}, key=lambda k: (k != "greedy+prune", k != "local_search", k))
     head = "| 방법 | " + " | ".join(f"{t} {s}" for t, s in keys) + " |"
-    lines = ["### 요약: 정확 검사 성공률 / 개수÷greedy+prune (둘 다 성공)", "", head, "|---|" + "---|" * len(keys)]
-    for m in sorted(by_method, key=lambda k: (k != "greedy+prune", k != "local_search", k)):
+    lines = ["### 요약: 정확 검사 성공률 / 개수÷greedy+prune (둘 다 성공) [문제 수]", "", head, "|---|" + "---|" * len(keys)]
+    for m in methods:
         cells = []
         for k in keys:
-            r = by_method[m].get(k)
-            if r is None:
-                cells.append("–")
-                continue
-            ok = np.asarray(r["ok"], bool)
-            rel = "–"
-            if k in gp:
-                gok = np.asarray(gp[k]["ok"], bool)
-                both = ok & gok
-                if both.any():
-                    rel = f"{np.mean(np.asarray(r['count'], float)[both] / np.maximum(np.asarray(gp[k]['count'], float)[both], 1)):.2f}"
-            cells.append(f"{ok.mean():.2f} / {rel}")
+            r = by[k].get(m)
+            cells.append("–" if r is None else f"{r['ok'].mean():.2f} / {fmt(r['rel'])} [{len(r['ok'])}]")
         lines.append(f"| {m} | " + " | ".join(cells) + " |")
     return lines + [""]
 
