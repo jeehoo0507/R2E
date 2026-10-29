@@ -1,6 +1,6 @@
 # PROGRESS (갱신 2026-10-29 11:25 UTC, 라운드 50)
 
-**지금 (11:25):** GPU **bm_manoharan** distill (11:22~, 끝 ~13:30 예상, 첫 backward 통과, OOM 0) · CPU = 드라이버 CPU 줄 1 (10칸 modal_rule 기준선 11:12~ → **r2am 10칸 평가** → e0plus16 pcb16_0 종류 0 retry2 …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 15.7 GiB / 60, oom_kill 0.
+**지금 (11:25):** GPU **bm_manoharan** distill (11:22~, 끝 ~13:30 예상, 첫 backward 통과, OOM 0) · CPU = 드라이버 CPU 줄 1 (**r2am 10칸 평가** 11:24~ → e0plus16 pcb16_0 종류 0 retry2 …) + side16_gp 16칸 g+p 1 worker + RL certify 2. GPU 큐: bm_manoharan → 사다리 0~3단 seed 1·2 (8개) → r2a seed 1·2. pod 15.7 GiB / 60, oom_kill 0.
 
 ## 라운드 50 (10:58~ UTC)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, pod 28.9 → 15.7 GiB / 60, oom_kill 0.
@@ -8,7 +8,11 @@
 - **bm_manoharan 다시 시작 (11:22) → distill it 25 통과** (loss 0.535, gpu peak 12.1 GB, OOM 0, `runs/2026-10-29/bm_manoharan/driver.log`): 라운드 49의 mul-sum 고침으로 triton backward 문제 해결 확인.
 - 결정: **e0plus16 pcb16_0 종류 0 retry (10:34~, 36분째)를 멈추고 10칸 modal_rule 기준선을 그 자리에** (`kill_pat.py`; 큐에서 modal_rule 항목을 맨 끝에서 e0plus16 앞으로, e0plus16 이름은 "retry2"로 — 드라이버 FAILED 집합 우회). 이유: 이 16칸 작업은 진행 출력이 없어 끝 시각을 모름 (16칸 g+p 1 파일이 1.8 h; 종류 0만이면 pcb에서 더 많이 채워 더 느림), r2am이 11:22에 끝나면 그 평가가 그 뒤에 1 h 넘게 막힘 (라운드 49에 적은 규칙). modal_rule 10칸은 파일당 ~7분 (`eval_pkg10_1__modal_rule.json` 417 s)이라 r2am 끝까지의 틈을 채움. 버린 것: CPU 36분. CPU 수 4 그대로.
   - 주의: 이 16칸 E0+ 작업은 세 번째로 멈춤 (09:30, 11:10 포함). 15:00 루프 종료 뒤에는 아무도 멈추지 않으므로 밤새 이어서 돎. 13:30 bm_manoharan 평가 때는 다시 멈추지 않을 생각 (그대로면 bm 평가는 e0plus16 뒤 — 판정은 사람이 회수).
-- 다음: modal_rule 끝 (~11:50) → r2am 10칸 평가 (~20~60분) → arch c' 판정 (r2a_rl·E0+ 대비, 드라이버가 RESULTS 재생성).
+- **10칸 modal_rule 기준선 끝** (11:22, 11분 — 예상보다 빠름, `runs/2026-10-28/baselines/eval/eval_*10_*__modal_rule.json`, `agent/logs/base10.log`): US 6789241식 비학습 규칙 (공진 피크에 SRF 맞는 decap, 판 종류 분기 없음). 성공률 / 개수÷g+p / 개수÷E0+: ip 0.94 / 1.10 / 1.56 · pcb **1.00** / 0.84 / 0.21 · pkg 0.88 / 0.86 / 0.61; 문제당 0.42~0.82 s.
+  - RESULTS에 **modal_rule 대비 짝지은 CI 표** 추가 (`collect_results.py`의 기존 `ci_table`을 ref="modal_rule"로 한 번 더 부름; 결과 표 정리일 뿐 새 실험·모델 코드 아님). 우리 최선 r2a_rl vs modal_rule (성공률 차 [CI] / 개수 비 [CI]): ip +0.06 [+0.00, +0.14] / **0.719 [0.659, 0.780]** · pcb −0.04 [−0.10, +0.00] / 0.983 [0.941, 1.022] · pkg −0.04 [−0.14, +0.06] / 1.005 [0.950, 1.058].
+  - → **pcb·pkg에서는 비학습 모달 규칙이 우리 정책과 같은 수준** (성공률·개수 차 CI가 0·1을 포함 또는 경계), **ip에서만 정책이 개수 ~28% 적음**. 다른 단도 같음 (pcb에서 r2_mott_rl −0.12, r3_loop_rl −0.16은 규칙보다 낮음, CI 0 밖). bp_park_rl은 세 종류 모두 규칙보다 크게 낮음.
+  - 해석 주의 (보고서 문장에 영향): QUEUE 03:15의 "규칙은 판 종류마다 다시 골라야 하고 정책은 하나로 고른다"는 **E0+ (종류 고정 greedy)에 대해서만** 맞음. 공진·SRF를 보는 규칙 하나는 판 종류 분기 없이 pcb·pkg에서 정책만큼 함 (종류 비율: pcb 종류 2가 0.73, ip 종류 0이 1.00 — 규칙도 종류를 판마다 다르게 고름). 즉 "공진 정보가 종류 선택에 핵심"이라는 주장은 강해지고, "학습이 규칙보다 낫다"는 ip 10칸 개수에서만 지금 숫자로 말할 수 있음. 16칸 modal_rule은 큐에 없음 (사람이 판단).
+- 다음: r2am 10칸 평가 (11:24~, ~20~60분) → arch c' 판정 (r2a_rl·E0+ 대비, 드라이버가 RESULTS 재생성).
 
 ## 라운드 49 (09:14~ UTC)
 - **bp_park 학습 끝** (09:18, `runs/2026-10-29/bp_park_rl/log.txt`): RL 199 iter / 1.27 h, best it 100 score 3.219, replaced 0, gpu peak 16.6 GB, OOM 0 (distill 2210 iter / 0.77 h, 라운드 46). 다른 run과 같은 예산.

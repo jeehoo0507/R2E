@@ -434,6 +434,8 @@ def main():
     lines += ladder_table(recs)
     lines += ci_table(recs)
     lines += ci_table(recs, ref="greedy+prune", title="greedy+prune")
+    lines += ci_table(recs, ref="modal_rule", title="비학습 모달 규칙 `modal_rule` (US 6789241식, 공진 피크에 SRF 맞는 decap)",
+                      only={f"{r}_rl" for r in ("r0_coord", "r1_modal", "r2_mott", "r3_loop", "r2a", "r3a", "r2am", "bp_park", "bm_manoharan")})
     for var, base, what, base_desc in ABLATIONS:
         lines += ci_table(recs, ref=base, title=f"{what}: `{var}` vs {base_desc} `{base}`", only={var})
     lines += distill_rl_table(recs)
