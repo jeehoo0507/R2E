@@ -9,3 +9,5 @@ Round 29 was a status check only. No new experiments finished, so I didn't regen
 - **Decision:** I didn't start new experiments or change code, because all 4 CPU slots are taken. The next decision point is after r3a's RL finishes (around 05:15): evaluate it on the 10-cell sets, then compare it against the unbiased r3 and against E0+.
 
 I updated `PROGRESS.md` and committed and pushed it to `r2e main`. DAILY.md isn't due for a rewrite until around 01:50 on 10/30.
+To https://github.com/jeehoo0507/R2E.git
+   c22ddb4..3a4d06b  main -> main
