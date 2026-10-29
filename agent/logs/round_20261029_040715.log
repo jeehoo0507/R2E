@@ -10,3 +10,5 @@ error: Please commit or stash them.
 - **다음 라운드:** r3a RL 종료 → r3a 10칸 평가 → 종류 2 g+p 종료 → `make_type_aware.py`로 종류 인식 greedy 열 채우기 → r3 대비, 종류 인식 greedy 대비 판정.
 
 PROGRESS.md를 갱신해 커밋(`7eb4092`)하고 `r2e main`에 push했습니다. push는 오류 메시지 없이 끝났지만 원격에 올라갔는지 따로 확인하지는 않았습니다.
+To https://github.com/jeehoo0507/R2E.git
+   7eb4092..0b035e5  main -> main

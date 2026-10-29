@@ -1,6 +1,11 @@
-# PROGRESS (갱신 2026-10-29 04:10 UTC, 라운드 23)
+# PROGRESS (갱신 2026-10-29 04:12 UTC, 라운드 24)
 
-**지금 (04:08):** GPU r3a **RL** it 25 (fail 0.10, gpu peak 13.3 GB, oom 0) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 6파일·종류 1 5파일 끝, ip10_1 종류 1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 9.4 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+**지금 (04:11):** GPU r3a **RL** it 50 (fail 0.00, gpu peak 13.6 GB, oom 0, GPU 17.0 GB 사용) · CPU 4 = 학습 certify 2 + 10칸 종류별 g+p (종류 0 6파일·종류 1 5파일 끝, ip10_1 종류 1 진행 → 종류 2 6파일) + side16_gp 16칸 g+p 1 worker (RSS 9.4 GB). GPU 큐: r3a → r2a → bp_park → bm_manoharan → 사다리 0~3단 seed 1·2 (8개). pod 14.9 GiB, oom_kill 0.
+
+## 라운드 24 (04:10~ UTC, 라운드 23 직후라 짧음)
+- 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, CPU 바쁜 것 4개 (certify 2 + 종류 g+p ip10_1 종류 1 + 16칸 g+p 1 worker RSS 9.2 GB), pod 14.5 GiB / 60, oom_kill 0. r3a RL it 50 (603 s, OOM 0). 새로 끝난 실험 없음 → RESULTS 재생성 없음.
+- 결정: 새 실험·코드 변경 없음 (라운드 23과 같은 이유: CPU 4칸 꽉 참, 다음 판단은 r3a RL `done:` ~05:15 뒤). DAILY는 01:50 작성 → 다음은 10/30 01:50 무렵.
+- 다음 라운드: 라운드 22와 같음.
 
 ## 라운드 23 (04:07~ UTC, 라운드 22 직후라 짧음)
 - 상태 정상: `ensure_running.py` → day2 드라이버·side16_gp 살아 있음, 프로세스 목록에 CPU 바쁜 것 4개 (certify 2 + 종류 g+p 1 + 16칸 g+p 1), oom_kill 0. 새로 끝난 실험 없음 → RESULTS 재생성 없음.
