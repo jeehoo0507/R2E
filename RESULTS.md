@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-29 17:48 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-30 02:37 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -10,7 +10,7 @@
 
 | 방법 | ip 10 | ip 16 | pcb 10 | pcb 16 | pkg 10 | pkg 16 |
 |---|---|---|---|---|---|---|
-| greedy+prune | 0.40 / 1.00 / 2.03 [50] | 0.64 / 1.00 / – [25] | 0.90 / 1.00 / 0.34 [50] | 0.92 / 1.00 / – [50] | 0.90 / 1.00 / 0.75 [50] | 0.82 / 1.00 / – [50] |
+| greedy+prune | 0.40 / 1.00 / 2.03 [50] | 0.56 / 1.00 / – [50] | 0.90 / 1.00 / 0.34 [50] | 0.92 / 1.00 / – [50] | 0.90 / 1.00 / 0.75 [50] | 0.82 / 1.00 / – [50] |
 | gp_type_aware | 1.00 / 0.74 / 1.00 [50] | – | 0.66 / 4.83 / 1.00 [50] | – | 0.82 / 1.59 / 1.00 [50] | – |
 | bm_manoharan_rl | 0.00 / – / – [50] | – | 0.00 / – / – [50] | – | 0.00 / – / – [50] | – |
 | bp_park_rl | 0.72 / 0.97 / 1.38 [50] | – | 0.46 / 4.86 / 1.13 [50] | – | 0.16 / 3.39 / 3.04 [50] | – |
@@ -261,7 +261,7 @@
 
 | 방법 | 문제 수 (풀 파일) | 정확 검사 성공률 | 개수 (성공 평균) | 개수 / greedy+prune (둘 다 성공, 같은 파일끼리 짝지음) | 개수 / 종류 인식 greedy (둘 다 성공) | 문제당 시간 (s) | 출처 |
 |---|---|---|---|---|---|---|---|
-| greedy+prune | 25 (0) | 0.64 | 64.06 | 1.000 | – | 68.524 | `runs/2026-10-28/baselines/eval/eval_ip16_0__greedy+prune.json` |
+| greedy+prune | 50 (0, 1) | 0.56 | 73.93 | 1.000 | – | 82.481 | `runs/2026-10-28/baselines/eval/eval_ip16_0__greedy+prune.json`, `runs/2026-10-28/baselines/eval/eval_ip16_1__greedy+prune.json` |
 
 ### pcb 10×10
 
@@ -361,8 +361,8 @@
 | ip 10 | r3_loop_rl@R2 | 성공 | 50 | 8.4 | 1.00 | 0.00 | 0.00 |
 | ip 10 | r3_loop_rl@R4 | 성공 | 50 | 8.5 | 1.00 | 0.00 | 0.00 |
 | ip 10 | r3a_rl | 성공 | 50 | 8.5 | 1.00 | 0.00 | 0.00 |
-| ip 16 | greedy+prune | 성공 | 16 | 64.1 | 0.14 | 0.02 | 0.84 |
-| ip 16 | greedy+prune | 실패 | 9 | 196.8 | 0.04 | 0.01 | 0.95 |
+| ip 16 | greedy+prune | 성공 | 28 | 73.9 | 0.16 | 0.02 | 0.82 |
+| ip 16 | greedy+prune | 실패 | 22 | 204.9 | 0.05 | 0.01 | 0.94 |
 | pcb 10 | greedy+prune | 성공 | 45 | 12.0 | 0.40 | 0.13 | 0.47 |
 | pcb 10 | greedy+prune | 실패 | 5 | 55.2 | 0.76 | 0.05 | 0.19 |
 | pcb 10 | bm_manoharan_rl | 실패 | 50 | 0.4 | 0.00 | 0.00 | 1.00 |
@@ -544,6 +544,9 @@
 | runs/2026-10-29/bp_park_rl | coord / park_am | rl | 199 | 1.27 | val_pcb10_0: 3.09/0.88, val_pkg10_0: 1.67/0.94, val_ip10_0: 0.65/0.31 | `runs/2026-10-29/bp_park_rl/metrics.json` |
 | runs/2026-10-29/lo_ip_r0_distill | coord / grid | distill | 2282 | 0.77 | val_pcb10_0: 2.52/0.50, val_pkg10_0: 1.00/0.81 | `runs/2026-10-29/lo_ip_r0_distill/metrics.json` |
 | runs/2026-10-29/lo_ip_r0_rl | coord / grid | rl | 300 | 1.27 | val_pcb10_0: 0.96/0.25, val_pkg10_0: 1.00/0.69 | `runs/2026-10-29/lo_ip_r0_rl/metrics.json` |
+| runs/2026-10-29/lo_ip_r1_distill | modal / grid | distill | 2176 | 0.77 | val_pcb10_0: 1.32/0.69, val_pkg10_0: 0.94/0.81 | `runs/2026-10-29/lo_ip_r1_distill/metrics.json` |
+| runs/2026-10-29/lo_ip_r1_rl | modal / grid | rl | 343 | 1.27 | val_pcb10_0: 1.21/0.69, val_pkg10_0: 0.94/0.62 | `runs/2026-10-29/lo_ip_r1_rl/metrics.json` |
+| runs/2026-10-29/lo_ip_r2_distill | mott / mott | distill | 1621 | 0.77 | val_pcb10_0: 1.14/0.56, val_pkg10_0: 1.08/0.75 | `runs/2026-10-29/lo_ip_r2_distill/metrics.json` |
 | runs/2026-10-29/r0_coord_s1_distill | coord / grid | distill | 2215 | 0.77 | val_pcb10_0: 1.97/0.38, val_pkg10_0: 1.20/0.69, val_ip10_0: 0.83/0.19 | `runs/2026-10-29/r0_coord_s1_distill/metrics.json` |
 | runs/2026-10-29/r0_coord_s1_rl | coord / grid | rl | 338 | 1.27 | val_pcb10_0: 1.13/0.75, val_pkg10_0: 1.04/0.75, val_ip10_0: 0.78/0.38 | `runs/2026-10-29/r0_coord_s1_rl/metrics.json` |
 | runs/2026-10-29/r2a_distill | mott / mott | distill | 1603 | 0.77 | val_pcb10_0: 1.03/0.75, val_pkg10_0: 1.07/0.50, val_ip10_0: 0.69/0.12 | `runs/2026-10-29/r2a_distill/metrics.json` |
