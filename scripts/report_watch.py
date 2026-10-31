@@ -2,8 +2,8 @@
 loop stops. Every 30 min: if an eval record under runs/**/eval/*.json is new (untracked) or changed, regenerate
 RESULTS.md (scripts/collect_results.py), commit only RESULTS.md and those eval records ("results: auto (lo_*)",
 `git add -f` because runs/ is gitignored), pull --rebase --autostash, push to r2e main. Unpushed commits from
-a failed cycle are pushed on the next one. Ends itself after the cycle that has all 9 leave-one-type-out rungs
-(lo_<t>_r{0,1,2}) evaluated on every 10×10 eval pool and pushed, or after MAX_H hours. Never touches the
+a failed cycle are pushed on the next one. Ends itself after the cycle that has all 27 leave-one-type-out rungs
+(lo_<t>_r{0,1,2}, seeds 0-2) evaluated on every 10×10 eval pool and pushed, or after MAX_H hours. Never touches the
 driver or any training/eval process; a failed cycle is logged and retried.
 Run: .venv/bin/python scripts/bg.py agent/logs/report_watch.log '.venv/bin/python scripts/report_watch.py'
 """
@@ -19,8 +19,12 @@ DAY = "2026-10-29"
 POOL = "runs/pool_v1"
 REMOTE, BRANCH = "r2e", "main"
 PERIOD_S = 1800
-MAX_H = 72
-LO = [f"lo_{t}_{r}" for t in ("ip", "pcb", "pkg") for r in ("r0", "r1", "r2")]
+MAX_H = 96
+# QUEUE 10/31: seeds 1-2 of the 9 rungs too (run names lo_<t>_<r>_s<seed>), so it waits for 27 rungs
+LO = [f"lo_{t}_{r}{s}" for s in ("", "_s1", "_s2") for t in ("ip", "pcb", "pkg") for r in ("r0", "r1", "r2")]
+# git never prompts for credentials and times out: after the 10/30 workspace restart a push waited 32 h for a
+# prompt nobody could see
+GIT_TIMEOUT_S = 300
 
 
 def log(msg):
@@ -28,7 +32,8 @@ def log(msg):
 
 
 def git(*args, check=True):
-    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                       timeout=GIT_TIMEOUT_S, env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true"))
     if check and r.returncode != 0:
         raise RuntimeError(f"git {' '.join(args[:2])} rc={r.returncode}: {(r.stderr or r.stdout).strip()[-400:]}")
     return r.stdout

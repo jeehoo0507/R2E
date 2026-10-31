@@ -399,7 +399,7 @@ def leave_out_table(recs):
     if not any(m.startswith("lo_") for ms in by.values() for m in ms):
         return []
     lines = ["## 한 종류 빼고 학습 (처음 보는 기술 종류)", "",
-             "`lo_<t>_r*`: 종류 t의 학습 풀·val을 빼고 나머지 두 종류로 학습 (같은 예산 distill 0.75 h + RL 1.25 h, seed 0, "
+             "`lo_<t>_r*`: 종류 t의 학습 풀·val을 빼고 나머지 두 종류로 학습 (같은 예산 distill 0.75 h + RL 1.25 h, 아래 두 표는 seed 0, "
              "arm은 사다리 0·1·2단 그대로 + `--pool_glob`·`--val_pools`). 아래는 **뺀 종류 t의 10×10 eval 풀**에서만 잰 값. 없는 결과는 \"–\".", "",
              "| 뺀 종류 (평가 판) | 방법 | 문제 수 | 정확 검사 성공률 | 개수 (성공 평균) | 개수÷종류 인식 greedy (둘 다 성공) |",
              "|---|---|---|---|---|---|"]
@@ -412,7 +412,7 @@ def leave_out_table(recs):
                 continue
             ok, cnt = r["ok"], r["cnt"]
             lines.append(f"| {t} 10 | {m} | {len(ok)} | {ok.mean():.2f} | {fmt(cnt[ok].mean() if ok.any() else None)} | {fmt(r['rel_ta'], 3)} |")
-    lines += ["", "짝지은 bootstrap 95% CI (뺀 종류의 eval 문제, 같은 문제를 함께 다시 뽑음, 2000회, seed 0):", "",
+    lines += ["", "짝지은 bootstrap 95% CI (seed 0 run끼리, 뺀 종류의 eval 문제, 같은 문제를 함께 다시 뽑음, 2000회, seed 0):", "",
               "| 뺀 종류 | 비교 | 방법 | 기준 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |",
               "|---|---|---|---|---|---|---|"]
     for t in LO_TECHS:
@@ -423,6 +423,47 @@ def leave_out_table(recs):
             pm = paired(recs, ref).get((t, 10), {}).get(m)
             cells = ci_cells(*pm) if pm is not None else "– | – | –"
             lines.append(f"| {t} 10 | {what} | {m} | {ref} | {cells} |")
+    return lines + [""] + leave_out_seed_table(by)
+
+
+LO_SEEDS = (0, 1, 2)
+
+
+def seed_run(base, s):
+    """Run name of rung `base` (e.g. lo_ip_r0, r0_coord) at seed s: seed 0 has no suffix."""
+    return f"{base}_rl" if s == 0 else f"{base}_s{s}_rl"
+
+
+def leave_out_seed_table(by):
+    """QUEUE 10/31: the leave-one-type-out rungs at seeds 0-2. Success on the held-out type's 10×10 eval pools per
+    seed, so a seed-0 result can be told apart from luck: (b) 2단 − 0단 within the leave-out runs, and (c) each
+    leave-out run minus the same rung trained on all types at the same seed."""
+    def rate(t, m):
+        r = by.get((t, 10), {}).get(m)
+        return r["ok"].mean() if r is not None else None
+
+    def cells(vals):
+        have = [v for v in vals if v is not None]
+        mean = f"{np.mean(have):+.2f}" if len(have) == len(vals) else "–"
+        return " / ".join("–" if v is None else f"{v:+.2f}" for v in vals), mean, len(have)
+    lines = ["### seed별 (뺀 종류의 10×10 eval, 정확 검사 성공률; 평균은 seed가 다 있을 때만)", "",
+             "| 뺀 종류 | 단 | 뺀 학습 seed 0 / 1 / 2 | 평균 | 전체 학습 seed 0 / 1 / 2 | 평균 | 뺀 − 전체 (같은 seed) | 평균 |",
+             "|---|---|---|---|---|---|---|---|"]
+    for t in LO_TECHS:
+        for r, full, desc in LO_RUNGS:
+            lo = [rate(t, seed_run(f"lo_{t}_{r}", s)) for s in LO_SEEDS]
+            fu = [rate(t, seed_run(full[:-3], s)) for s in LO_SEEDS]
+            d = [a - b if a is not None and b is not None else None for a, b in zip(lo, fu)]
+            (lc, lm, _), (fc, fm, _), (dc, dm, _) = cells(lo), cells(fu), cells(d)
+            lines.append(f"| {t} 10 | {desc} | {lc.replace('+', '')} | {lm.replace('+', '')} | {fc.replace('+', '')} | "
+                         f"{fm.replace('+', '')} | {dc} | {dm} |")
+    lines += ["", "| 뺀 종류 | 비교 (뺀 학습끼리) | seed 0 / 1 / 2 | 평균 | 0보다 큰 seed 수 |", "|---|---|---|---|---|"]
+    for t in LO_TECHS:
+        for what, a, b in (("(a) 1단 − 0단", "r1", "r0"), ("(b) 2단 − 0단", "r2", "r0")):
+            d = [None if x is None or y is None else x - y
+                 for x, y in ((rate(t, seed_run(f"lo_{t}_{a}", s)), rate(t, seed_run(f"lo_{t}_{b}", s))) for s in LO_SEEDS)]
+            dc, dm, n = cells(d)
+            lines.append(f"| {t} 10 | {what} | {dc} | {dm} | {sum(v > 0 for v in d if v is not None)}/{n} |")
     return lines + [""]
 
 

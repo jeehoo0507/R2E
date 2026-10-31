@@ -10,3 +10,11 @@ runs/
 
 # experiment artifacts stay local; results go through metrics.json / RESULTS.md
 *.pkl
+
+# logs the background jobs keep appending to: a tracked copy is swapped for a new file by `git pull --autostash`
+# (report_watch), and the job keeps writing to the deleted one (10/30-31: pipeline_day2.log went invisible)
+agent/logs/pipeline_day2.log
+agent/logs/report_watch.log
+agent/logs/collect_results.log
+agent/logs/day2_cpu.log
+agent/logs/side16_gp.log
