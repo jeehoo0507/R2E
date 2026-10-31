@@ -1,4 +1,4 @@
-# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-31 11:36 UTC)
+# RESULTS (자동 생성: `scripts/collect_results.py`, 2026-10-31 12:07 UTC)
 
 성공 = `verify.py` 700점 + 피크 정밀화 정확 검사에서 최악 |Z| ≤ 1.01·Zt. 모든 방법은 cutting-plane 안에서 실행. 시간은 문제당 초(판 준비 제외, 같은 CPU 계산기). 손으로 적은 숫자는 없다.
 
@@ -25,7 +25,7 @@
 | lo_pkg_r2_rl | 1.00 / 0.74 / 1.02 [50] | – | 0.96 / 0.85 / 0.20 [50] | – | 0.80 / 0.92 / 0.65 [50] | – |
 | modal_rule | 0.94 / 1.10 / 1.56 [50] | 1.00 / 0.48 / – [50] | 1.00 / 0.84 / 0.21 [50] | 1.00 / 0.88 / 0.27 [50] | 0.88 / 0.86 / 0.61 [50] | 0.60 / 0.78 / 0.49 [50] |
 | r0_coord_distill | 0.96 / 1.17 / 2.04 [50] | – | 0.76 / 1.78 / 0.48 [50] | 0.80 / 3.63 / 0.90 [25] | 0.90 / 1.59 / 1.16 [50] | 0.80 / 2.67 / – [25] |
-| r0_coord_rl | 1.00 / 1.05 / 1.45 [50] | – | 0.96 / 0.80 / 0.20 [50] | 1.00 / 0.98 / 0.31 [25] | 0.76 / 0.79 / 0.58 [50] | 0.72 / 0.61 / – [25] |
+| r0_coord_rl | 1.00 / 1.05 / 1.45 [50] | – | 0.96 / 0.80 / 0.20 [50] | 1.00 / 0.98 / 0.31 [25] | 0.76 / 0.79 / 0.58 [50] | 0.64 / 0.63 / 0.47 [50] |
 | r0_coord_s1_rl | 0.96 / 0.97 / 1.29 [50] | – | 0.94 / 0.91 / 0.22 [50] | – | 0.74 / 0.77 / 0.54 [50] | – |
 | r0_coord_s2_rl | 1.00 / 0.96 / 1.50 [50] | – | 0.98 / 0.84 / 0.21 [50] | – | 0.76 / 0.80 / 0.55 [50] | – |
 | r1_modal_distill | 1.00 / 0.91 / 1.59 [50] | – | 0.88 / 1.08 / 0.24 [50] | – | 0.90 / 1.13 / 0.82 [50] | – |
@@ -173,6 +173,7 @@
 | pkg 10 | r3a_rl | 50 | +0.04 [-0.08, +0.16] | 0.608 [0.552, 0.667] |
 | pkg 16 | greedy+prune | 25 | +0.00 [-0.20, +0.20] | 0.970 [0.575, 1.509] |
 | pkg 16 | modal_rule | 25 | -0.12 [-0.36, +0.12] | 0.493 [0.357, 0.645] |
+| pkg 16 | r0_coord_rl | 25 | -0.24 [-0.52, +0.04] | 0.471 [0.344, 0.604] |
 
 ## greedy+prune 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)
 
@@ -300,7 +301,7 @@
 | pkg 16 | gp_type_aware | 25 | +0.00 [-0.20, +0.20] | 1.632 [1.253, 2.027] |
 | pkg 16 | modal_rule | 50 | -0.22 [-0.36, -0.08] | 0.778 [0.649, 0.911] |
 | pkg 16 | r0_coord_distill | 25 | -0.04 [-0.24, +0.16] | 2.669 [1.086, 4.562] |
-| pkg 16 | r0_coord_rl | 25 | -0.12 [-0.36, +0.12] | 0.611 [0.479, 0.750] |
+| pkg 16 | r0_coord_rl | 50 | -0.18 [-0.36, -0.02] | 0.633 [0.533, 0.735] |
 
 ## 비학습 모달 규칙 `modal_rule` (US 6789241식, 공진 피크에 SRF 맞는 decap) 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)
 
@@ -337,7 +338,7 @@
 | pkg 10 | r2am_rl | 50 | -0.02 [-0.14, +0.10] | 1.004 [0.956, 1.050] |
 | pkg 10 | r3_loop_rl | 50 | +0.00 [-0.10, +0.10] | 0.982 [0.932, 1.031] |
 | pkg 10 | r3a_rl | 50 | -0.02 [-0.14, +0.10] | 1.001 [0.951, 1.049] |
-| pkg 16 | r0_coord_rl | 25 | +0.20 [+0.04, +0.40] | 0.782 [0.695, 0.871] |
+| pkg 16 | r0_coord_rl | 50 | +0.04 [-0.12, +0.20] | 0.820 [0.766, 0.872] |
 
 ## 3단 + 주파수 궁합 편향 (dec_from_mode): `r3a_rl` vs 같은 단 편향 없는 `r3_loop_rl` 대비 짝지은 bootstrap 95% CI (같은 문제를 함께 다시 뽑음, 2000회, seed 0)
 
@@ -548,7 +549,7 @@
 | gp_type_aware | 25 (0) | 0.80 | 30.15 | 1.632 | 1.000 | 467.068 | `runs/2026-10-29/baselines_e0plus/eval/eval_pkg16_0__gp_type_aware.json` |
 | modal_rule | 50 (0, 1) | 0.60 | 10.57 | 0.778 | 0.493 | 8.513 | `runs/2026-10-28/baselines/eval/eval_pkg16_0__modal_rule.json`, `runs/2026-10-28/baselines/eval/eval_pkg16_1__modal_rule.json` |
 | r0_coord_distill | 25 (1) | 0.80 | 31.15 | 2.669 | – | 49.804 | `runs/2026-10-28/r0_coord_distill/eval/eval_pkg16_1__r0_coord_distill.json` |
-| r0_coord_rl | 25 (1) | 0.72 | 7.94 | 0.611 | – | 18.971 | `runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_1__r0_coord_rl.json` |
+| r0_coord_rl | 50 (0, 1) | 0.64 | 8.66 | 0.633 | 0.471 | 34.125 | `runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_0__r0_coord_rl.json`, `runs/2026-10-28/r0_coord_rl/eval/eval_pkg16_1__r0_coord_rl.json` |
 
 ## decap 종류 비율 (놓인 decap 중, 정확 검사 성공/실패 문제별; 종류 0 = C가 가장 큰 것, `decap_loop/techs.py`)
 
@@ -782,8 +783,8 @@
 | pkg 16 | modal_rule | 실패 | 20 | 15.2 | 0.57 | 0.07 | 0.36 |
 | pkg 16 | r0_coord_distill | 성공 | 20 | 31.1 | 0.46 | 0.07 | 0.47 |
 | pkg 16 | r0_coord_distill | 실패 | 5 | 37.4 | 0.21 | 0.06 | 0.73 |
-| pkg 16 | r0_coord_rl | 성공 | 18 | 7.9 | 0.29 | 0.21 | 0.50 |
-| pkg 16 | r0_coord_rl | 실패 | 7 | 15.1 | 0.56 | 0.11 | 0.33 |
+| pkg 16 | r0_coord_rl | 성공 | 32 | 8.7 | 0.35 | 0.22 | 0.44 |
+| pkg 16 | r0_coord_rl | 실패 | 18 | 14.0 | 0.56 | 0.13 | 0.32 |
 
 ## greedy+prune 실패 문제의 최악 주파수 (`scripts/analyze_ip_gp_fail.py`, 기록된 occ로 정확 검사 격자 재계산)
 
@@ -980,6 +981,7 @@
 | runs/2026-10-29/bp_park_rl | coord / park_am | rl | 199 | 1.27 | val_pcb10_0: 3.09/0.88, val_pkg10_0: 1.67/0.94, val_ip10_0: 0.65/0.31 | `runs/2026-10-29/bp_park_rl/metrics.json` |
 | runs/2026-10-29/lo_ip_r0_distill | coord / grid | distill | 2282 | 0.77 | val_pcb10_0: 2.52/0.50, val_pkg10_0: 1.00/0.81 | `runs/2026-10-29/lo_ip_r0_distill/metrics.json` |
 | runs/2026-10-29/lo_ip_r0_rl | coord / grid | rl | 300 | 1.27 | val_pcb10_0: 0.96/0.25, val_pkg10_0: 1.00/0.69 | `runs/2026-10-29/lo_ip_r0_rl/metrics.json` |
+| runs/2026-10-29/lo_ip_r0_s1_distill | coord / grid | distill | 2318 | 0.77 | val_pcb10_0: 1.90/0.50, val_pkg10_0: 1.27/0.69 | `runs/2026-10-29/lo_ip_r0_s1_distill/metrics.json` |
 | runs/2026-10-29/lo_ip_r1_distill | modal / grid | distill | 2176 | 0.77 | val_pcb10_0: 1.32/0.69, val_pkg10_0: 0.94/0.81 | `runs/2026-10-29/lo_ip_r1_distill/metrics.json` |
 | runs/2026-10-29/lo_ip_r1_rl | modal / grid | rl | 343 | 1.27 | val_pcb10_0: 1.21/0.69, val_pkg10_0: 0.94/0.62 | `runs/2026-10-29/lo_ip_r1_rl/metrics.json` |
 | runs/2026-10-29/lo_ip_r2_distill | mott / mott | distill | 1621 | 0.77 | val_pcb10_0: 1.14/0.56, val_pkg10_0: 1.08/0.75 | `runs/2026-10-29/lo_ip_r2_distill/metrics.json` |
