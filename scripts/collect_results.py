@@ -352,6 +352,7 @@ ABLATIONS = [  # QUEUE 10/29 03:15 item 3: one change vs the same rung without i
     ("r3a_rl", "r3_loop_rl", "3단 + 주파수 궁합 편향 (dec_from_mode)", "같은 단 편향 없는"),
     ("r2a_rl", "r2_mott_rl", "2단 + 주파수 궁합 편향 (dec_from_mode)", "같은 단 편향 없는"),
     ("r2am_rl", "r2a_rl", "r2a + 모드 경유 add 점수 (--mode_head)", "모드 경유 점수 없는 부모"),
+    ("r3_loop_rl", "r2_mott_rl", "루프 트랜스포머 (MoTT 블록 1개를 가중치 공유로 R회 반복)", "기본 트랜스포머 (블록 6개)"),
 ]
 
 
@@ -423,7 +424,7 @@ def leave_out_table(recs):
             pm = paired(recs, ref).get((t, 10), {}).get(m)
             cells = ci_cells(*pm) if pm is not None else "– | – | –"
             lines.append(f"| {t} 10 | {what} | {m} | {ref} | {cells} |")
-    return lines + [""] + leave_out_seed_table(by)
+    return lines + [""] + leave_out_seed_table(by) + loop_vs_plain_table(recs, by)
 
 
 LO_SEEDS = (0, 1, 2)
@@ -432,6 +433,31 @@ LO_SEEDS = (0, 1, 2)
 def seed_run(base, s):
     """Run name of rung `base` (e.g. lo_ip_r0, r0_coord) at seed s: seed 0 has no suffix."""
     return f"{base}_rl" if s == 0 else f"{base}_s{s}_rl"
+
+
+def loop_vs_plain_table(recs, by):
+    """QUEUE 10/31: looped transformer (r3_loop, one shared MoTT block run R times) vs the plain one (r2_mott, six
+    blocks), same budget. Trained on all types at seeds 0-2 (success and count÷E0+ per seed on each board's 10×10
+    eval), and on the leave-out pcb run lo_pcb_r3 (seed 0): vs lo_pcb_r2, and vs r3_loop_rl trained on all types."""
+    if not any("r3_loop" in m for ms in by.values() for m in ms):
+        return []
+
+    def cell(t, m):
+        r = by.get((t, 10), {}).get(m)
+        return "–" if r is None else f"{r['ok'].mean():.2f} / {fmt(r['rel_ta'], 2)}"
+    lines = ["### 루프 트랜스포머 vs 기본 트랜스포머 (같은 예산; 성공률 / 개수÷종류 인식 greedy)", "",
+             "| 판 | seed | 기본 `r2_mott` | 루프 `r3_loop` |", "|---|---|---|---|"]
+    for t in LO_TECHS:
+        for s in LO_SEEDS:
+            lines.append(f"| {t} 10 | {s} | {cell(t, seed_run('r2_mott', s))} | {cell(t, seed_run('r3_loop', s))} |")
+    lines += ["", "뺀 종류 pcb (seed 0, 짝지은 bootstrap 95% CI):", "",
+              "| 비교 | 방법 | 기준 | 문제 수 | 성공률 차 (방법 − 기준) [95% CI] | 개수 비 방법/기준 (둘 다 성공) [95% CI] |",
+              "|---|---|---|---|---|---|"]
+    for what, m, ref in (("루프 vs 기본 (둘 다 pcb 빼고 학습)", "lo_pcb_r3_rl", "lo_pcb_r2_rl"),
+                         ("루프: 뺀 학습 vs 전체 학습", "lo_pcb_r3_rl", "r3_loop_rl")):
+        pm = paired(recs, ref).get(("pcb", 10), {}).get(m)
+        lines.append(f"| {what} | {m} | {ref} | {ci_cells(*pm) if pm is not None else '– | – | –'} |")
+    return lines + [""]
 
 
 def leave_out_seed_table(by):
