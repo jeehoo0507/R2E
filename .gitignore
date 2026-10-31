@@ -18,3 +18,5 @@ agent/logs/report_watch.log
 agent/logs/collect_results.log
 agent/logs/day2_cpu.log
 agent/logs/side16_gp.log
+
+agent/logs/resume_agent.log

@@ -19,6 +19,8 @@ JOBS = [  # (pattern in cmdline, log, command)
     # QUEUE 10/29 14:20: commits RESULTS.md + new eval records every 30 min after the loop stops (exits by itself
     # once the lo_* rungs are evaluated and pushed; a relaunch after that does one cycle and exits)
     ("scripts/report_watch.py", "agent/logs/report_watch.log", f"{PY} scripts/report_watch.py"),
+    # QUEUE 10/31 11:40: restarts the agent loop when the GPU queue is done, or after a restart if STOP is gone
+    ("scripts/resume_agent.py", "agent/logs/resume_agent.log", f"{PY} scripts/resume_agent.py"),
 ]
 POOL16 = [f"runs/pool_v1/eval_{k}16_{i}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)]
 GP16 = [f"runs/2026-10-28/baselines/eval/eval_{k}16_{i}__{m}.json" for k in ("pcb", "pkg", "ip") for i in (0, 1)
